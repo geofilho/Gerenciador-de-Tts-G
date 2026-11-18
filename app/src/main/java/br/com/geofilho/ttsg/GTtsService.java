@@ -128,7 +128,7 @@ public class GTtsService extends TextToSpeechService {
         text = Dictionary.get(this).apply(text);
         boolean separateNumbers = Prefs.separateNumbers(p);
         List<TextProcessor.Segment> segments = TextProcessor.process(text, Prefs.groupRepeats(p),
-                Prefs.numberMode(p), separateNumbers);
+                Prefs.numberMode(p), separateNumbers, Prefs.punctuationMode(p));
 
         String mainPkg = Prefs.engine(p, Prefs.MAIN);
         if (mainPkg.isEmpty()) {

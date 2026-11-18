@@ -20,4 +20,5 @@
     <string name="group_switch">Ler emojis e símbolos repetidos agrupados, exemplo: coração vermelho 5</string>
     <string name="diagnostics">Diagnóstico: ver o que o motor recebeu do leitor de tela</string>
     <string name="check_update">Verificar atualização</string>
+    <string name="title_numbers">Leitura de números e pontuação</string>
 </resources>

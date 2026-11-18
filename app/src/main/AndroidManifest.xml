@@ -35,6 +35,11 @@
             android:label="@string/title_dictionary" />
 
         <activity
+            android:name=".NumbersActivity"
+            android:exported="false"
+            android:label="@string/title_numbers" />
+
+        <activity
             android:name=".EmojiActivity"
             android:exported="false"
             android:label="@string/title_emoji" />

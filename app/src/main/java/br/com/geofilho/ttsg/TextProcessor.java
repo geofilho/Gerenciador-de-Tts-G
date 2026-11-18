@@ -54,7 +54,20 @@ final class TextProcessor {
     private TextProcessor() {
     }
 
+    static final int PUNCT_NONE = 0;
+    static final int PUNCT_SOME = 1;
+    static final int PUNCT_ALL = 2;
+
+    /** Símbolos falados no nível "Algumas" (os de frase, como ponto e vírgula, ficam de fora). */
+    private static final String SOME = "@#$%&*+=/\\|_~^<>[]{}()§°€£•`";
+    /** Pontuação que dá pausa: depois do nome, o sinal continua para manter a entonação. */
+    private static final String PAUSE = ".,;:!?";
+
     static List<Segment> split(String text, boolean group) {
+        return split(text, group, PUNCT_NONE);
+    }
+
+    static List<Segment> split(String text, boolean group, int punct) {
         List<Segment> out = new ArrayList<>();
         StringBuilder normal = new StringBuilder();
         StringBuilder emojis = new StringBuilder();
@@ -120,7 +133,18 @@ final class TextProcessor {
                 continue;
             }
             flushEmoji(out, emojis);
-            normal.appendCodePoint(cp);
+            String name = punct == PUNCT_NONE ? null : punctuationName(text, i, cp, punct);
+            if (name != null) {
+                normal.append(' ').append(name);
+                // Mantém o sinal (e a pausa) só no fim de frase; no meio de "site.com" não.
+                boolean endsPhrase = i + len >= n || Character.isWhitespace(text.charAt(i + len));
+                if (PAUSE.indexOf(cp) >= 0 && endsPhrase) {
+                    normal.append((char) cp);
+                }
+                normal.append(' ');
+            } else {
+                normal.appendCodePoint(cp);
+            }
             i += len;
         }
         flushEmoji(out, emojis);
@@ -195,8 +219,13 @@ final class TextProcessor {
      * {@code separateNumbers}, deixa cada número num trecho próprio.
      */
     static List<Segment> process(String text, boolean group, int numberMode, boolean separateNumbers) {
+        return process(text, group, numberMode, separateNumbers, PUNCT_NONE);
+    }
+
+    static List<Segment> process(String text, boolean group, int numberMode, boolean separateNumbers,
+                                 int punct) {
         List<Segment> out = new ArrayList<>();
-        for (Segment seg : split(text, group)) {
+        for (Segment seg : split(text, group, punct)) {
             if (seg.emoji) {
                 out.add(seg);
                 continue;
@@ -303,6 +332,23 @@ final class TextProcessor {
     /** Emoji sem os seletores de variação, para comparar "❤" com "❤️". */
     private static String baseKey(String cluster) {
         return cluster.replace("\uFE0F", "").replace("\uFE0E", "");
+    }
+
+    /** Nome do sinal se ele deve ser falado no nível escolhido; senão, null. */
+    private static String punctuationName(String text, int i, int cp, int punct) {
+        String name = SYMBOLS.get(cp);
+        if (name == null) {
+            return null;
+        }
+        if (punct == PUNCT_SOME && SOME.indexOf(cp) < 0) {
+            return null;
+        }
+        // Ponto, vírgula e dois pontos entre dígitos fazem parte do número: 1.250,99 e 12:30.
+        if ((cp == '.' || cp == ',' || cp == ':') && i > 0 && i + 1 < text.length()
+                && isDigit(text.charAt(i - 1)) && isDigit(text.charAt(i + 1))) {
+            return null;
+        }
+        return name;
     }
 
     private static boolean isSymbol(int cp) {
