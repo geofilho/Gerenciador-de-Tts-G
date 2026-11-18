@@ -1,6 +1,6 @@
 {
-  "versionCode": 14,
-  "versionName": "1.13",
+  "versionCode": 15,
+  "versionName": "1.14",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
   "novidades": "- Ajuda da página Saída de áudio do leitor de tela mais curta: saiu a parte de contato com o desenvolvedor."
 }

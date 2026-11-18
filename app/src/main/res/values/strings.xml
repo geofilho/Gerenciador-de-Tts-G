@@ -38,8 +38,6 @@
 
 5. A chave está desativada: esta opção precisa do Android 6 ou mais novo.
 
-6. A fala sai no telefone mesmo sem você querer: desligue a chave. Ela só age quando há um dispositivo Bluetooth de áudio conectado.
-
-Se nada disso resolver, use o botão Ouvir a voz desta página e conte ao desenvolvedor o que aconteceu e o modelo do seu celular.</string>
+6. A fala sai no telefone mesmo sem você querer: desligue a chave. Ela só age quando há um dispositivo Bluetooth de áudio conectado.</string>
     <string name="audio_sounds_note">Atenção: só a fala muda de saída. Os sons e cliques do leitor de tela continuam saindo no dispositivo Bluetooth.</string>
 </resources>
