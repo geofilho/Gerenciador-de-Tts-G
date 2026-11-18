@@ -1,6 +1,6 @@
 {
-  "versionCode": 12,
-  "versionName": "1.11",
+  "versionCode": 13,
+  "versionName": "1.12",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- A página Saída de áudio do leitor de tela agora avisa, logo abaixo da chave, que os sons e cliques do leitor de tela continuam saindo no Bluetooth."
+  "novidades": "- A ajuda da página Saída de áudio do leitor de tela agora explica como evitar que os sons de navegação do leitor de tela saiam no Bluetooth."
 }

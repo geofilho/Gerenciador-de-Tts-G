@@ -32,7 +32,7 @@
 
 2. Ainda assim sai no Bluetooth: o app pede ao Android para tocar a fala no alto-falante. A maioria dos aparelhos respeita, mas algumas marcas ignoram esse pedido e mandam tudo para o Bluetooth. Nesse caso, o problema é do aparelho e não do aplicativo.
 
-3. Os sons e cliques do leitor de tela continuam no Bluetooth: só a fala é desviada. Os sons de navegação, cliques e avisos sonoros são tocados pelo próprio leitor de tela, e não pelo Gerenciador, que por isso não consegue mudar a saída deles.
+3. Os sons e cliques do leitor de tela continuam no Bluetooth: só a fala é desviada. Os sons de navegação, cliques e avisos sonoros são tocados pelo próprio leitor de tela, e não pelo Gerenciador, que por isso não consegue mudar a saída deles. Se você não quer que os sons da navegação e da varredura do leitor de tela saiam no dispositivo Bluetooth, desative esses sons nas configurações do próprio leitor de tela. No TalkBack, por exemplo, isso fica em Configurações do TalkBack, na parte Som e vibração. O nome pode variar conforme a versão.
 
 4. A música abaixa quando o leitor fala: quem abaixa a música é o leitor de tela, e isso já acontecia antes. O Gerenciador não muda esse comportamento.
 
