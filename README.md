@@ -1,5 +1,11 @@
 # Gerenciador de TTS G
 
+## Baixar
+
+[Baixar o aplicativo (APK, versão mais recente)](https://github.com/geofilho/Gerenciador-de-Tts-G/raw/main/atualizacao/GerenciadorTtsG.apk)
+
+Depois de instalado, as próximas versões chegam pelo botão "Verificar atualização" do próprio aplicativo.
+
 Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para uso com leitor de tela.
 
 ## Tela principal (ordem de varredura)
