@@ -13,6 +13,8 @@ Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para 
 8. Gerenciar dicionário (tocar numa palavra: Editar ou Remover; exportar e importar)
 9. Escolher TTS para falar emojis (motor, voz, ouvir, ajustes e chave de agrupar repetidos)
 10. Usar como motor de TTS do sistema
+11. Leitura de números: número inteiro, um a um ou dois a dois
+12. Verificar atualização (mostra as novidades e, com o OK, baixa e instala)
 
 ## Como funciona
 O app também é um motor de TTS. Quando ele é escolhido como motor padrão do

@@ -1,6 +1,6 @@
 {
-  "versionCode": 4,
-  "versionName": "1.3",
+  "versionCode": 5,
+  "versionName": "1.4",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Versão de teste da atualização automática.\n- O botão Verificar atualização agora fala a versão instalada."
+  "novidades": "- Nova opção Leitura de números: número inteiro, um a um ou dois a dois.\n- A opção fica antes do botão Verificar atualização e vale para o leitor de tela e para o teste de voz."
 }

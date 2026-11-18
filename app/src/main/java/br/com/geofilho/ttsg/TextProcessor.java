@@ -121,6 +121,65 @@ final class TextProcessor {
         return out;
     }
 
+    static final int NUMBERS_WHOLE = 0;
+    static final int NUMBERS_ONE_BY_ONE = 1;
+    static final int NUMBERS_PAIRS = 2;
+
+    /**
+     * Leitura de números: inteiro (sem mudança), um a um ("1234" vira "1 2 3 4")
+     * ou dois a dois ("1234" vira "12 34"; se sobrar um, ele fica sozinho no fim).
+     */
+    static String numbers(String text, int mode) {
+        if (mode == NUMBERS_WHOLE || text == null) {
+            return text;
+        }
+        int step = mode == NUMBERS_PAIRS ? 2 : 1;
+        StringBuilder out = null;
+        int n = text.length();
+        int i = 0;
+        while (i < n) {
+            char c = text.charAt(i);
+            if (c >= '0' && c <= '9') {
+                int j = i;
+                while (j < n && text.charAt(j) >= '0' && text.charAt(j) <= '9') {
+                    j++;
+                }
+                if (j - i > step) {
+                    if (out == null) {
+                        out = new StringBuilder(n + 16).append(text, 0, i);
+                    }
+                    for (int k = i; k < j; k += step) {
+                        if (k > i) {
+                            out.append(' ');
+                        }
+                        out.append(text, k, Math.min(k + step, j));
+                    }
+                } else if (out != null) {
+                    out.append(text, i, j);
+                }
+                i = j;
+            } else if ((c == '.' || c == ',' || c == ':') && i > 0 && i + 1 < n
+                    && isDigit(text.charAt(i - 1)) && isDigit(text.charAt(i + 1))) {
+                // "1.250" ou "12:30": separa a pontuação para o motor não juntar os números.
+                if (out == null) {
+                    out = new StringBuilder(n + 16).append(text, 0, i);
+                }
+                out.append(' ').append(c).append(' ');
+                i++;
+            } else {
+                if (out != null) {
+                    out.append(c);
+                }
+                i++;
+            }
+        }
+        return out == null ? text : out.toString();
+    }
+
+    private static boolean isDigit(char c) {
+        return c >= '0' && c <= '9';
+    }
+
     /** Junta tudo em um texto só (usado quando não há voz separada para emojis). */
     static String join(List<Segment> segments) {
         StringBuilder sb = new StringBuilder();

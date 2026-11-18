@@ -39,6 +39,10 @@ final class Prefs {
         return p.getInt(who + "_volume", 100);
     }
 
+    static int numberMode(SharedPreferences p) {
+        return p.getInt("number_mode", TextProcessor.NUMBERS_WHOLE);
+    }
+
     static boolean groupRepeats(SharedPreferences p) {
         return p.getBoolean("group_repeats", true);
     }
