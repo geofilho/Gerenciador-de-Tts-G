@@ -24,7 +24,8 @@ final class Diagnostics {
         sb.append("Códigos especiais: ").append(codes(received)).append('\n');
         sb.append("Falado: ");
         for (TextProcessor.Segment s : spoken) {
-            sb.append(s.emoji && emojiVoice ? "[voz de emojis] " : "[voz principal] ").append(s.text).append(' ');
+            sb.append(s.emoji && emojiVoice ? "[voz de emojis] " : s.number ? "[números] " : "[voz principal] ")
+                    .append(s.text).append(' ');
         }
         synchronized (LAST) {
             LAST.addFirst(sb.toString().trim());

@@ -1,6 +1,6 @@
 {
-  "versionCode": 5,
-  "versionName": "1.4",
+  "versionCode": 6,
+  "versionName": "1.5",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Nova opção Leitura de números: número inteiro, um a um ou dois a dois.\n- A opção fica antes do botão Verificar atualização e vale para o leitor de tela e para o teste de voz."
+  "novidades": "- Nova barra Velocidade dos números, logo abaixo de Leitura de números.\n- Os números são falados nessa velocidade e o resto do texto continua na velocidade normal."
 }

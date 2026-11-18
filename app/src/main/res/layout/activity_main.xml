@@ -68,6 +68,14 @@
             android:id="@+id/btn_numbers"
             style="@style/Row" />
 
+        <TextView
+            android:id="@+id/lbl_number_rate"
+            style="@style/SliderLabel" />
+
+        <br.com.geofilho.ttsg.PercentSeekBar
+            android:id="@+id/seek_number_rate"
+            style="@style/Slider" />
+
         <Button
             android:id="@+id/btn_update"
             style="@style/Row"

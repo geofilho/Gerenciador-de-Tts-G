@@ -126,8 +126,9 @@ public class GTtsService extends TextToSpeechService {
 
         String original = text;
         text = Dictionary.get(this).apply(text);
-        text = TextProcessor.numbers(text, Prefs.numberMode(p));
-        List<TextProcessor.Segment> segments = TextProcessor.split(text, Prefs.groupRepeats(p));
+        boolean separateNumbers = Prefs.separateNumbers(p);
+        List<TextProcessor.Segment> segments = TextProcessor.process(text, Prefs.groupRepeats(p),
+                Prefs.numberMode(p), separateNumbers);
 
         String mainPkg = Prefs.engine(p, Prefs.MAIN);
         if (mainPkg.isEmpty()) {
@@ -136,12 +137,8 @@ public class GTtsService extends TextToSpeechService {
         String emojiPkg = Prefs.engine(p, Prefs.EMOJI);
         boolean useEmojiEngine = !emojiPkg.isEmpty() && emojiEngine.ensure(emojiPkg, stopFlag);
         Diagnostics.record(original, segments, useEmojiEngine);
-        if (!useEmojiEngine && segments.size() > 1) {
-            // Sem voz própria para emojis: fala tudo de uma vez na voz principal.
-            List<TextProcessor.Segment> one = new ArrayList<>();
-            one.add(new TextProcessor.Segment(TextProcessor.join(segments), false));
-            segments = one;
-        }
+        // Junta o que vai para a mesma voz e velocidade (sem voz de emojis, eles vão na principal).
+        segments = TextProcessor.merge(segments, useEmojiEngine, separateNumbers);
 
         if (!mainEngine.ensure(mainPkg, stopFlag)) {
             if (!stopped) {
@@ -162,8 +159,9 @@ public class GTtsService extends TextToSpeechService {
                 if (stopped) {
                     break;
                 }
+                int rate = seg.number ? Prefs.numberRate(p) : Prefs.rate(p, who);
                 Pcm pcm = eng.synth(piece, Prefs.voice(p, who),
-                        Levels.rate(Prefs.rate(p, who)) * reqRate,
+                        Levels.rate(rate) * reqRate,
                         Levels.pitch(Prefs.pitch(p, who)) * reqPitch, stopFlag);
                 if (pcm == null || pcm.samples.length == 0 || stopped) {
                     continue;

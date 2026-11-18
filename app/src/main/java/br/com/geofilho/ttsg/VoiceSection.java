@@ -30,7 +30,8 @@ import java.util.TreeMap;
 final class VoiceSection implements TextToSpeech.OnInitListener {
 
     interface TextProvider {
-        String text();
+        /** Trechos a falar; os de número usam a velocidade dos números. */
+        List<TextProcessor.Segment> segments();
     }
 
     private final Activity act;
@@ -392,16 +393,31 @@ final class VoiceSection implements TextToSpeech.OnInitListener {
                 break;
             }
         }
-        tts.setSpeechRate(Levels.rate(Prefs.rate(prefs, who)));
         tts.setPitch(Levels.pitch(Prefs.pitch(prefs, who)));
         Bundle params = new Bundle();
         params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, Levels.volume(Prefs.volume(prefs, who)));
-        tts.speak(textProvider.text(), TextToSpeech.QUEUE_FLUSH, params, "teste");
+        List<TextProcessor.Segment> segs = textProvider.segments();
+        if (segs.isEmpty()) {
+            tts.stop();
+            return;
+        }
+        for (int i = 0; i < segs.size(); i++) {
+            TextProcessor.Segment seg = segs.get(i);
+            // A velocidade é guardada em cada fala enfileirada.
+            tts.setSpeechRate(Levels.rate(seg.number ? Prefs.numberRate(prefs) : Prefs.rate(prefs, who)));
+            tts.speak(seg.text, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD, params, "teste" + i);
+        }
     }
 
     // ----- barras -----
 
-    private void setupSlider(int seekId, int labelId, final String name, final String key, int value) {
+    private void setupSlider(int seekId, int labelId, String name, String key, int value) {
+        bindSlider(act, prefs, seekId, labelId, name, who + key, value);
+    }
+
+    /** Liga uma barra de 0 a 100% a uma configuração salva. */
+    static void bindSlider(Activity act, final SharedPreferences prefs, int seekId, int labelId,
+                           final String name, final String prefKey, int value) {
         final PercentSeekBar bar = act.findViewById(seekId);
         final TextView lbl = act.findViewById(labelId);
         bar.setContentDescription(name);
@@ -411,7 +427,7 @@ final class VoiceSection implements TextToSpeech.OnInitListener {
             @Override
             public void onProgressChanged(SeekBar s, int progress, boolean fromUser) {
                 show(bar, lbl, name, progress);
-                prefs.edit().putInt(who + key, progress).apply();
+                prefs.edit().putInt(prefKey, progress).apply();
             }
 
             @Override

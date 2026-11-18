@@ -12,6 +12,9 @@ import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Voz para emojis: motor, voz (no idioma escolhido na tela principal),
  * ouvir, velocidade, tonalidade, volume e a chave de agrupar repetidos.
@@ -31,8 +34,11 @@ public class EmojiActivity extends Activity {
         final SharedPreferences prefs = Prefs.get(this);
         voice = new VoiceSection(this, Prefs.EMOJI, false, true, new VoiceSection.TextProvider() {
             @Override
-            public String text() {
-                return TextProcessor.join(TextProcessor.split(SAMPLE, Prefs.groupRepeats(prefs)));
+            public List<TextProcessor.Segment> segments() {
+                List<TextProcessor.Segment> one = new ArrayList<>();
+                one.add(new TextProcessor.Segment(
+                        TextProcessor.join(TextProcessor.split(SAMPLE, Prefs.groupRepeats(prefs))), true));
+                return one;
             }
         });
 

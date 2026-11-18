@@ -39,6 +39,16 @@ final class Prefs {
         return p.getInt(who + "_volume", 100);
     }
 
+    /** Velocidade dos números; se nunca foi ajustada, segue a da voz principal. */
+    static int numberRate(SharedPreferences p) {
+        return p.getInt("number_rate", rate(p, MAIN));
+    }
+
+    /** Números só viram trechos separados quando a velocidade deles é diferente. */
+    static boolean separateNumbers(SharedPreferences p) {
+        return numberRate(p) != rate(p, MAIN);
+    }
+
     static int numberMode(SharedPreferences p) {
         return p.getInt("number_mode", TextProcessor.NUMBERS_WHOLE);
     }

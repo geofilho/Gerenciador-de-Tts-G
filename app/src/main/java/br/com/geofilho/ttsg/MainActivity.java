@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
@@ -12,6 +13,8 @@ import android.view.accessibility.AccessibilityEvent;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import java.util.List;
 
 /** Tela única: voz principal, teste, ajustes, dicionário e atalhos. */
 public class MainActivity extends Activity {
@@ -35,11 +38,13 @@ public class MainActivity extends Activity {
         final EditText editTest = findViewById(R.id.edit_test);
         voice = new VoiceSection(this, Prefs.MAIN, true, false, new VoiceSection.TextProvider() {
             @Override
-            public String text() {
-                // O teste já passa pelo dicionário e pelas regras de símbolos repetidos.
+            public List<TextProcessor.Segment> segments() {
+                // O teste passa pelas mesmas regras do motor: dicionário, repetidos e números.
+                SharedPreferences p = Prefs.get(MainActivity.this);
                 String t = Dictionary.get(MainActivity.this).apply(editTest.getText().toString());
-                t = TextProcessor.numbers(t, Prefs.numberMode(Prefs.get(MainActivity.this)));
-                return TextProcessor.join(TextProcessor.split(t, Prefs.groupRepeats(Prefs.get(MainActivity.this))));
+                boolean sep = Prefs.separateNumbers(p);
+                return TextProcessor.merge(TextProcessor.process(t, Prefs.groupRepeats(p), Prefs.numberMode(p), sep),
+                        false, sep);
             }
         });
 
@@ -88,6 +93,12 @@ public class MainActivity extends Activity {
         });
         btnNumbers = findViewById(R.id.btn_numbers);
         showNumberMode();
+        SharedPreferences prefs = Prefs.get(this);
+        if (!prefs.contains("number_rate")) {
+            prefs.edit().putInt("number_rate", Prefs.numberRate(prefs)).apply();
+        }
+        VoiceSection.bindSlider(this, prefs, R.id.seek_number_rate, R.id.lbl_number_rate,
+                "Velocidade dos números", "number_rate", Prefs.numberRate(prefs));
         btnNumbers.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

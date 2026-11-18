@@ -16,10 +16,17 @@ final class TextProcessor {
     static final class Segment {
         final String text;
         final boolean emoji;
+        /** Trecho de número, falado com a velocidade própria dos números. */
+        final boolean number;
 
         Segment(String text, boolean emoji) {
+            this(text, emoji, false);
+        }
+
+        Segment(String text, boolean emoji, boolean number) {
             this.text = text;
             this.emoji = emoji;
+            this.number = number;
         }
     }
 
@@ -178,6 +185,75 @@ final class TextProcessor {
 
     private static boolean isDigit(char c) {
         return c >= '0' && c <= '9';
+    }
+
+    private static final java.util.regex.Pattern NUMBER =
+            java.util.regex.Pattern.compile("[0-9]+(?:[.,:][0-9]+)*");
+
+    /**
+     * Separa emojis, agrupa repetidos, aplica a leitura de números e, se
+     * {@code separateNumbers}, deixa cada número num trecho próprio.
+     */
+    static List<Segment> process(String text, boolean group, int numberMode, boolean separateNumbers) {
+        List<Segment> out = new ArrayList<>();
+        for (Segment seg : split(text, group)) {
+            if (seg.emoji) {
+                out.add(seg);
+                continue;
+            }
+            java.util.regex.Matcher m = NUMBER.matcher(seg.text);
+            if (!m.find()) {
+                out.add(seg);
+                continue;
+            }
+            StringBuilder normal = new StringBuilder();
+            int last = 0;
+            do {
+                normal.append(seg.text, last, m.start());
+                String num = numbers(m.group(), numberMode);
+                if (separateNumbers) {
+                    if (hasContent(normal)) {
+                        out.add(new Segment(normal.toString(), false));
+                    }
+                    normal.setLength(0);
+                    out.add(new Segment(num, false, true));
+                } else {
+                    normal.append(num);
+                }
+                last = m.end();
+            } while (m.find());
+            normal.append(seg.text, last, seg.text.length());
+            if (hasContent(normal)) {
+                out.add(new Segment(normal.toString(), false));
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Junta trechos vizinhos que vão para a mesma voz e velocidade,
+     * para falar com o menor número de chamadas ao motor.
+     */
+    static List<Segment> merge(List<Segment> in, boolean emojiSeparate, boolean numberSeparate) {
+        List<Segment> out = new ArrayList<>();
+        StringBuilder buf = new StringBuilder();
+        int kind = -1;
+        for (Segment s : in) {
+            int k = s.emoji && emojiSeparate ? 1 : s.number && numberSeparate ? 2 : 0;
+            if (k != kind && buf.length() > 0) {
+                out.add(new Segment(buf.toString(), kind == 1, kind == 2));
+                buf.setLength(0);
+            }
+            kind = k;
+            if (buf.length() > 0) {
+                buf.append(' ');
+            }
+            buf.append(s.text);
+        }
+        if (buf.length() > 0) {
+            out.add(new Segment(buf.toString(), kind == 1, kind == 2));
+        }
+        return out;
     }
 
     /** Junta tudo em um texto só (usado quando não há voz separada para emojis). */
