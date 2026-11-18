@@ -24,5 +24,21 @@
     <string name="numbers_test_text">Meu telefone é 11987654321, o valor é R$ 1.250,99 às 12:30 e o e-mail é joao@site.com. Tudo certo?</string>
     <string name="title_audio">Saída de áudio do leitor de tela</string>
     <string name="keep_on_phone">Manter o áudio do leitor de tela no telefone</string>
-    <string name="audio_note">Com a chave ligada e um fone, caixa de som ou som do carro Bluetooth conectado, a fala do leitor de tela sai no alto-falante do telefone e músicas e vídeos continuam no Bluetooth. Os sons e cliques do próprio TalkBack continuam no Bluetooth. Funciona quando o Gerenciador de TTS G é o motor de TTS do sistema.</string>
+    <string name="audio_help_button">Caso tenha problemas, toque aqui para saber o motivo</string>
+    <string name="audio_help_title">Por que pode não funcionar</string>
+    <string name="audio_help_text">Como funciona: com a chave ligada e um fone, caixa de som ou som do carro Bluetooth conectado, o Gerenciador toca a fala do leitor de tela no alto-falante do telefone. Músicas e vídeos continuam no Bluetooth. Sem Bluetooth conectado, ou com fone de fio, a fala segue o caminho normal.
+
+1. A fala continua saindo no Bluetooth: confira se o Gerenciador de TTS G está escolhido como motor de TTS do sistema, no botão Usar como motor de TTS do sistema, na tela principal. Sem isso, o leitor de tela usa outro motor e esta opção não age.
+
+2. Ainda assim sai no Bluetooth: o app pede ao Android para tocar a fala no alto-falante. A maioria dos aparelhos respeita, mas algumas marcas ignoram esse pedido e mandam tudo para o Bluetooth. Nesse caso, o problema é do aparelho e não do aplicativo.
+
+3. Os cliques e sons do TalkBack continuam no Bluetooth: só a fala é desviada. Os sons e cliques são tocados pelo próprio TalkBack, e o Gerenciador não tem controle sobre eles.
+
+4. A música abaixa quando o leitor fala: quem abaixa a música é o TalkBack, e isso já acontecia antes. O Gerenciador não muda esse comportamento.
+
+5. A chave está desativada: esta opção precisa do Android 6 ou mais novo.
+
+6. A fala sai no telefone mesmo sem você querer: desligue a chave. Ela só age quando há um dispositivo Bluetooth de áudio conectado.
+
+Se nada disso resolver, use o botão Ouvir a voz desta página e conte ao desenvolvedor o que aconteceu e o modelo do seu celular.</string>
 </resources>

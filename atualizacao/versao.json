@@ -1,6 +1,6 @@
 {
-  "versionCode": 10,
-  "versionName": "1.9",
+  "versionCode": 11,
+  "versionName": "1.10",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Nova opção Saída de áudio do leitor de tela, antes de Verificar atualização.\n- Com fone, caixa de som ou som do carro Bluetooth conectado, a fala do leitor de tela pode ficar no alto-falante do telefone e a música continua no Bluetooth. Precisa do Android 6 ou mais novo."
+  "novidades": "- Na página Saída de áudio do leitor de tela, o novo botão Caso tenha problemas explica em detalhes por que a opção pode não funcionar."
 }

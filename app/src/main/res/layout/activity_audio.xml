@@ -26,9 +26,9 @@
             style="@style/Row"
             android:text="@string/listen" />
 
-        <TextView
+        <Button
+            android:id="@+id/btn_help"
             style="@style/Row"
-            android:focusable="true"
-            android:text="@string/audio_note" />
+            android:text="@string/audio_help_button" />
     </LinearLayout>
 </ScrollView>

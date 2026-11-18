@@ -2,6 +2,7 @@ package br.com.geofilho.ttsg;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.SharedPreferences;
 import android.media.AudioDeviceCallback;
 import android.media.AudioDeviceInfo;
@@ -59,6 +60,17 @@ public class AudioActivity extends Activity {
                     return;
                 }
                 tts.speak("Este é o áudio do leitor de tela.", TextToSpeech.QUEUE_FLUSH, null, "teste");
+            }
+        });
+
+        findViewById(R.id.btn_help).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(AudioActivity.this)
+                        .setTitle(R.string.audio_help_title)
+                        .setMessage(R.string.audio_help_text)
+                        .setPositiveButton("Fechar", null)
+                        .show();
             }
         });
 
