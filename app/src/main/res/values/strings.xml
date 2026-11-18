@@ -22,4 +22,7 @@
     <string name="check_update">Verificar atualização</string>
     <string name="title_numbers">Leitura de números e pontuação</string>
     <string name="numbers_test_text">Meu telefone é 11987654321, o valor é R$ 1.250,99 às 12:30 e o e-mail é joao@site.com. Tudo certo?</string>
+    <string name="title_audio">Saída de áudio do leitor de tela</string>
+    <string name="keep_on_phone">Manter o áudio do leitor de tela no telefone</string>
+    <string name="audio_note">Com a chave ligada e um fone, caixa de som ou som do carro Bluetooth conectado, a fala do leitor de tela sai no alto-falante do telefone e músicas e vídeos continuam no Bluetooth. Os sons e cliques do próprio TalkBack continuam no Bluetooth. Funciona quando o Gerenciador de TTS G é o motor de TTS do sistema.</string>
 </resources>

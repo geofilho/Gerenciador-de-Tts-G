@@ -49,6 +49,10 @@ final class Prefs {
         return numberRate(p) != rate(p, MAIN);
     }
 
+    static boolean keepOnPhone(SharedPreferences p) {
+        return p.getBoolean("keep_on_phone", false);
+    }
+
     static int punctuationMode(SharedPreferences p) {
         return p.getInt("punctuation_mode", TextProcessor.PUNCT_NONE);
     }

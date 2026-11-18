@@ -29,6 +29,8 @@ public class GTtsService extends TextToSpeechService {
     private EngineClient mainEngine;
     private EngineClient emojiEngine;
     private volatile boolean stopped;
+    /** Tocador próprio no alto-falante, usado quando há Bluetooth e a opção está ligada. */
+    private volatile PhonePlayer phonePlayer;
 
     private final EngineClient.StopFlag stopFlag = new EngineClient.StopFlag() {
         @Override
@@ -107,6 +109,10 @@ public class GTtsService extends TextToSpeechService {
     @Override
     protected void onStop() {
         stopped = true;
+        PhonePlayer pp = phonePlayer;
+        if (pp != null) {
+            pp.stop();
+        }
         mainEngine.stop();
         emojiEngine.stop();
     }
@@ -147,6 +153,8 @@ public class GTtsService extends TextToSpeechService {
             return;
         }
 
+        // Fala no telefone e música no Bluetooth: o próprio app toca no alto-falante.
+        boolean toPhone = Prefs.keepOnPhone(p) && PhonePlayer.bluetoothOutputName(this) != null;
         int outRate = 0;
         for (TextProcessor.Segment seg : segments) {
             if (stopped) {
@@ -171,9 +179,16 @@ public class GTtsService extends TextToSpeechService {
                     if (cb.start(outRate, AudioFormat.ENCODING_PCM_16BIT, 1) != TextToSpeech.SUCCESS) {
                         return;
                     }
+                    if (toPhone) {
+                        phonePlayer = PhonePlayer.open(this, outRate);
+                    }
                 }
                 short[] s = Pcm.resample(pcm.samples, pcm.rate, outRate);
-                if (!write(cb, Pcm.toBytes(s, Levels.volume(Prefs.volume(p, who))))) {
+                byte[] bytes = Pcm.toBytes(s, Levels.volume(Prefs.volume(p, who)));
+                PhonePlayer pp = phonePlayer;
+                boolean ok = pp != null ? pp.write(bytes) : write(cb, bytes);
+                if (!ok) {
+                    releasePhonePlayer(false);
                     return;
                 }
             }
@@ -182,7 +197,21 @@ public class GTtsService extends TextToSpeechService {
             // Nada para falar (ou interrompido antes do primeiro som).
             cb.start(22050, AudioFormat.ENCODING_PCM_16BIT, 1);
         }
+        // Só avisa que terminou depois que o alto-falante acabou de tocar.
+        releasePhonePlayer(true);
         cb.done();
+    }
+
+    private void releasePhonePlayer(boolean waitEnd) {
+        PhonePlayer pp = phonePlayer;
+        phonePlayer = null;
+        if (pp != null) {
+            if (waitEnd) {
+                pp.finish();
+            } else {
+                pp.release();
+            }
+        }
     }
 
     private boolean write(SynthesisCallback cb, byte[] data) {

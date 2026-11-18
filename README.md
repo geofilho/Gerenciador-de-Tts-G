@@ -22,7 +22,9 @@ Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para 
     inteiro, um a um ou dois a dois; velocidade dos números; leitura de
     pontuação nenhuma, algumas ou todas; caixa de texto e Ouvir a voz)
 11. Usar como motor de TTS do sistema
-12. Verificar atualização (mostra as novidades e, com o OK, baixa e instala)
+12. Saída de áudio do leitor de tela (manter a fala no telefone quando houver
+    Bluetooth conectado; a mídia continua no Bluetooth)
+13. Verificar atualização (mostra as novidades e, com o OK, baixa e instala)
 
 ## Como funciona
 O app também é um motor de TTS. Quando ele é escolhido como motor padrão do

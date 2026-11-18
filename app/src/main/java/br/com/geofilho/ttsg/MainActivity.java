@@ -92,6 +92,13 @@ public class MainActivity extends Activity {
             }
         });
 
+        findViewById(R.id.btn_audio).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, AudioActivity.class));
+            }
+        });
+
         updater = new Updater(this);
         Button btnUpdate = findViewById(R.id.btn_update);
         try {

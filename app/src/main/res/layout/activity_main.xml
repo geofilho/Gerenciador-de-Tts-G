@@ -70,6 +70,11 @@
             android:text="@string/system_engine" />
 
         <Button
+            android:id="@+id/btn_audio"
+            style="@style/Row"
+            android:text="@string/title_audio" />
+
+        <Button
             android:id="@+id/btn_update"
             style="@style/Row"
             android:text="@string/check_update" />

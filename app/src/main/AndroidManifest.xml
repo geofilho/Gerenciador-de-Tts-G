@@ -40,6 +40,11 @@
             android:label="@string/title_numbers" />
 
         <activity
+            android:name=".AudioActivity"
+            android:exported="false"
+            android:label="@string/title_audio" />
+
+        <activity
             android:name=".EmojiActivity"
             android:exported="false"
             android:label="@string/title_emoji" />
