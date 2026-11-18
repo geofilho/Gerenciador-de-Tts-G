@@ -80,7 +80,13 @@ public class MainActivity extends Activity {
             }
         });
         updater = new Updater(this);
-        findViewById(R.id.btn_update).setOnClickListener(new View.OnClickListener() {
+        Button btnUpdate = findViewById(R.id.btn_update);
+        try {
+            String v = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            btnUpdate.setText(getString(R.string.check_update) + ", versão instalada " + v);
+        } catch (Exception ignored) {
+        }
+        btnUpdate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 updater.check();
