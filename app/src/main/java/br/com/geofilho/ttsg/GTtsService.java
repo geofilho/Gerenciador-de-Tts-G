@@ -124,6 +124,7 @@ public class GTtsService extends TextToSpeechService {
         float reqRate = request.getSpeechRate() / 100f;
         float reqPitch = request.getPitch() / 100f;
 
+        String original = text;
         text = Dictionary.get(this).apply(text);
         List<TextProcessor.Segment> segments = TextProcessor.split(text, Prefs.groupRepeats(p));
 
@@ -133,6 +134,7 @@ public class GTtsService extends TextToSpeechService {
         }
         String emojiPkg = Prefs.engine(p, Prefs.EMOJI);
         boolean useEmojiEngine = !emojiPkg.isEmpty() && emojiEngine.ensure(emojiPkg, stopFlag);
+        Diagnostics.record(original, segments, useEmojiEngine);
         if (!useEmojiEngine && segments.size() > 1) {
             // Sem voz própria para emojis: fala tudo de uma vez na voz principal.
             List<TextProcessor.Segment> one = new ArrayList<>();

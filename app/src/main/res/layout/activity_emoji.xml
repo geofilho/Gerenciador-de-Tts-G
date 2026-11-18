@@ -16,5 +16,10 @@
             android:id="@+id/switch_group"
             style="@style/Row"
             android:text="@string/group_switch" />
+
+        <Button
+            android:id="@+id/btn_diagnostics"
+            style="@style/Row"
+            android:text="@string/diagnostics" />
     </LinearLayout>
 </ScrollView>

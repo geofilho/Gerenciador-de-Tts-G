@@ -57,18 +57,21 @@ final class TextProcessor {
             int end = emojiEnd(text, i);
             if (end > i) {
                 String cluster = text.substring(i, end);
+                String key = baseKey(cluster);
                 int count = 1;
                 int next = end;
                 if (group) {
-                    // Conta repetições do mesmo emoji (com ou sem espaço entre eles).
+                    // Conta repetições do mesmo emoji, mesmo com espaços (visíveis ou
+                    // invisíveis) entre eles e com ou sem o seletor de cor (FE0F).
                     while (true) {
                         int j = next;
-                        while (j < n && text.charAt(j) == ' ') {
+                        while (j < n && isGap(text.charAt(j))) {
                             j++;
                         }
-                        if (text.startsWith(cluster, j) && emojiEnd(text, j) == j + cluster.length()) {
+                        int e = emojiEnd(text, j);
+                        if (e > j && key.equals(baseKey(text.substring(j, e)))) {
                             count++;
-                            next = j + cluster.length();
+                            next = e;
                         } else {
                             break;
                         }
@@ -104,7 +107,7 @@ final class TextProcessor {
                     continue;
                 }
             }
-            if (emojis.length() > 0 && Character.isWhitespace(cp)) {
+            if (emojis.length() > 0 && isGap((char) cp)) {
                 // Espaço entre emojis não precisa virar um trecho separado.
                 i += len;
                 continue;
@@ -134,7 +137,7 @@ final class TextProcessor {
         if (normal.length() == 0) {
             return;
         }
-        if (normal.toString().trim().length() > 0) {
+        if (hasContent(normal)) {
             out.add(new Segment(normal.toString(), false));
         }
         normal.setLength(0);
@@ -145,6 +148,26 @@ final class TextProcessor {
             out.add(new Segment(emojis.toString(), true));
             emojis.setLength(0);
         }
+    }
+
+    /** Espaços comuns e invisíveis que aparecem entre emojis. */
+    static boolean isGap(char c) {
+        return Character.isWhitespace(c) || c == '\u00A0' || c == '\u200B' || c == '\u200C'
+                || c == '\u2060' || c == '\uFEFF' || c == '\u202F' || c == '\u2007';
+    }
+
+    private static boolean hasContent(CharSequence s) {
+        for (int k = 0; k < s.length(); k++) {
+            if (!isGap(s.charAt(k))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Emoji sem os seletores de variação, para comparar "❤" com "❤️". */
+    private static String baseKey(String cluster) {
+        return cluster.replace("\uFE0F", "").replace("\uFE0E", "");
     }
 
     private static boolean isSymbol(int cp) {
