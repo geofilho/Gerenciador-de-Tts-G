@@ -16,6 +16,9 @@ final class Diagnostics {
     }
 
     static void record(String received, List<TextProcessor.Segment> spoken, boolean emojiVoice) {
+        if (received.trim().isEmpty()) {
+            return; // pausas e sons do leitor de tela: não interessam
+        }
         StringBuilder sb = new StringBuilder();
         sb.append("Recebido: ").append(received).append('\n');
         sb.append("Códigos especiais: ").append(codes(received)).append('\n');

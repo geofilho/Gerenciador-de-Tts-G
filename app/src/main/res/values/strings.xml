@@ -19,4 +19,5 @@
     <string name="dictionary_empty">O dicionário está vazio.</string>
     <string name="group_switch">Ler emojis e símbolos repetidos agrupados, exemplo: coração vermelho 5</string>
     <string name="diagnostics">Diagnóstico: ver o que o motor recebeu do leitor de tela</string>
+    <string name="check_update">Verificar atualização</string>
 </resources>

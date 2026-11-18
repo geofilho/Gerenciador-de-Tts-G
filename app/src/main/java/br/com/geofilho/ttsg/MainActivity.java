@@ -19,6 +19,7 @@ public class MainActivity extends Activity {
     private EditText editWord;
     private EditText editReplacement;
     private Button btnSystem;
+    private Updater updater;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,11 +79,19 @@ public class MainActivity extends Activity {
                 openTtsSettings();
             }
         });
+        updater = new Updater(this);
+        findViewById(R.id.btn_update).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updater.check();
+            }
+        });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        updater.onResume();
         String def = null;
         try {
             def = Settings.Secure.getString(getContentResolver(), "tts_default_synth");

@@ -1,0 +1,6 @@
+{
+  "versionCode": 3,
+  "versionName": "1.2",
+  "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
+  "novidades": "- Nova opção Verificar atualização, no fim da tela principal.\n- Agrupamento de emojis repetidos corrigido.\n- Diagnóstico sem os itens vazios."
+}
