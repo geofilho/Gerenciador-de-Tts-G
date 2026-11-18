@@ -32,13 +32,14 @@
 
 2. Ainda assim sai no Bluetooth: o app pede ao Android para tocar a fala no alto-falante. A maioria dos aparelhos respeita, mas algumas marcas ignoram esse pedido e mandam tudo para o Bluetooth. Nesse caso, o problema é do aparelho e não do aplicativo.
 
-3. Os cliques e sons do TalkBack continuam no Bluetooth: só a fala é desviada. Os sons e cliques são tocados pelo próprio TalkBack, e o Gerenciador não tem controle sobre eles.
+3. Os sons e cliques do leitor de tela continuam no Bluetooth: só a fala é desviada. Os sons de navegação, cliques e avisos sonoros são tocados pelo próprio leitor de tela, e não pelo Gerenciador, que por isso não consegue mudar a saída deles.
 
-4. A música abaixa quando o leitor fala: quem abaixa a música é o TalkBack, e isso já acontecia antes. O Gerenciador não muda esse comportamento.
+4. A música abaixa quando o leitor fala: quem abaixa a música é o leitor de tela, e isso já acontecia antes. O Gerenciador não muda esse comportamento.
 
 5. A chave está desativada: esta opção precisa do Android 6 ou mais novo.
 
 6. A fala sai no telefone mesmo sem você querer: desligue a chave. Ela só age quando há um dispositivo Bluetooth de áudio conectado.
 
 Se nada disso resolver, use o botão Ouvir a voz desta página e conte ao desenvolvedor o que aconteceu e o modelo do seu celular.</string>
+    <string name="audio_sounds_note">Atenção: só a fala muda de saída. Os sons e cliques do leitor de tela continuam saindo no dispositivo Bluetooth.</string>
 </resources>

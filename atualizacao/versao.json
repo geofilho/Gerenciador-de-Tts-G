@@ -1,6 +1,6 @@
 {
-  "versionCode": 11,
-  "versionName": "1.10",
+  "versionCode": 12,
+  "versionName": "1.11",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Na página Saída de áudio do leitor de tela, o novo botão Caso tenha problemas explica em detalhes por que a opção pode não funcionar."
+  "novidades": "- A página Saída de áudio do leitor de tela agora avisa, logo abaixo da chave, que os sons e cliques do leitor de tela continuam saindo no Bluetooth."
 }

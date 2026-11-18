@@ -16,6 +16,11 @@
             android:text="@string/keep_on_phone" />
 
         <TextView
+            style="@style/Row"
+            android:focusable="true"
+            android:text="@string/audio_sounds_note" />
+
+        <TextView
             android:id="@+id/txt_status"
             style="@style/Row"
             android:accessibilityLiveRegion="polite"
