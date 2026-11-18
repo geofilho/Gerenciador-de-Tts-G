@@ -1,6 +1,6 @@
 {
-  "versionCode": 7,
-  "versionName": "1.6",
+  "versionCode": 8,
+  "versionName": "1.7",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- O botão Leitura de números agora se chama Leitura de números e pontuação e abre uma página própria.\n- Nessa página: leitura de números, velocidade dos números e a nova leitura de pontuação: nenhuma, algumas ou todas. O padrão é nenhuma."
+  "novidades": "- O botão Usar como motor de TTS do sistema agora fica abaixo de Leitura de números e pontuação."
 }

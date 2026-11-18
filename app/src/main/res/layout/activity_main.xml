@@ -60,14 +60,14 @@
             android:text="@string/emoji_voice" />
 
         <Button
-            android:id="@+id/btn_system"
-            style="@style/Row"
-            android:text="@string/system_engine" />
-
-        <Button
             android:id="@+id/btn_numbers"
             style="@style/Row"
             android:text="@string/title_numbers" />
+
+        <Button
+            android:id="@+id/btn_system"
+            style="@style/Row"
+            android:text="@string/system_engine" />
 
         <Button
             android:id="@+id/btn_update"
