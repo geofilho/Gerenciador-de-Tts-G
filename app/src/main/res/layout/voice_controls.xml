@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Controles de voz reaproveitados na tela principal e na tela de emojis.
+     Os rótulos visuais das barras ficam fora da varredura do leitor de tela,
+     porque a própria barra já anuncia o nome e o valor. -->
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Button
+        android:id="@+id/btn_engine"
+        style="@style/Row" />
+
+    <Button
+        android:id="@+id/btn_language"
+        style="@style/Row" />
+
+    <Button
+        android:id="@+id/btn_voice"
+        style="@style/Row" />
+
+    <EditText
+        android:id="@+id/edit_test"
+        style="@style/Row"
+        android:hint="@string/hint_test_text"
+        android:importantForAutofill="no"
+        android:inputType="textMultiLine|textCapSentences"
+        android:text="@string/default_test_text" />
+
+    <Button
+        android:id="@+id/btn_test"
+        style="@style/Row"
+        android:text="@string/listen" />
+
+    <TextView
+        android:id="@+id/lbl_rate"
+        style="@style/SliderLabel" />
+
+    <br.com.geofilho.ttsg.PercentSeekBar
+        android:id="@+id/seek_rate"
+        style="@style/Slider" />
+
+    <TextView
+        android:id="@+id/lbl_pitch"
+        style="@style/SliderLabel" />
+
+    <br.com.geofilho.ttsg.PercentSeekBar
+        android:id="@+id/seek_pitch"
+        style="@style/Slider" />
+
+    <TextView
+        android:id="@+id/lbl_volume"
+        style="@style/SliderLabel" />
+
+    <br.com.geofilho.ttsg.PercentSeekBar
+        android:id="@+id/seek_volume"
+        style="@style/Slider" />
+</merge>

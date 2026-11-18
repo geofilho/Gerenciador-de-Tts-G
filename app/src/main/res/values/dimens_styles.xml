@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Row">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="SliderLabel">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">12dp</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
+    <style name="Slider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:max">100</item>
+    </style>
+</resources>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <include layout="@layout/voice_controls" />
+
+        <Button
+            android:id="@+id/btn_add_word"
+            style="@style/Row"
+            android:text="@string/add_word" />
+
+        <LinearLayout
+            android:id="@+id/add_box"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/edit_word"
+                style="@style/Row"
+                android:hint="@string/hint_word"
+                android:importantForAutofill="no"
+                android:inputType="text" />
+
+            <EditText
+                android:id="@+id/edit_replacement"
+                style="@style/Row"
+                android:hint="@string/hint_replacement"
+                android:importantForAutofill="no"
+                android:inputType="text" />
+
+            <Button
+                android:id="@+id/btn_save_word"
+                style="@style/Row"
+                android:text="@string/save_word" />
+
+            <Button
+                android:id="@+id/btn_cancel_word"
+                style="@style/Row"
+                android:text="@string/cancel" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_manage_dictionary"
+            style="@style/Row"
+            android:text="@string/manage_dictionary" />
+
+        <Button
+            android:id="@+id/btn_emoji"
+            style="@style/Row"
+            android:text="@string/emoji_voice" />
+
+        <Button
+            android:id="@+id/btn_system"
+            style="@style/Row"
+            android:text="@string/system_engine" />
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gerenciador de TTS G</string>
+    <string name="title_dictionary">Gerenciar dicionário</string>
+    <string name="title_emoji">Voz para emojis</string>
+    <string name="default_test_text">estou testando essa voz para usar neste aparelho</string>
+    <string name="hint_test_text">Texto para testar a voz</string>
+    <string name="listen">Ouvir a voz</string>
+    <string name="add_word">Adicionar palavra ao dicionário</string>
+    <string name="hint_word">Palavra ou frase</string>
+    <string name="hint_replacement">Substituir por</string>
+    <string name="save_word">Salvar no dicionário</string>
+    <string name="cancel">Cancelar</string>
+    <string name="manage_dictionary">Gerenciar dicionário</string>
+    <string name="emoji_voice">Escolher TTS para falar emojis</string>
+    <string name="system_engine">Usar como motor de TTS do sistema</string>
+    <string name="export_dictionary">Exportar dicionário</string>
+    <string name="import_dictionary">Importar dicionário</string>
+    <string name="dictionary_empty">O dicionário está vazio.</string>
+    <string name="group_switch">Ler emojis e símbolos repetidos agrupados, exemplo: coração vermelho 5</string>
+</resources>
