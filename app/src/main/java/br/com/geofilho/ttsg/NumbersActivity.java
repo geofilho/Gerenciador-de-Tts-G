@@ -5,8 +5,15 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.Voice;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import java.util.List;
+import java.util.Set;
 
 /** Página "Leitura de números e pontuação". */
 public class NumbersActivity extends Activity {
@@ -19,6 +26,8 @@ public class NumbersActivity extends Activity {
     private SharedPreferences prefs;
     private Button btnNumbers;
     private Button btnPunctuation;
+    private TextToSpeech tts;
+    private boolean ready;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +57,70 @@ public class NumbersActivity extends Activity {
         }
         VoiceSection.bindSlider(this, prefs, R.id.seek_number_rate, R.id.lbl_number_rate,
                 "Velocidade dos números", "number_rate", Prefs.numberRate(prefs));
+
+        final EditText editTest = findViewById(R.id.edit_test);
+        String engine = Prefs.engine(prefs, Prefs.MAIN);
+        if (engine.isEmpty()) {
+            engine = EngineClient.firstEngine(this);
+        }
+        tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                ready = status == TextToSpeech.SUCCESS;
+            }
+        }, engine);
+        findViewById(R.id.btn_test).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                test(editTest.getText().toString());
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
+        super.onDestroy();
+    }
+
+    /** Fala com a voz principal e as mesmas regras do motor. */
+    private void test(String text) {
+        if (tts == null || !ready) {
+            Toast.makeText(this, "O motor ainda está carregando.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String voiceName = Prefs.voice(prefs, Prefs.MAIN);
+        try {
+            Set<Voice> voices = tts.getVoices();
+            if (voices != null) {
+                for (Voice v : voices) {
+                    if (v.getName().equals(voiceName)) {
+                        tts.setVoice(v);
+                        break;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        tts.setPitch(Levels.pitch(Prefs.pitch(prefs, Prefs.MAIN)));
+        Bundle params = new Bundle();
+        params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, Levels.volume(Prefs.volume(prefs, Prefs.MAIN)));
+        String t = Dictionary.get(this).apply(text);
+        boolean sep = Prefs.separateNumbers(prefs);
+        List<TextProcessor.Segment> segs = TextProcessor.merge(TextProcessor.process(t, Prefs.groupRepeats(prefs),
+                Prefs.numberMode(prefs), sep, Prefs.punctuationMode(prefs)), false, sep);
+        if (segs.isEmpty()) {
+            tts.stop();
+            return;
+        }
+        for (int i = 0; i < segs.size(); i++) {
+            TextProcessor.Segment seg = segs.get(i);
+            tts.setSpeechRate(Levels.rate(seg.number ? Prefs.numberRate(prefs) : Prefs.rate(prefs, Prefs.MAIN)));
+            tts.speak(seg.text, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD, params, "teste" + i);
+        }
     }
 
     private void refresh() {

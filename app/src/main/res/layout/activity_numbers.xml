@@ -25,5 +25,18 @@
         <Button
             android:id="@+id/btn_punctuation"
             style="@style/Row" />
+
+        <EditText
+            android:id="@+id/edit_test"
+            style="@style/Row"
+            android:hint="@string/hint_test_text"
+            android:importantForAutofill="no"
+            android:inputType="textMultiLine|textCapSentences"
+            android:text="@string/numbers_test_text" />
+
+        <Button
+            android:id="@+id/btn_test"
+            style="@style/Row"
+            android:text="@string/listen" />
     </LinearLayout>
 </ScrollView>

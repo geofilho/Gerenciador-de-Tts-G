@@ -21,4 +21,5 @@
     <string name="diagnostics">Diagnóstico: ver o que o motor recebeu do leitor de tela</string>
     <string name="check_update">Verificar atualização</string>
     <string name="title_numbers">Leitura de números e pontuação</string>
+    <string name="numbers_test_text">Meu telefone é 11987654321, o valor é R$ 1.250,99 às 12:30 e o e-mail é joao@site.com. Tudo certo?</string>
 </resources>

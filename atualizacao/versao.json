@@ -1,6 +1,6 @@
 {
-  "versionCode": 8,
-  "versionName": "1.7",
+  "versionCode": 9,
+  "versionName": "1.8",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- O botão Usar como motor de TTS do sistema agora fica abaixo de Leitura de números e pontuação."
+  "novidades": "- A página Leitura de números e pontuação agora tem caixa de texto e o botão Ouvir a voz, para testar as opções na hora."
 }
