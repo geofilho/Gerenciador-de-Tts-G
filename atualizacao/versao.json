@@ -1,6 +1,6 @@
 {
-  "versionCode": 23,
-  "versionName": "1.22",
+  "versionCode": 24,
+  "versionName": "1.23",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- No Android 12 ou mais novo, a opção Manter o áudio do leitor de tela no telefone tenta levar também os sons de navegação do leitor de tela para o telefone.\n- A página Saída de áudio do leitor de tela avisa quando o Gerenciador não está como motor de TTS do sistema.\n- A ajuda da página foi atualizada."
+  "novidades": "- Fala mais rápida: o Gerenciador começa a tocar o áudio enquanto o motor ainda está gerando, principalmente em textos longos.\n- Menos espera entre o fim da geração e o som.\n- O motor de emojis só é usado quando o texto tem emoji."
 }
