@@ -1,6 +1,6 @@
 {
-  "versionCode": 16,
-  "versionName": "1.15",
+  "versionCode": 17,
+  "versionName": "1.16",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- O Gerenciador agora funciona logo depois de religar o aparelho, antes de digitar a senha.\n- Se o motor escolhido falhar ou ainda não puder rodar, o Gerenciador fala com o motor padrão do aparelho e volta sozinho para a voz escolhida assim que possível.\n- Corrigido: depois de religar, às vezes a voz escolhida não era usada."
+  "novidades": "- Antes de digitar a senha, o Gerenciador agora usa o motor da Samsung como reserva, como o próprio Android faz. Sem ele, usa o do Google."
 }

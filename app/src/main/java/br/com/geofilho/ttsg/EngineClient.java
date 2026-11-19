@@ -98,6 +98,16 @@ final class EngineClient {
         return "";
     }
 
+    /** O motor pode rodar agora? (Antes da senha, só os preparados para isso aparecem.) */
+    static boolean isAvailable(Context c, String pkg) {
+        try {
+            Intent i = new Intent(TextToSpeech.Engine.INTENT_ACTION_TTS_SERVICE).setPackage(pkg);
+            return !c.getPackageManager().queryIntentServices(i, 0).isEmpty();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     /** Lista os pacotes dos motores instalados, sem o próprio app. */
     static List<ResolveInfo> installedEngines(Context c) {
         PackageManager pm = c.getPackageManager();
@@ -142,6 +152,12 @@ final class EngineClient {
         }
         if (tts == null) {
             if (now - failedAt < RETRY_MS) {
+                return false;
+            }
+            if (!isAvailable(ctx, wantPkg)) {
+                // Ex.: antes de digitar a senha, motores como a RHVoice não podem rodar.
+                // Se pedíssemos assim mesmo, o Android trocaria em silêncio por outro motor.
+                failedAt = now;
                 return false;
             }
             pkg = wantPkg;
