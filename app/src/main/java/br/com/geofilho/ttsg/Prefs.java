@@ -1,7 +1,12 @@
 package br.com.geofilho.ttsg;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
+import android.os.UserManager;
+
+import java.io.File;
 
 /** Configurações salvas. Prefixo "main" = voz principal, "emoji" = voz dos emojis. */
 final class Prefs {
@@ -12,7 +17,68 @@ final class Prefs {
     }
 
     static SharedPreferences get(Context c) {
-        return c.getApplicationContext().getSharedPreferences("config", Context.MODE_PRIVATE);
+        return storage(c).getSharedPreferences("config", Context.MODE_PRIVATE);
+    }
+
+    private static volatile boolean migrated;
+
+    /**
+     * Onde ficam configurações, dicionário e arquivos temporários. No Android 7+
+     * é o armazenamento protegido pelo aparelho, que funciona até antes de
+     * digitar a senha depois de religar (assim o motor já fala na tela de bloqueio).
+     */
+    static Context storage(Context c) {
+        Context app = c.getApplicationContext() != null ? c.getApplicationContext() : c;
+        if (Build.VERSION.SDK_INT < 24) {
+            return app;
+        }
+        Context de = app.createDeviceProtectedStorageContext();
+        if (!migrated) {
+            migrate(app, de);
+        }
+        return de;
+    }
+
+    /** Leva as configurações e o dicionário das versões antigas para o armazenamento novo (uma vez). */
+    @TargetApi(24)
+    private static synchronized void migrate(Context ce, Context de) {
+        if (migrated) {
+            return;
+        }
+        UserManager um = (UserManager) ce.getSystemService(Context.USER_SERVICE);
+        if (um == null || !um.isUserUnlocked()) {
+            return; // ainda bloqueado: tenta de novo depois da senha
+        }
+        SharedPreferences flag = de.getSharedPreferences("migracao", Context.MODE_PRIVATE);
+        if (!flag.getBoolean("feito", false)) {
+            try {
+                de.moveSharedPreferencesFrom(ce, "config");
+            } catch (Exception ignored) {
+            }
+            try {
+                File old = new File(ce.getFilesDir(), "dicionario.json");
+                File neu = new File(de.getFilesDir(), "dicionario.json");
+                if (old.exists() && !neu.exists() && !old.renameTo(neu)) {
+                    copy(old, neu);
+                    old.delete();
+                }
+            } catch (Exception ignored) {
+            }
+            flag.edit().putBoolean("feito", true).commit();
+        }
+        migrated = true;
+    }
+
+    private static void copy(File from, File to) throws java.io.IOException {
+        java.io.InputStream in = new java.io.FileInputStream(from);
+        java.io.OutputStream out = new java.io.FileOutputStream(to);
+        byte[] buf = new byte[8192];
+        int n;
+        while ((n = in.read(buf)) > 0) {
+            out.write(buf, 0, n);
+        }
+        in.close();
+        out.close();
     }
 
     static String engine(SharedPreferences p, String who) {

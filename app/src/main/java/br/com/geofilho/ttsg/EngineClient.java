@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -33,7 +34,7 @@ final class EngineClient {
     private final Context ctx;
     private final File file;
     private final Handler main = new Handler(Looper.getMainLooper());
-    private TextToSpeech tts;
+    private volatile TextToSpeech tts;
     private String pkg = "";
     private volatile int status = Integer.MIN_VALUE;
     private CountDownLatch initLatch;
@@ -43,9 +44,58 @@ final class EngineClient {
     private String currentVoice = "";
     private int seq;
 
+    /** Depois de uma falha, espera este tempo antes de tentar o motor de novo. */
+    private static final long RETRY_MS = 10000;
+    /** Na primeira vez, espera o motor ficar pronto por até este tempo. */
+    private static final long FIRST_WAIT_MS = 4000;
+    /** Motor que nunca termina de iniciar: desiste e tenta de novo depois. */
+    private static final long GIVE_UP_MS = 30000;
+
+    private volatile long failedAt;
+    private long createdAt;
+    private long voicesLoadedAt;
+    private Locale locale;
+    private boolean localeApplied;
+
     EngineClient(Context ctx, String name) {
         this.ctx = ctx.getApplicationContext();
-        this.file = new File(ctx.getCacheDir(), name + ".wav");
+        // Armazenamento que funciona até antes de digitar a senha, depois de religar.
+        this.file = new File(Prefs.storage(ctx).getCacheDir(), name + ".wav");
+    }
+
+    /** Idioma usado quando nenhuma voz específica é escolhida (motor reserva). */
+    void setLocale(Locale l) {
+        if (l != null && !l.equals(locale)) {
+            locale = l;
+            localeApplied = false;
+        }
+    }
+
+    /** Permite tentar o motor de novo na hora (por exemplo, logo depois de desbloquear). */
+    void retryNow() {
+        failedAt = 0;
+    }
+
+    /**
+     * Motor reserva: o padrão do aparelho (Samsung ou Google) ou outro instalado,
+     * diferente do motor que falhou. Vazio se não houver.
+     */
+    static String fallbackEngine(Context c, String failedPkg) {
+        List<ResolveInfo> list = installedEngines(c);
+        String[] preferred = {"com.samsung.SMT", "com.google.android.tts"};
+        for (String want : preferred) {
+            for (ResolveInfo r : list) {
+                if (want.equals(r.serviceInfo.packageName) && !want.equals(failedPkg)) {
+                    return want;
+                }
+            }
+        }
+        for (ResolveInfo r : list) {
+            if (!r.serviceInfo.packageName.equals(failedPkg)) {
+                return r.serviceInfo.packageName;
+            }
+        }
+        return "";
     }
 
     /** Lista os pacotes dos motores instalados, sem o próprio app. */
@@ -72,33 +122,55 @@ final class EngineClient {
         return list.isEmpty() ? "" : list.get(0).serviceInfo.packageName;
     }
 
+    /**
+     * Garante o motor pronto. Não trava a fala: se o motor demora ou falhou,
+     * retorna false (o serviço usa o motor reserva) e tenta de novo depois.
+     */
     boolean ensure(final String wantPkg, StopFlag stop) {
         if (wantPkg.isEmpty()) {
             return false;
         }
-        if (tts != null && wantPkg.equals(pkg) && status == TextToSpeech.SUCCESS) {
-            return true;
+        long now = System.currentTimeMillis();
+        if (tts != null && !wantPkg.equals(pkg)) {
+            shutdown();
         }
-        if (tts != null && (!wantPkg.equals(pkg) || status == TextToSpeech.ERROR)) {
+        if (tts != null && status == TextToSpeech.ERROR) {
+            if (now - failedAt < RETRY_MS) {
+                return false;
+            }
             shutdown();
         }
         if (tts == null) {
+            if (now - failedAt < RETRY_MS) {
+                return false;
+            }
             pkg = wantPkg;
             status = Integer.MIN_VALUE;
+            createdAt = now;
             initLatch = new CountDownLatch(1);
             final CountDownLatch created = new CountDownLatch(1);
+            final CountDownLatch myInit = initLatch;
             // O TextToSpeech precisa ser criado na thread principal.
             main.post(new Runnable() {
                 @Override
                 public void run() {
-                    tts = new TextToSpeech(ctx, new TextToSpeech.OnInitListener() {
-                        @Override
-                        public void onInit(int s) {
-                            status = s;
-                            initLatch.countDown();
-                        }
-                    }, wantPkg);
-                    tts.setOnUtteranceProgressListener(listener);
+                    try {
+                        tts = new TextToSpeech(ctx, new TextToSpeech.OnInitListener() {
+                            @Override
+                            public void onInit(int s) {
+                                status = s;
+                                if (s != TextToSpeech.SUCCESS) {
+                                    failedAt = System.currentTimeMillis();
+                                }
+                                myInit.countDown();
+                            }
+                        }, wantPkg);
+                        tts.setOnUtteranceProgressListener(listener);
+                    } catch (Exception e) {
+                        status = TextToSpeech.ERROR;
+                        failedAt = System.currentTimeMillis();
+                        myInit.countDown();
+                    }
                     created.countDown();
                 }
             });
@@ -106,17 +178,37 @@ final class EngineClient {
                 return false;
             }
         }
-        if (!await(initLatch, 8000, stop) || status != TextToSpeech.SUCCESS) {
+        if (status == TextToSpeech.SUCCESS) {
+            loadVoices(false);
+            return true;
+        }
+        long waited = now - createdAt;
+        long wait = waited < FIRST_WAIT_MS ? FIRST_WAIT_MS - waited : 150;
+        if (!await(initLatch, wait, stop)) {
+            if (System.currentTimeMillis() - createdAt > GIVE_UP_MS) {
+                failedAt = System.currentTimeMillis();
+                shutdown();
+            }
             return false;
         }
-        loadVoices();
+        if (status != TextToSpeech.SUCCESS) {
+            failedAt = System.currentTimeMillis();
+            return false;
+        }
+        loadVoices(false);
         return true;
     }
 
-    private void loadVoices() {
-        if (!voices.isEmpty()) {
+    /** Carrega a lista de vozes; se veio vazia ou falta a voz pedida, tenta de novo (no máximo a cada 3 s). */
+    private void loadVoices(boolean force) {
+        if (!voices.isEmpty() && !force) {
             return;
         }
+        long now = System.currentTimeMillis();
+        if (now - voicesLoadedAt < 3000) {
+            return;
+        }
+        voicesLoadedAt = now;
         try {
             Set<Voice> set = tts.getVoices();
             if (set != null) {
@@ -137,6 +229,11 @@ final class EngineClient {
         }
         if (voiceName != null && !voiceName.isEmpty() && !voiceName.equals(currentVoice)) {
             Voice v = voices.get(voiceName);
+            if (v == null) {
+                // Logo depois de religar, o motor pode ainda não ter informado as vozes.
+                loadVoices(true);
+                v = voices.get(voiceName);
+            }
             if (v != null) {
                 try {
                     t.setVoice(v);
@@ -144,6 +241,13 @@ final class EngineClient {
                 } catch (Exception ignored) {
                 }
             }
+        }
+        if ((voiceName == null || voiceName.isEmpty()) && locale != null && !localeApplied) {
+            try {
+                t.setLanguage(locale);
+            } catch (Exception ignored) {
+            }
+            localeApplied = true;
         }
         t.setSpeechRate(rate);
         t.setPitch(pitch);
@@ -183,7 +287,9 @@ final class EngineClient {
         final TextToSpeech t = tts;
         tts = null;
         voices.clear();
+        voicesLoadedAt = 0;
         currentVoice = "";
+        localeApplied = false;
         status = Integer.MIN_VALUE;
         if (t != null) {
             main.post(new Runnable() {

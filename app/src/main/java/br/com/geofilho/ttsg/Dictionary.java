@@ -53,7 +53,7 @@ final class Dictionary {
 
     static synchronized Dictionary get(Context c) {
         if (instance == null) {
-            instance = new Dictionary(new File(c.getApplicationContext().getFilesDir(), "dicionario.json"));
+            instance = new Dictionary(new File(Prefs.storage(c).getFilesDir(), "dicionario.json"));
         }
         return instance;
     }

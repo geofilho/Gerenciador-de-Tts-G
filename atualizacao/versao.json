@@ -1,6 +1,6 @@
 {
-  "versionCode": 15,
-  "versionName": "1.14",
+  "versionCode": 16,
+  "versionName": "1.15",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Ajuda da página Saída de áudio do leitor de tela mais curta: saiu a parte de contato com o desenvolvedor."
+  "novidades": "- O Gerenciador agora funciona logo depois de religar o aparelho, antes de digitar a senha.\n- Se o motor escolhido falhar ou ainda não puder rodar, o Gerenciador fala com o motor padrão do aparelho e volta sozinho para a voz escolhida assim que possível.\n- Corrigido: depois de religar, às vezes a voz escolhida não era usada."
 }

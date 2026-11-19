@@ -63,6 +63,7 @@
         <!-- O próprio app é um motor de TTS: aplica dicionário e emojis e repassa ao motor escolhido. -->
         <service
             android:name=".GTtsService"
+            android:directBootAware="true"
             android:exported="true"
             android:label="@string/app_name">
             <intent-filter>

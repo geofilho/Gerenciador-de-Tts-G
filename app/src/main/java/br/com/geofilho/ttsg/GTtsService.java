@@ -1,7 +1,12 @@
 package br.com.geofilho.ttsg;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.media.AudioFormat;
+import android.os.Build;
 import android.speech.tts.SynthesisCallback;
 import android.speech.tts.SynthesisRequest;
 import android.speech.tts.TextToSpeech;
@@ -39,17 +44,43 @@ public class GTtsService extends TextToSpeechService {
         }
     };
 
+    /** Motor reserva: usado quando o motor escolhido falha ou ainda não pode rodar. */
+    private EngineClient fallbackEngine;
+
+    /** Depois de digitar a senha, tenta na hora voltar ao motor e à voz escolhidos. */
+    private final BroadcastReceiver unlockReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            mainEngine.retryNow();
+            emojiEngine.retryNow();
+        }
+    };
+
     @Override
     public void onCreate() {
         mainEngine = new EngineClient(this, "principal");
         emojiEngine = new EngineClient(this, "emoji");
+        fallbackEngine = new EngineClient(this, "reserva");
+        if (Build.VERSION.SDK_INT >= 24) {
+            try {
+                registerReceiver(unlockReceiver, new IntentFilter(Intent.ACTION_USER_UNLOCKED));
+            } catch (Exception ignored) {
+            }
+        }
         super.onCreate();
     }
 
     @Override
     public void onDestroy() {
+        if (Build.VERSION.SDK_INT >= 24) {
+            try {
+                unregisterReceiver(unlockReceiver);
+            } catch (Exception ignored) {
+            }
+        }
         mainEngine.shutdown();
         emojiEngine.shutdown();
+        fallbackEngine.shutdown();
         super.onDestroy();
     }
 
@@ -115,6 +146,7 @@ public class GTtsService extends TextToSpeechService {
         }
         mainEngine.stop();
         emojiEngine.stop();
+        fallbackEngine.stop();
     }
 
     @Override
@@ -146,11 +178,19 @@ public class GTtsService extends TextToSpeechService {
         // Junta o que vai para a mesma voz e velocidade (sem voz de emojis, eles vão na principal).
         segments = TextProcessor.merge(segments, useEmojiEngine, separateNumbers);
 
+        // Motor principal; se ele falhar ou ainda não puder rodar, usa o motor reserva.
+        EngineClient mainUse = mainEngine;
+        String mainVoice = Prefs.voice(p, Prefs.MAIN);
         if (!mainEngine.ensure(mainPkg, stopFlag)) {
-            if (!stopped) {
-                cb.error();
+            if (stopped) {
+                return;
             }
-            return;
+            mainUse = useFallback(mainPkg);
+            mainVoice = "";
+            if (mainUse == null) {
+                cb.error();
+                return;
+            }
         }
 
         // Fala no telefone e música no Bluetooth: o próprio app toca no alto-falante.
@@ -162,15 +202,23 @@ public class GTtsService extends TextToSpeechService {
             }
             boolean emoji = seg.emoji && useEmojiEngine;
             String who = emoji ? Prefs.EMOJI : Prefs.MAIN;
-            EngineClient eng = emoji ? emojiEngine : mainEngine;
+            EngineClient eng = emoji ? emojiEngine : mainUse;
+            String voice = emoji ? Prefs.voice(p, Prefs.EMOJI) : mainVoice;
             for (String piece : splitLong(seg.text)) {
                 if (stopped) {
                     break;
                 }
                 int rate = seg.number ? Prefs.numberRate(p) : Prefs.rate(p, who);
-                Pcm pcm = eng.synth(piece, Prefs.voice(p, who),
-                        Levels.rate(rate) * reqRate,
-                        Levels.pitch(Prefs.pitch(p, who)) * reqPitch, stopFlag);
+                float r = Levels.rate(rate) * reqRate;
+                float pt = Levels.pitch(Prefs.pitch(p, who)) * reqPitch;
+                Pcm pcm = eng.synth(piece, voice, r, pt, stopFlag);
+                if (pcm == null && !stopped && eng != fallbackEngine) {
+                    // O motor falhou nesta fala: tenta com o motor reserva para não ficar mudo.
+                    EngineClient fb = useFallback(emoji ? Prefs.engine(p, Prefs.EMOJI) : mainPkg);
+                    if (fb != null) {
+                        pcm = fb.synth(piece, "", r, pt, stopFlag);
+                    }
+                }
                 if (pcm == null || pcm.samples.length == 0 || stopped) {
                     continue;
                 }
@@ -212,6 +260,20 @@ public class GTtsService extends TextToSpeechService {
                 pp.release();
             }
         }
+    }
+
+    /** Prepara o motor reserva (padrão do aparelho) e registra o aviso no diagnóstico. */
+    private EngineClient useFallback(String failedPkg) {
+        String fb = EngineClient.fallbackEngine(this, failedPkg);
+        if (fb.isEmpty()) {
+            return null;
+        }
+        fallbackEngine.setLocale(configuredLocale());
+        if (!fallbackEngine.ensure(fb, stopFlag)) {
+            return null;
+        }
+        Diagnostics.note("o motor escolhido não respondeu; foi usado o motor reserva " + fb + ".");
+        return fallbackEngine;
     }
 
     private boolean write(SynthesisCallback cb, byte[] data) {

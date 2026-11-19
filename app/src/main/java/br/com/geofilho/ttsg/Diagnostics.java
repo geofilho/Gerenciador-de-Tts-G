@@ -35,6 +35,20 @@ final class Diagnostics {
         }
     }
 
+    /** Registra um aviso (por exemplo, quando o motor reserva foi usado). Ignora repetições seguidas. */
+    static void note(String msg) {
+        String line = "Aviso: " + msg;
+        synchronized (LAST) {
+            if (line.equals(LAST.peekFirst())) {
+                return;
+            }
+            LAST.addFirst(line);
+            while (LAST.size() > MAX) {
+                LAST.removeLast();
+            }
+        }
+    }
+
     static String report() {
         synchronized (LAST) {
             if (LAST.isEmpty()) {
