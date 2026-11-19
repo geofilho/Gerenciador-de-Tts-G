@@ -46,6 +46,8 @@ public class GTtsService extends TextToSpeechService {
 
     /** Motor reserva: usado quando o motor escolhido falha ou ainda não pode rodar. */
     private EngineClient fallbackEngine;
+    private String fallbackPkg = "";
+    private boolean usingFallback;
 
     /** Depois de digitar a senha, tenta na hora voltar ao motor e à voz escolhidos. */
     private final BroadcastReceiver unlockReceiver = new BroadcastReceiver() {
@@ -174,7 +176,6 @@ public class GTtsService extends TextToSpeechService {
         }
         String emojiPkg = Prefs.engine(p, Prefs.EMOJI);
         boolean useEmojiEngine = !emojiPkg.isEmpty() && emojiEngine.ensure(emojiPkg, stopFlag);
-        Diagnostics.record(original, segments, useEmojiEngine);
         // Junta o que vai para a mesma voz e velocidade (sem voz de emojis, eles vão na principal).
         segments = TextProcessor.merge(segments, useEmojiEngine, separateNumbers);
 
@@ -188,10 +189,17 @@ public class GTtsService extends TextToSpeechService {
             mainUse = useFallback(mainPkg);
             mainVoice = "";
             if (mainUse == null) {
+                Diagnostics.note(this, "nenhum motor respondeu (escolhido: " + mainPkg + ").");
                 cb.error();
                 return;
             }
+            usingFallback = true;
+        } else if (usingFallback) {
+            usingFallback = false;
+            Diagnostics.note(this, "voltou ao motor escolhido " + mainPkg + ".");
         }
+        Diagnostics.record(original, segments, useEmojiEngine,
+                mainUse == fallbackEngine ? "reserva " + fallbackPkg : mainPkg);
 
         // Fala no telefone e música no Bluetooth: o próprio app toca no alto-falante.
         boolean toPhone = Prefs.keepOnPhone(p) && PhonePlayer.bluetoothOutputName(this) != null;
@@ -272,7 +280,15 @@ public class GTtsService extends TextToSpeechService {
         if (!fallbackEngine.ensure(fb, stopFlag)) {
             return null;
         }
-        Diagnostics.note("o motor escolhido não respondeu; foi usado o motor reserva " + fb + ".");
+        fallbackPkg = fb;
+        boolean locked = false;
+        if (Build.VERSION.SDK_INT >= 24) {
+            android.os.UserManager um = (android.os.UserManager) getSystemService(USER_SERVICE);
+            locked = um != null && !um.isUserUnlocked();
+        }
+        Diagnostics.note(this, "o motor escolhido " + failedPkg + " não respondeu"
+                + (locked ? " (aparelho ainda bloqueado depois de religar)" : "")
+                + "; foi usado o motor reserva " + fb + ".");
         return fallbackEngine;
     }
 

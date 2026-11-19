@@ -1,6 +1,6 @@
 {
-  "versionCode": 17,
-  "versionName": "1.16",
+  "versionCode": 18,
+  "versionName": "1.17",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Antes de digitar a senha, o Gerenciador agora usa o motor da Samsung como reserva, como o próprio Android faz. Sem ele, usa o do Google."
+  "novidades": "- Diagnóstico melhorado: os avisos de troca de motor ficam guardados à parte, com horário, mesmo depois de religar.\n- Cada fala no diagnóstico agora mostra qual motor falou."
 }

@@ -60,7 +60,7 @@ public class EmojiActivity extends Activity {
     }
 
     private void showDiagnostics() {
-        final String report = Diagnostics.report();
+        final String report = Diagnostics.report(this);
         new AlertDialog.Builder(this)
                 .setTitle("Diagnóstico")
                 .setMessage(report)
