@@ -102,8 +102,19 @@ public class GTtsService extends TextToSpeechService {
         audioDeviceCallback = cb;
     }
 
+    /** Android 12+: leva todo o áudio de acessibilidade (fala e sons do leitor) ao alto-falante. */
+    private AccessibilityRouter router;
+
     @Override
     public void onCreate() {
+        if (AccessibilityRouter.supported()) {
+            try {
+                router = new AccessibilityRouter(this);
+                router.start();
+            } catch (Exception e) {
+                router = null;
+            }
+        }
         if (Build.VERSION.SDK_INT >= 23) {
             try {
                 watchBluetooth();
@@ -124,6 +135,9 @@ public class GTtsService extends TextToSpeechService {
 
     @Override
     public void onDestroy() {
+        if (router != null) {
+            router.stop();
+        }
         handler.removeCallbacks(checkBluetooth);
         if (Build.VERSION.SDK_INT >= 23 && audioDeviceCallback != null) {
             AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
@@ -265,6 +279,9 @@ public class GTtsService extends TextToSpeechService {
         if (Prefs.keepOnPhone(p)) {
             if (PhonePlayer.bluetoothOutputName(this) != null) {
                 toPhone = true;
+                if (router != null) {
+                    router.ensure();
+                }
             } else {
                 turnOffKeepOnPhoneIfNoBluetooth();
             }

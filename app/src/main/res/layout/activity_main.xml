@@ -69,10 +69,10 @@
             style="@style/Row"
             android:text="@string/system_engine" />
 
-        <Button
-            android:id="@+id/btn_audio"
+        <Switch
+            android:id="@+id/switch_keep_phone"
             style="@style/Row"
-            android:text="@string/title_audio" />
+            android:text="@string/keep_on_phone" />
 
         <Button
             android:id="@+id/btn_update"

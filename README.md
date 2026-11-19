@@ -22,8 +22,9 @@ Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para 
     inteiro, um a um ou dois a dois; velocidade dos números; leitura de
     pontuação nenhuma, algumas ou todas; caixa de texto e Ouvir a voz)
 11. Usar como motor de TTS do sistema
-12. Saída de áudio do leitor de tela (manter a fala no telefone quando houver
-    Bluetooth conectado; a mídia continua no Bluetooth)
+12. Manter o áudio do leitor de tela no telefone (chave; com Bluetooth de áudio
+    conectado, a fala e, no Android 12+, também os sons de navegação ficam no
+    alto-falante, e a mídia continua no Bluetooth)
 13. Verificar atualização (mostra as novidades e, com o OK, baixa e instala)
 14. Diagnóstico (ativar ou desativar o registro; ver, copiar, compartilhar e
     limpar o relatório com os dados do aparelho, do sistema e das configurações)

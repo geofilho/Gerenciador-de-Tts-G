@@ -1,6 +1,6 @@
 {
-  "versionCode": 20,
-  "versionName": "1.19",
+  "versionCode": 21,
+  "versionName": "1.20",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Manter o áudio do leitor de tela no telefone agora desliga sozinha quando o Bluetooth desconecta, e só pode ser ativada com um Bluetooth conectado.\n- A ajuda da página ganhou a dica da função Separar som do app, dos celulares Samsung, e os itens agora aparecem em parágrafos separados."
+  "novidades": "- Manter o áudio do leitor de tela no telefone agora é uma chave direto na tela principal: um toque liga ou desliga.\n- No Android 12 ou mais novo, além da fala, os sons de navegação do leitor de tela também ficam no telefone, e a mídia continua no Bluetooth.\n- Durante ligações e quando outro app usa o microfone, a separação é pausada sozinha."
 }
