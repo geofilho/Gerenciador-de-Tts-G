@@ -1,6 +1,6 @@
 {
-  "versionCode": 18,
-  "versionName": "1.17",
+  "versionCode": 19,
+  "versionName": "1.18",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Diagnóstico melhorado: os avisos de troca de motor ficam guardados à parte, com horário, mesmo depois de religar.\n- Cada fala no diagnóstico agora mostra qual motor falou."
+  "novidades": "- O Diagnóstico agora fica na tela principal, abaixo de Verificar atualização, e saiu da página de emojis.\n- Nova chave para ativar ou desativar o registro das falas; vem desativada, para não pesar.\n- O relatório agora traz os dados do aparelho, do sistema e das configurações, e pode ser copiado, compartilhado ou limpo."
 }

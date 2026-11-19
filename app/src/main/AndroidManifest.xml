@@ -45,6 +45,11 @@
             android:label="@string/title_audio" />
 
         <activity
+            android:name=".DiagnosticsActivity"
+            android:exported="false"
+            android:label="@string/title_diagnostics" />
+
+        <activity
             android:name=".EmojiActivity"
             android:exported="false"
             android:label="@string/title_emoji" />

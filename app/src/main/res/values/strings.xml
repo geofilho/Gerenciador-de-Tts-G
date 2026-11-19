@@ -18,7 +18,6 @@
     <string name="import_dictionary">Importar dicionário</string>
     <string name="dictionary_empty">O dicionário está vazio.</string>
     <string name="group_switch">Ler emojis e símbolos repetidos agrupados, exemplo: coração vermelho 5</string>
-    <string name="diagnostics">Diagnóstico: ver o que o motor recebeu do leitor de tela</string>
     <string name="check_update">Verificar atualização</string>
     <string name="title_numbers">Leitura de números e pontuação</string>
     <string name="numbers_test_text">Meu telefone é 11987654321, o valor é R$ 1.250,99 às 12:30 e o e-mail é joao@site.com. Tudo certo?</string>
@@ -40,4 +39,8 @@
 
 6. A fala sai no telefone mesmo sem você querer: desligue a chave. Ela só age quando há um dispositivo Bluetooth de áudio conectado.</string>
     <string name="audio_sounds_note">Atenção: só a fala muda de saída. Os sons e cliques do leitor de tela continuam saindo no dispositivo Bluetooth.</string>
+    <string name="title_diagnostics">Diagnóstico</string>
+    <string name="diag_switch">Ativar diagnóstico: registrar o que o leitor de tela envia ao motor</string>
+    <string name="diag_view">Ver relatório</string>
+    <string name="diag_clear">Limpar relatório</string>
 </resources>

@@ -99,6 +99,13 @@ public class MainActivity extends Activity {
             }
         });
 
+        findViewById(R.id.btn_diagnostics).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, DiagnosticsActivity.class));
+            }
+        });
+
         updater = new Updater(this);
         Button btnUpdate = findViewById(R.id.btn_update);
         try {

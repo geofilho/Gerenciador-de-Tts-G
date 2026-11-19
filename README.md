@@ -25,6 +25,8 @@ Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para 
 12. Saída de áudio do leitor de tela (manter a fala no telefone quando houver
     Bluetooth conectado; a mídia continua no Bluetooth)
 13. Verificar atualização (mostra as novidades e, com o OK, baixa e instala)
+14. Diagnóstico (ativar ou desativar o registro; ver, copiar, compartilhar e
+    limpar o relatório com os dados do aparelho, do sistema e das configurações)
 
 ## Como funciona
 O app também é um motor de TTS. Quando ele é escolhido como motor padrão do

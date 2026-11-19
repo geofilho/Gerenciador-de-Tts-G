@@ -198,8 +198,10 @@ public class GTtsService extends TextToSpeechService {
             usingFallback = false;
             Diagnostics.note(this, "voltou ao motor escolhido " + mainPkg + ".");
         }
-        Diagnostics.record(original, segments, useEmojiEngine,
-                mainUse == fallbackEngine ? "reserva " + fallbackPkg : mainPkg);
+        if (Prefs.diagnosticsOn(p)) {
+            Diagnostics.record(original, segments, useEmojiEngine,
+                    mainUse == fallbackEngine ? "reserva " + fallbackPkg : mainPkg);
+        }
 
         // Fala no telefone e música no Bluetooth: o próprio app toca no alto-falante.
         boolean toPhone = Prefs.keepOnPhone(p) && PhonePlayer.bluetoothOutputName(this) != null;

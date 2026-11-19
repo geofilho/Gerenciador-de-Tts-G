@@ -2,6 +2,13 @@ package br.com.geofilho.ttsg;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.os.Build;
+import android.os.PowerManager;
+import android.os.UserManager;
+import android.provider.Settings;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
@@ -70,8 +77,123 @@ final class Diagnostics {
         }
     }
 
+    /** Apaga as falas registradas (fica na memória). */
+    static void clearUtterances() {
+        synchronized (LAST) {
+            LAST.clear();
+        }
+    }
+
+    /** Apaga as falas e os avisos. */
+    static synchronized void clear(Context c) {
+        clearUtterances();
+        try {
+            notes(c).edit().clear().apply();
+        } catch (Exception ignored) {
+        }
+    }
+
+    /** Dados do aparelho, do sistema e das configurações, para o relatório já ir completo. */
+    private static String deviceInfo(Context c) {
+        StringBuilder sb = new StringBuilder();
+        SharedPreferences p = Prefs.get(c);
+        PackageManager pm = c.getPackageManager();
+        sb.append("Relatório gerado em: ")
+                .append(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.ROOT).format(new Date())).append('\n');
+        sb.append("Aparelho: ").append(Build.MANUFACTURER).append(' ').append(Build.MODEL)
+                .append(" (").append(Build.DEVICE).append(")\n");
+        sb.append("Android: ").append(Build.VERSION.RELEASE).append(" (API ").append(Build.VERSION.SDK_INT)
+                .append(")\n");
+        sb.append("Versão do Gerenciador: ").append(versionOf(pm, c.getPackageName())).append('\n');
+        if (Build.VERSION.SDK_INT >= 24) {
+            UserManager um = (UserManager) c.getSystemService(Context.USER_SERVICE);
+            sb.append("Aparelho desbloqueado desde que religou: ")
+                    .append(um != null && um.isUserUnlocked() ? "sim" : "não").append('\n');
+        }
+        sb.append("Motor de TTS padrão do sistema: ").append(secure(c, "tts_default_synth")).append('\n');
+        String a11y = secure(c, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        sb.append("Leitores de tela e serviços de acessibilidade ativos: ")
+                .append(a11y.equals("desconhecido") || a11y.isEmpty() ? "nenhum informado" : a11y.replace(":", ", "))
+                .append('\n');
+        sb.append("Motores de TTS instalados:\n");
+        for (ResolveInfo r : EngineClient.installedEngines(c)) {
+            String pkg = r.serviceInfo.packageName;
+            sb.append("- ").append(r.loadLabel(pm)).append(" (").append(pkg).append("), versão ")
+                    .append(versionOf(pm, pkg)).append('\n');
+        }
+        String bt = PhonePlayer.bluetoothOutputName(c);
+        sb.append("Bluetooth de áudio conectado: ").append(bt == null ? "nenhum" : bt).append('\n');
+        if (Build.VERSION.SDK_INT >= 23) {
+            PowerManager pw = (PowerManager) c.getSystemService(Context.POWER_SERVICE);
+            sb.append("Sem restrição de bateria para o Gerenciador: ")
+                    .append(pw != null && pw.isIgnoringBatteryOptimizations(c.getPackageName()) ? "sim" : "não")
+                    .append('\n');
+        }
+        sb.append("\nConfigurações do Gerenciador:\n");
+        sb.append("Voz principal: motor ").append(orDefault(Prefs.engine(p, Prefs.MAIN)))
+                .append(", idioma ").append(Prefs.language(p))
+                .append(", voz ").append(orDefault(Prefs.voice(p, Prefs.MAIN)))
+                .append(", velocidade ").append(Prefs.rate(p, Prefs.MAIN))
+                .append("%, tonalidade ").append(Prefs.pitch(p, Prefs.MAIN))
+                .append("%, volume ").append(Prefs.volume(p, Prefs.MAIN)).append("%\n");
+        String emojiEngine = Prefs.engine(p, Prefs.EMOJI);
+        sb.append("Voz para emojis: ");
+        if (emojiEngine.isEmpty()) {
+            sb.append("a mesma da voz principal");
+        } else {
+            sb.append("motor ").append(emojiEngine)
+                    .append(", voz ").append(orDefault(Prefs.voice(p, Prefs.EMOJI)))
+                    .append(", velocidade ").append(Prefs.rate(p, Prefs.EMOJI))
+                    .append("%, tonalidade ").append(Prefs.pitch(p, Prefs.EMOJI))
+                    .append("%, volume ").append(Prefs.volume(p, Prefs.EMOJI)).append('%');
+        }
+        sb.append('\n');
+        sb.append("Agrupar repetidos: ").append(Prefs.groupRepeats(p) ? "sim" : "não").append('\n');
+        String[] numbers = {"número inteiro", "um a um", "dois a dois"};
+        String[] punct = {"nenhuma", "algumas", "todas"};
+        sb.append("Leitura de números: ").append(pick(numbers, Prefs.numberMode(p)))
+                .append(", velocidade dos números ").append(Prefs.numberRate(p)).append("%\n");
+        sb.append("Leitura de pontuação: ").append(pick(punct, Prefs.punctuationMode(p))).append('\n');
+        sb.append("Manter o áudio do leitor de tela no telefone: ").append(Prefs.keepOnPhone(p) ? "sim" : "não")
+                .append('\n');
+        sb.append("Palavras no dicionário: ").append(Dictionary.get(c).list().size()).append('\n');
+        sb.append("Registro das falas: ").append(Prefs.diagnosticsOn(p) ? "ativado" : "desativado").append('\n');
+        return sb.toString();
+    }
+
+    private static String versionOf(PackageManager pm, String pkg) {
+        try {
+            PackageInfo pi = pm.getPackageInfo(pkg, 0);
+            return pi.versionName + " (" + pi.versionCode + ")";
+        } catch (Exception e) {
+            return "desconhecida";
+        }
+    }
+
+    private static String secure(Context c, String key) {
+        try {
+            String v = Settings.Secure.getString(c.getContentResolver(), key);
+            return v == null ? "desconhecido" : v;
+        } catch (Exception e) {
+            return "desconhecido";
+        }
+    }
+
+    private static String orDefault(String s) {
+        return s == null || s.isEmpty() ? "padrão" : s;
+    }
+
+    private static String pick(String[] items, int i) {
+        return items[i >= 0 && i < items.length ? i : 0];
+    }
+
     static String report(Context c) {
         StringBuilder sb = new StringBuilder();
+        try {
+            sb.append(deviceInfo(c)).append('\n');
+        } catch (Exception e) {
+            sb.append("Não foi possível ler os dados do aparelho.\n\n");
+        }
         String avisos = "";
         try {
             avisos = notes(c).getString("avisos", "").trim();
@@ -79,10 +201,16 @@ final class Diagnostics {
         }
         sb.append("Avisos sobre troca de motor, do mais novo para o mais antigo:\n");
         sb.append(avisos.isEmpty() ? "nenhum aviso." : avisos).append("\n\n");
+        if (!Prefs.diagnosticsOn(Prefs.get(c))) {
+            sb.append("Registro das falas desativado. Para registrar o que o leitor de tela envia ao motor, "
+                    + "ative a chave Ativar diagnóstico, use o leitor de tela um pouco e veja o relatório de novo.");
+            return sb.toString();
+        }
         synchronized (LAST) {
             if (LAST.isEmpty()) {
-                sb.append("O motor ainda não recebeu nenhum texto. Confira se o Gerenciador de TTS G "
-                        + "está escolhido como motor de TTS do sistema e use o leitor de tela um pouco.");
+                sb.append("O motor ainda não recebeu nenhum texto desde que o diagnóstico foi ativado. Confira se "
+                        + "o Gerenciador de TTS G está escolhido como motor de TTS do sistema e use o leitor de tela "
+                        + "um pouco.");
                 return sb.toString();
             }
             sb.append("Últimos textos recebidos, do mais novo para o mais antigo.\n\n");

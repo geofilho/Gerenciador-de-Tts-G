@@ -115,6 +115,11 @@ final class Prefs {
         return numberRate(p) != rate(p, MAIN);
     }
 
+    /** Registro das falas no diagnóstico (desligado por padrão, para não pesar). */
+    static boolean diagnosticsOn(SharedPreferences p) {
+        return p.getBoolean("diagnostics_on", false);
+    }
+
     static boolean keepOnPhone(SharedPreferences p) {
         return p.getBoolean("keep_on_phone", false);
     }
