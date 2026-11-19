@@ -1,6 +1,6 @@
 {
-  "versionCode": 21,
-  "versionName": "1.20",
+  "versionCode": 22,
+  "versionName": "1.21",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Manter o áudio do leitor de tela no telefone agora é uma chave direto na tela principal: um toque liga ou desliga.\n- No Android 12 ou mais novo, além da fala, os sons de navegação do leitor de tela também ficam no telefone, e a mídia continua no Bluetooth.\n- Durante ligações e quando outro app usa o microfone, a separação é pausada sozinha."
+  "novidades": "- Volta da página Saída de áudio do leitor de tela, com a explicação para quando não funcionar.\n- Desfeita a mudança da versão 1.20, que não funcionou."
 }

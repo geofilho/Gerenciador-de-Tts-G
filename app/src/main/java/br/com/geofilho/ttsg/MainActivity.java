@@ -4,15 +4,12 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.Switch;
 import android.widget.Toast;
 
 import java.util.List;
@@ -26,8 +23,6 @@ public class MainActivity extends Activity {
     private EditText editReplacement;
     private Button btnSystem;
     private Updater updater;
-    private Switch keepSwitch;
-    private SharedPreferences.OnSharedPreferenceChangeListener keepListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,7 +92,12 @@ public class MainActivity extends Activity {
             }
         });
 
-        setupKeepOnPhone();
+        findViewById(R.id.btn_audio).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, AudioActivity.class));
+            }
+        });
 
         findViewById(R.id.btn_diagnostics).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -125,9 +125,6 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         updater.onResume();
-        if (keepSwitch != null) {
-            keepSwitch.setChecked(Prefs.keepOnPhone(Prefs.get(this)));
-        }
         String def = null;
         try {
             def = Settings.Secure.getString(getContentResolver(), "tts_default_synth");
@@ -142,50 +139,8 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        if (keepListener != null) {
-            Prefs.get(this).unregisterOnSharedPreferenceChangeListener(keepListener);
-        }
         voice.shutdown();
         super.onDestroy();
-    }
-
-    /**
-     * Chave "Manter o áudio do leitor de tela no telefone": um toque liga ou desliga.
-     * Só liga com Bluetooth de áudio conectado e desliga sozinha quando ele desconecta.
-     */
-    private void setupKeepOnPhone() {
-        final SharedPreferences prefs = Prefs.get(this);
-        keepSwitch = findViewById(R.id.switch_keep_phone);
-        if (Build.VERSION.SDK_INT < 23) {
-            keepSwitch.setVisibility(View.GONE);
-            return;
-        }
-        keepSwitch.setChecked(Prefs.keepOnPhone(prefs));
-        keepSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton b, boolean checked) {
-                if (checked == Prefs.keepOnPhone(prefs)) {
-                    return;
-                }
-                if (checked && PhonePlayer.bluetoothOutputName(MainActivity.this) == null) {
-                    b.setChecked(false);
-                    Toast.makeText(MainActivity.this, "Conecte um dispositivo Bluetooth de áudio primeiro.",
-                            Toast.LENGTH_LONG).show();
-                    return;
-                }
-                prefs.edit().putBoolean("keep_on_phone", checked).apply();
-            }
-        });
-        // Se o motor desligar a chave (Bluetooth desconectado), a tela acompanha.
-        keepListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-            @Override
-            public void onSharedPreferenceChanged(SharedPreferences sp, String key) {
-                if ("keep_on_phone".equals(key) && keepSwitch.isChecked() != Prefs.keepOnPhone(sp)) {
-                    keepSwitch.setChecked(Prefs.keepOnPhone(sp));
-                }
-            }
-        };
-        prefs.registerOnSharedPreferenceChangeListener(keepListener);
     }
 
     private void saveWord() {
