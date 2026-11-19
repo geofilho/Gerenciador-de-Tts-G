@@ -246,7 +246,15 @@ public class GTtsService extends TextToSpeechService {
             mainPkg = EngineClient.firstEngine(this);
         }
         String emojiPkg = Prefs.engine(p, Prefs.EMOJI);
-        boolean useEmojiEngine = !emojiPkg.isEmpty() && emojiEngine.ensure(emojiPkg, stopFlag);
+        // Só prepara o motor de emojis quando o texto tem emoji.
+        boolean hasEmoji = false;
+        for (TextProcessor.Segment seg : segments) {
+            if (seg.emoji) {
+                hasEmoji = true;
+                break;
+            }
+        }
+        boolean useEmojiEngine = hasEmoji && !emojiPkg.isEmpty() && emojiEngine.ensure(emojiPkg, stopFlag);
         // Junta o que vai para a mesma voz e velocidade (sem voz de emojis, eles vão na principal).
         segments = TextProcessor.merge(segments, useEmojiEngine, separateNumbers);
 
@@ -286,59 +294,84 @@ public class GTtsService extends TextToSpeechService {
                 turnOffKeepOnPhoneIfNoBluetooth();
             }
         }
-        int outRate = 0;
+        Output out = new Output(cb, toPhone);
+        speaking:
         for (TextProcessor.Segment seg : segments) {
-            if (stopped) {
-                break;
-            }
             boolean emoji = seg.emoji && useEmojiEngine;
             String who = emoji ? Prefs.EMOJI : Prefs.MAIN;
             EngineClient eng = emoji ? emojiEngine : mainUse;
             String voice = emoji ? Prefs.voice(p, Prefs.EMOJI) : mainVoice;
             for (String piece : splitLong(seg.text)) {
                 if (stopped) {
-                    break;
+                    break speaking;
                 }
                 int rate = seg.number ? Prefs.numberRate(p) : Prefs.rate(p, who);
                 float r = Levels.rate(rate) * reqRate;
                 float pt = Levels.pitch(Prefs.pitch(p, who)) * reqPitch;
-                Pcm pcm = eng.synth(piece, voice, r, pt, stopFlag);
-                if (pcm == null && !stopped && eng != fallbackEngine) {
+                out.gain = Levels.volume(Prefs.volume(p, who));
+                // O áudio vai tocando à medida que o motor gera (ver Output.write).
+                int res = eng.synth(piece, voice, r, pt, stopFlag, out);
+                if (res == EngineClient.FAIL && !stopped && !out.failed && eng != fallbackEngine) {
                     // O motor falhou nesta fala: tenta com o motor reserva para não ficar mudo.
                     EngineClient fb = useFallback(emoji ? Prefs.engine(p, Prefs.EMOJI) : mainPkg);
                     if (fb != null) {
-                        pcm = fb.synth(piece, "", r, pt, stopFlag);
+                        res = fb.synth(piece, "", r, pt, stopFlag, out);
                     }
                 }
-                if (pcm == null || pcm.samples.length == 0 || stopped) {
-                    continue;
-                }
-                if (outRate == 0) {
-                    outRate = pcm.rate;
-                    if (cb.start(outRate, AudioFormat.ENCODING_PCM_16BIT, 1) != TextToSpeech.SUCCESS) {
-                        return;
-                    }
-                    if (toPhone) {
-                        phonePlayer = PhonePlayer.open(this, outRate);
-                    }
-                }
-                short[] s = Pcm.resample(pcm.samples, pcm.rate, outRate);
-                byte[] bytes = Pcm.toBytes(s, Levels.volume(Prefs.volume(p, who)));
-                PhonePlayer pp = phonePlayer;
-                boolean ok = pp != null ? pp.write(bytes) : write(cb, bytes);
-                if (!ok) {
+                if (out.failed) {
                     releasePhonePlayer(false);
                     return;
                 }
+                if (res == EngineClient.ABORTED) {
+                    break speaking;
+                }
             }
         }
-        if (outRate == 0) {
+        if (out.outRate == 0) {
             // Nada para falar (ou interrompido antes do primeiro som).
             cb.start(22050, AudioFormat.ENCODING_PCM_16BIT, 1);
         }
         // Só avisa que terminou depois que o alto-falante acabou de tocar.
         releasePhonePlayer(true);
         cb.done();
+    }
+
+    /** Recebe os pedaços de áudio dos motores e toca na hora (sistema ou alto-falante). */
+    private final class Output implements EngineClient.AudioSink {
+        private final SynthesisCallback cb;
+        private final boolean toPhone;
+        int outRate;
+        float gain = 1f;
+        boolean failed;
+
+        Output(SynthesisCallback cb, boolean toPhone) {
+            this.cb = cb;
+            this.toPhone = toPhone;
+        }
+
+        @Override
+        public boolean write(short[] mono, int rate) {
+            if (stopped) {
+                return false;
+            }
+            if (outRate == 0) {
+                outRate = rate;
+                if (cb.start(outRate, AudioFormat.ENCODING_PCM_16BIT, 1) != TextToSpeech.SUCCESS) {
+                    failed = true;
+                    return false;
+                }
+                if (toPhone) {
+                    phonePlayer = PhonePlayer.open(GTtsService.this, outRate);
+                }
+            }
+            byte[] bytes = Pcm.toBytes(Pcm.resample(mono, rate, outRate), gain);
+            PhonePlayer pp = phonePlayer;
+            boolean ok = pp != null ? pp.write(bytes) : GTtsService.this.write(cb, bytes);
+            if (!ok) {
+                failed = true;
+            }
+            return ok;
+        }
     }
 
     private void releasePhonePlayer(boolean waitEnd) {

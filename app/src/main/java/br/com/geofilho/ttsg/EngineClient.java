@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.media.AudioFormat;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -19,6 +20,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,8 +40,6 @@ final class EngineClient {
     private String pkg = "";
     private volatile int status = Integer.MIN_VALUE;
     private CountDownLatch initLatch;
-    private volatile CountDownLatch doneLatch;
-    private volatile boolean ok;
     private final Map<String, Voice> voices = new HashMap<>();
     private String currentVoice = "";
     private int seq;
@@ -237,11 +237,36 @@ final class EngineClient {
         }
     }
 
-    /** Gera o áudio do texto. Retorna null se falhar ou for interrompido. */
-    Pcm synth(String text, String voiceName, float rate, float pitch, StopFlag stop) {
+    /** Recebe o áudio em pedaços, já em PCM 16 bits mono. Retorna false para interromper. */
+    interface AudioSink {
+        boolean write(short[] mono, int sampleRate);
+    }
+
+    /** Resultado de {@link #synth}. */
+    static final int OK = 0;
+    static final int FAIL = -1;
+    static final int ABORTED = -2;
+
+    private static final int EV_BEGIN = 1;
+    private static final int EV_AUDIO = 2;
+    private static final int EV_DONE = 3;
+    private static final int EV_ERROR = 4;
+    private static final int EV_STOP = 5;
+
+    /** Eventos do motor (chegam em outra thread) para a thread de síntese. */
+    private final LinkedBlockingQueue<Object[]> events = new LinkedBlockingQueue<>();
+    private volatile String currentId = "";
+
+    /**
+     * Gera o áudio e entrega em pedaços ao {@code sink} à medida que o motor
+     * produz (Android 7+), para a fala começar antes de o motor terminar.
+     * Motores que não entregam pedaços caem no modo antigo: arquivo inteiro.
+     * Retorna OK, FAIL (o motor falhou antes de produzir som) ou ABORTED.
+     */
+    int synth(String text, String voiceName, float rate, float pitch, StopFlag stop, AudioSink sink) {
         TextToSpeech t = tts;
         if (t == null) {
-            return null;
+            return FAIL;
         }
         if (voiceName != null && !voiceName.isEmpty() && !voiceName.equals(currentVoice)) {
             Voice v = voices.get(voiceName);
@@ -268,24 +293,127 @@ final class EngineClient {
         t.setSpeechRate(rate);
         t.setPitch(pitch);
         file.delete();
-        ok = false;
-        doneLatch = new CountDownLatch(1);
-        int r = t.synthesizeToFile(text, new Bundle(), file, "g" + (seq++));
-        if (r != TextToSpeech.SUCCESS) {
-            return null;
+        String id = "g" + (seq++);
+        events.clear();
+        currentId = id;
+        if (t.synthesizeToFile(text, new Bundle(), file, id) != TextToSpeech.SUCCESS) {
+            return FAIL;
         }
-        if (!await(doneLatch, 30000, stop)) {
-            t.stop();
-            return null;
-        }
-        if (!ok) {
-            return null;
-        }
+
+        int sampleRate = 0;
+        int encoding = AudioFormat.ENCODING_PCM_16BIT;
+        int channels = 1;
+        byte[] carry = new byte[0];
+        boolean streamed = false;
+        long deadline = System.currentTimeMillis() + 30000;
         try {
-            return Pcm.readWav(file);
-        } catch (Exception e) {
+            while (true) {
+                long left = deadline - System.currentTimeMillis();
+                // Espera bloqueante: acorda na hora em que o motor manda algo (sem conferir a cada 20 ms).
+                Object[] e = left > 0 ? events.poll(left, TimeUnit.MILLISECONDS) : null;
+                if (e == null) {
+                    t.stop();
+                    return streamed ? OK : FAIL;
+                }
+                if (stop.stopped()) {
+                    t.stop();
+                    return ABORTED;
+                }
+                int type = (Integer) e[0];
+                if (type == EV_BEGIN) {
+                    sampleRate = (Integer) e[1];
+                    encoding = (Integer) e[2];
+                    channels = Math.max(1, (Integer) e[3]);
+                } else if (type == EV_AUDIO) {
+                    if (sampleRate <= 0) {
+                        continue; // sem formato informado: usa o arquivo no fim
+                    }
+                    byte[] data = (byte[]) e[1];
+                    if (carry.length > 0) {
+                        byte[] joined = new byte[carry.length + data.length];
+                        System.arraycopy(carry, 0, joined, 0, carry.length);
+                        System.arraycopy(data, 0, joined, carry.length, data.length);
+                        data = joined;
+                    }
+                    int frame = bytesPerSample(encoding) * channels;
+                    int usable = data.length - data.length % frame;
+                    carry = usable < data.length ? java.util.Arrays.copyOfRange(data, usable, data.length) : new byte[0];
+                    short[] mono = toMono(data, usable, encoding, channels);
+                    if (mono == null) {
+                        continue;
+                    }
+                    if (mono.length > 0) {
+                        streamed = true;
+                        if (!sink.write(mono, sampleRate)) {
+                            t.stop();
+                            return ABORTED;
+                        }
+                    }
+                } else if (type == EV_DONE) {
+                    if (streamed) {
+                        return OK;
+                    }
+                    // O motor não entregou pedaços: lê o arquivo inteiro (modo antigo).
+                    Pcm pcm = Pcm.readWav(file);
+                    if (pcm == null) {
+                        return FAIL;
+                    }
+                    if (pcm.samples.length > 0 && !sink.write(pcm.samples, pcm.rate)) {
+                        return ABORTED;
+                    }
+                    return OK;
+                } else if (type == EV_ERROR) {
+                    return streamed ? OK : FAIL;
+                } else {
+                    return ABORTED;
+                }
+            }
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            return ABORTED;
+        } catch (Exception ex) {
+            return streamed ? OK : FAIL;
+        }
+    }
+
+    private static int bytesPerSample(int encoding) {
+        if (encoding == AudioFormat.ENCODING_PCM_8BIT) {
+            return 1;
+        }
+        if (encoding == AudioFormat.ENCODING_PCM_FLOAT) {
+            return 4;
+        }
+        return 2;
+    }
+
+    /** Converte para 16 bits mono. Retorna null para formatos desconhecidos. */
+    private static short[] toMono(byte[] b, int len, int encoding, int channels) {
+        int bps = bytesPerSample(encoding);
+        if (encoding != AudioFormat.ENCODING_PCM_16BIT && encoding != AudioFormat.ENCODING_PCM_8BIT
+                && encoding != AudioFormat.ENCODING_PCM_FLOAT) {
             return null;
         }
+        int frames = len / (bps * channels);
+        short[] out = new short[frames];
+        for (int i = 0; i < frames; i++) {
+            int sum = 0;
+            for (int c = 0; c < channels; c++) {
+                int p = (i * channels + c) * bps;
+                int v;
+                if (bps == 2) {
+                    v = (short) ((b[p] & 0xFF) | (b[p + 1] << 8));
+                } else if (bps == 1) {
+                    v = ((b[p] & 0xFF) - 128) << 8;
+                } else {
+                    int bits = (b[p] & 0xFF) | ((b[p + 1] & 0xFF) << 8) | ((b[p + 2] & 0xFF) << 16) | (b[p + 3] << 24);
+                    float f = Float.intBitsToFloat(bits);
+                    v = (int) (Math.max(-1f, Math.min(1f, f)) * 32767);
+                }
+                sum += v;
+            }
+            out[i] = (short) (sum / channels);
+        }
+        return out;
     }
 
     void stop() {
@@ -293,10 +421,7 @@ final class EngineClient {
         if (t != null) {
             t.stop();
         }
-        CountDownLatch l = doneLatch;
-        if (l != null) {
-            l.countDown();
-        }
+        events.offer(new Object[]{EV_STOP}); // acorda a thread de síntese na hora
     }
 
     void shutdown() {
@@ -340,34 +465,40 @@ final class EngineClient {
         }
 
         @Override
+        public void onBeginSynthesis(String id, int sampleRateInHz, int audioFormat, int channelCount) {
+            post(id, new Object[]{EV_BEGIN, sampleRateInHz, audioFormat, channelCount});
+        }
+
+        @Override
+        public void onAudioAvailable(String id, byte[] audio) {
+            post(id, new Object[]{EV_AUDIO, audio});
+        }
+
+        @Override
         public void onDone(String id) {
-            ok = true;
-            release();
+            post(id, new Object[]{EV_DONE});
         }
 
         @Override
         @SuppressWarnings("deprecation")
         public void onError(String id) {
-            ok = false;
-            release();
+            post(id, new Object[]{EV_ERROR});
         }
 
         @Override
         public void onError(String id, int code) {
-            ok = false;
-            release();
+            post(id, new Object[]{EV_ERROR});
         }
 
         @Override
         public void onStop(String id, boolean interrupted) {
-            ok = false;
-            release();
+            post(id, new Object[]{EV_STOP});
         }
 
-        private void release() {
-            CountDownLatch l = doneLatch;
-            if (l != null) {
-                l.countDown();
+        /** Ignora eventos atrasados de falas anteriores. */
+        private void post(String id, Object[] event) {
+            if (id != null && id.equals(currentId)) {
+                events.offer(event);
             }
         }
     };
