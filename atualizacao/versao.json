@@ -1,6 +1,6 @@
 {
-  "versionCode": 22,
-  "versionName": "1.21",
+  "versionCode": 23,
+  "versionName": "1.22",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Volta da página Saída de áudio do leitor de tela, com a explicação para quando não funcionar.\n- Desfeita a mudança da versão 1.20, que não funcionou."
+  "novidades": "- No Android 12 ou mais novo, a opção Manter o áudio do leitor de tela no telefone tenta levar também os sons de navegação do leitor de tela para o telefone.\n- A página Saída de áudio do leitor de tela avisa quando o Gerenciador não está como motor de TTS do sistema.\n- A ajuda da página foi atualizada."
 }

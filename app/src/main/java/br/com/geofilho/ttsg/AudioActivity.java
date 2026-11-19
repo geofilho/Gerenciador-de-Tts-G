@@ -137,16 +137,34 @@ public class AudioActivity extends Activity {
             status.setText("Esta opção precisa do Android 6 ou mais novo.");
             return;
         }
+        String def = null;
+        try {
+            def = android.provider.Settings.Secure.getString(getContentResolver(), "tts_default_synth");
+        } catch (Exception ignored) {
+        }
+        if (!getPackageName().equals(def)) {
+            status.setText("Atenção: o Gerenciador de TTS G não está escolhido como motor de TTS do sistema. "
+                    + "Assim esta opção não funciona. Na tela principal, use o botão Usar como motor de TTS do "
+                    + "sistema.");
+            return;
+        }
         String bt = PhonePlayer.bluetoothOutputName(this);
         boolean on = Prefs.keepOnPhone(prefs);
         if (bt == null) {
             status.setText("Nenhum dispositivo Bluetooth de áudio conectado. O áudio segue o caminho normal.");
         } else if (on) {
-            status.setText("Bluetooth conectado: " + bt + ". O leitor de tela fala no telefone e a mídia "
-                    + "toca no Bluetooth.");
+            status.setText("Bluetooth conectado: " + bt + ". O leitor de tela fala no telefone"
+                    + (AccessibilityRouter.supported() ? ", inclusive os sons de navegação," : "")
+                    + " e a mídia toca no Bluetooth.");
         } else {
             status.setText("Bluetooth conectado: " + bt + ". O leitor de tela e a mídia saem no Bluetooth.");
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateStatus();
     }
 
     @Override
