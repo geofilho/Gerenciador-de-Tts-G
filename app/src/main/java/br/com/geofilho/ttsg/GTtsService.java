@@ -5,7 +5,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.annotation.TargetApi;
+import android.media.AudioDeviceCallback;
+import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Build;
 import android.speech.tts.SynthesisCallback;
 import android.speech.tts.SynthesisRequest;
@@ -58,8 +64,52 @@ public class GTtsService extends TextToSpeechService {
         }
     };
 
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private Object audioDeviceCallback;
+
+    /** Se não sobrou nenhuma saída Bluetooth, desliga "Manter o áudio do leitor de tela no telefone". */
+    private final Runnable checkBluetooth = new Runnable() {
+        @Override
+        public void run() {
+            turnOffKeepOnPhoneIfNoBluetooth();
+        }
+    };
+
+    private void turnOffKeepOnPhoneIfNoBluetooth() {
+        SharedPreferences p = Prefs.get(this);
+        if (Prefs.keepOnPhone(p) && PhonePlayer.bluetoothOutputName(this) == null) {
+            p.edit().putBoolean("keep_on_phone", false).apply();
+            Diagnostics.note(this, "Bluetooth desconectado: a opção Manter o áudio do leitor de tela no telefone "
+                    + "foi desativada.");
+        }
+    }
+
+    @TargetApi(23)
+    private void watchBluetooth() {
+        AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
+        if (am == null) {
+            return;
+        }
+        AudioDeviceCallback cb = new AudioDeviceCallback() {
+            @Override
+            public void onAudioDevicesRemoved(AudioDeviceInfo[] removed) {
+                // Confere de novo depois de 2 s, para não desligar numa queda rápida da conexão.
+                handler.removeCallbacks(checkBluetooth);
+                handler.postDelayed(checkBluetooth, 2000);
+            }
+        };
+        am.registerAudioDeviceCallback(cb, handler);
+        audioDeviceCallback = cb;
+    }
+
     @Override
     public void onCreate() {
+        if (Build.VERSION.SDK_INT >= 23) {
+            try {
+                watchBluetooth();
+            } catch (Exception ignored) {
+            }
+        }
         mainEngine = new EngineClient(this, "principal");
         emojiEngine = new EngineClient(this, "emoji");
         fallbackEngine = new EngineClient(this, "reserva");
@@ -74,6 +124,13 @@ public class GTtsService extends TextToSpeechService {
 
     @Override
     public void onDestroy() {
+        handler.removeCallbacks(checkBluetooth);
+        if (Build.VERSION.SDK_INT >= 23 && audioDeviceCallback != null) {
+            AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
+            if (am != null) {
+                am.unregisterAudioDeviceCallback((AudioDeviceCallback) audioDeviceCallback);
+            }
+        }
         if (Build.VERSION.SDK_INT >= 24) {
             try {
                 unregisterReceiver(unlockReceiver);
@@ -204,7 +261,14 @@ public class GTtsService extends TextToSpeechService {
         }
 
         // Fala no telefone e música no Bluetooth: o próprio app toca no alto-falante.
-        boolean toPhone = Prefs.keepOnPhone(p) && PhonePlayer.bluetoothOutputName(this) != null;
+        boolean toPhone = false;
+        if (Prefs.keepOnPhone(p)) {
+            if (PhonePlayer.bluetoothOutputName(this) != null) {
+                toPhone = true;
+            } else {
+                turnOffKeepOnPhoneIfNoBluetooth();
+            }
+        }
         int outRate = 0;
         for (TextProcessor.Segment seg : segments) {
             if (stopped) {

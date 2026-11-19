@@ -24,6 +24,8 @@ public class AudioActivity extends Activity {
     private TextToSpeech tts;
     private boolean ready;
     private Object deviceCallback;
+    private Switch keepSwitch;
+    private SharedPreferences.OnSharedPreferenceChangeListener prefListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,14 +34,35 @@ public class AudioActivity extends Activity {
         prefs = Prefs.get(this);
         status = findViewById(R.id.txt_status);
 
-        Switch sw = findViewById(R.id.switch_keep_phone);
+        final Switch sw = findViewById(R.id.switch_keep_phone);
+        keepSwitch = sw;
         sw.setChecked(Prefs.keepOnPhone(prefs));
+        // Se o motor desligar a opção (Bluetooth desconectado), a chave acompanha.
+        prefListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sp, String key) {
+                if ("keep_on_phone".equals(key) && sw.isChecked() != Prefs.keepOnPhone(sp)) {
+                    sw.setChecked(Prefs.keepOnPhone(sp));
+                    updateStatus();
+                }
+            }
+        };
+        prefs.registerOnSharedPreferenceChangeListener(prefListener);
         if (Build.VERSION.SDK_INT < 23) {
             sw.setEnabled(false);
         }
         sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton b, boolean checked) {
+                if (checked && PhonePlayer.bluetoothOutputName(AudioActivity.this) == null) {
+                    b.setChecked(false);
+                    Toast.makeText(AudioActivity.this, "Conecte um fone, caixa de som ou som do carro Bluetooth "
+                            + "antes de ativar esta opção.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                if (checked == Prefs.keepOnPhone(prefs)) {
+                    return;
+                }
                 prefs.edit().putBoolean("keep_on_phone", checked).apply();
                 updateStatus();
             }
@@ -91,6 +114,15 @@ public class AudioActivity extends Activity {
             @Override
             public void onAudioDevicesRemoved(AudioDeviceInfo[] removed) {
                 updateStatus();
+                keepSwitch.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (Prefs.keepOnPhone(prefs) && PhonePlayer.bluetoothOutputName(AudioActivity.this) == null) {
+                            prefs.edit().putBoolean("keep_on_phone", false).apply();
+                        }
+                        updateStatus();
+                    }
+                }, 2000);
             }
         };
         AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
@@ -119,6 +151,9 @@ public class AudioActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (prefListener != null) {
+            prefs.unregisterOnSharedPreferenceChangeListener(prefListener);
+        }
         if (Build.VERSION.SDK_INT >= 23 && deviceCallback != null) {
             AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
             if (am != null) {

@@ -1,6 +1,6 @@
 {
-  "versionCode": 19,
-  "versionName": "1.18",
+  "versionCode": 20,
+  "versionName": "1.19",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- O Diagnóstico agora fica na tela principal, abaixo de Verificar atualização, e saiu da página de emojis.\n- Nova chave para ativar ou desativar o registro das falas; vem desativada, para não pesar.\n- O relatório agora traz os dados do aparelho, do sistema e das configurações, e pode ser copiado, compartilhado ou limpo."
+  "novidades": "- Manter o áudio do leitor de tela no telefone agora desliga sozinha quando o Bluetooth desconecta, e só pode ser ativada com um Bluetooth conectado.\n- A ajuda da página ganhou a dica da função Separar som do app, dos celulares Samsung, e os itens agora aparecem em parágrafos separados."
 }
