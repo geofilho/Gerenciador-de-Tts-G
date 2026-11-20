@@ -21,7 +21,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -36,8 +35,6 @@ import java.util.concurrent.TimeoutException;
  */
 final class Translator {
 
-    private static final String URL_GTX =
-            "https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=auto&tl=";
     private static final int MAX_TEXT = 4500;
     private static final int CACHE_SIZE = 400;
     private static final long BACKOFF_MS = 15000;
@@ -197,7 +194,7 @@ final class Translator {
         }
         String detected = base(result[1]);
         boolean keep = detected.equals(base(dst)) || (!"auto".equals(src) && !detected.isEmpty()
-                && !detected.equals(base(src)));
+                && !detected.equals(base(src))) || result[0].trim().equalsIgnoreCase(text.trim());
         String out = keep || result[0].trim().isEmpty() ? text : result[0];
         synchronized (CACHE) {
             CACHE.put(key, out == text ? SAME : out);
@@ -224,88 +221,76 @@ final class Translator {
 
     private static final String BROWSER_UA =
             "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36";
-    /** Jeito de consultar que funciona neste aparelho (POST ou GET), descoberto na primeira tradução. */
-    private static volatile boolean preferGet;
-    private static volatile boolean methodKnown;
-    /** Para a "corrida" entre os dois jeitos de consultar. */
-    private static final ExecutorService RACE = Executors.newCachedThreadPool(new ThreadFactory() {
-        @Override
-        public Thread newThread(Runnable r) {
-            Thread t = new Thread(r, "traducao-teste");
-            t.setDaemon(true);
-            return t;
-        }
-    });
+    /**
+     * Endereços do tradutor do Google, em ordem. Cada um tem o seu limite de uso: quando um
+     * responde 429 ("consultas demais"), ele descansa por um tempo crescente e o próximo é usado.
+     */
+    private static final String[] ENDPOINTS = {
+            "https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=auto&tl=",
+            "https://translate.googleapis.com/translate_a/t?client=gtx&sl=auto&tl=",
+            "https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=auto&tl=",
+    };
+    private static final long[] restUntil = new long[ENDPOINTS.length];
+    private static final long[] restFor = new long[ENDPOINTS.length];
+    private static final long REST_FIRST_MS = 60000;
+    private static final long REST_MAX_MS = 600000;
+
+    /** Só para testes fora do celular: simula um endereço respondendo 429. */
+    static volatile int testLimitedEndpoint = -1;
 
     /** Consulta o tradutor. Retorna {texto traduzido, idioma detectado} ou null. */
     private static String[] request(String text, String dst) {
-        // Textos longos não cabem no endereço: só por POST.
-        boolean canGet = text.length() <= 1500;
-        String[] r;
-        if (canGet && !methodKnown) {
-            r = race(text, dst);
-        } else {
-            boolean post = !canGet || !preferGet;
-            r = request(text, dst, post);
-            if (r == null && canGet) {
-                r = request(text, dst, !post);
-                if (r != null) {
-                    preferGet = post; // o outro jeito funcionou: passa a usar ele
-                } else {
-                    methodKnown = false; // nenhum funcionou: na próxima, testa os dois de novo
-                }
+        long now = System.currentTimeMillis();
+        boolean limited = false;
+        for (int i = 0; i < ENDPOINTS.length; i++) {
+            if (now < restUntil[i]) {
+                limited = true;
+                continue; // descansando depois de um 429
+            }
+            // Textos longos não cabem no endereço: vão por POST, que só o primeiro endereço aceita.
+            boolean post = text.length() > 1500;
+            if (post && i > 0) {
+                continue;
+            }
+            lastCode = 0;
+            String[] r = request(i, text, dst, post);
+            if (r != null) {
+                restFor[i] = 0;
+                lastError = "";
+                lastNetwork = System.currentTimeMillis();
+                return r;
+            }
+            if (lastCode == 429) {
+                // Limite de uso do Google: descansa este endereço (1, 2, 4... até 10 min) e tenta o próximo.
+                restFor[i] = restFor[i] == 0 ? REST_FIRST_MS : Math.min(REST_MAX_MS, restFor[i] * 2);
+                restUntil[i] = System.currentTimeMillis() + restFor[i];
+                limited = true;
+                continue;
+            }
+            if (lastCode == 0) {
+                return null; // sem internet ou sem resposta: não adianta tentar os outros agora
             }
         }
-        if (r != null) {
-            lastError = "";
-            lastNetwork = System.currentTimeMillis();
-        }
-        return r;
-    }
-
-    /** Tenta POST e GET ao mesmo tempo e fica com o primeiro que der certo; lembra qual foi. */
-    private static String[] race(final String text, final String dst) {
-        final LinkedBlockingQueue<Object[]> answers = new LinkedBlockingQueue<>();
-        for (final boolean post : new boolean[]{true, false}) {
-            RACE.submit(new Runnable() {
-                @Override
-                public void run() {
-                    String[] r = request(text, dst, post);
-                    answers.offer(new Object[]{post, r});
-                }
-            });
-        }
-        try {
-            for (int i = 0; i < 2; i++) {
-                Object[] a = answers.poll(8, TimeUnit.SECONDS);
-                if (a == null) {
-                    break;
-                }
-                String[] r = (String[]) a[1];
-                if (r != null) {
-                    preferGet = !(Boolean) a[0];
-                    methodKnown = true;
-                    return r;
-                }
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        if (limited) {
+            lastError = "o tradutor do Google limitou as consultas deste aparelho por alguns minutos (código 429); "
+                    + "enquanto isso, os textos são lidos no idioma original";
         }
         return null;
     }
 
-    /** Só para testes fora do celular: simula um aparelho em que o POST trava. */
-    static volatile boolean testHangPost;
+    /** Código HTTP da última consulta (0 = sem resposta). */
+    private static volatile int lastCode;
 
-    private static String[] request(String text, String dst, boolean post) {
+    private static String[] request(int endpoint, String text, String dst, boolean post) {
         HttpURLConnection con = null;
         boolean ok = false;
         try {
-            if (post && testHangPost) {
-                Thread.sleep(3000);
-                throw new java.net.SocketTimeoutException();
+            if (endpoint == testLimitedEndpoint) {
+                lastCode = 429;
+                lastError = "o tradutor respondeu com o código 429";
+                return null;
             }
-            String address = URL_GTX + URLEncoder.encode(dst, "UTF-8");
+            String address = ENDPOINTS[endpoint] + URLEncoder.encode(dst, "UTF-8");
             if (!post) {
                 address += "&q=" + URLEncoder.encode(text, "UTF-8");
             }
@@ -324,6 +309,7 @@ final class Translator {
                 os.close();
             }
             int code = con.getResponseCode();
+            lastCode = code;
             if (code != 200) {
                 lastError = "o tradutor respondeu com o código " + code;
                 return null;
@@ -336,19 +322,9 @@ final class Translator {
                 bos.write(buf, 0, n);
             }
             in.close(); // lido até o fim: a conexão fica aberta para a próxima tradução
-            JSONArray root = new JSONArray(bos.toString("UTF-8"));
-            StringBuilder sb = new StringBuilder();
-            JSONArray parts = root.optJSONArray(0);
-            if (parts != null) {
-                for (int i = 0; i < parts.length(); i++) {
-                    JSONArray part = parts.optJSONArray(i);
-                    if (part != null && !part.isNull(0)) {
-                        sb.append(part.optString(0));
-                    }
-                }
-            }
-            ok = true;
-            return new String[]{sb.toString(), root.optString(2, "")};
+            String[] r = parse(bos.toString("UTF-8"));
+            ok = r != null;
+            return r;
         } catch (java.net.UnknownHostException e) {
             lastError = "sem internet ou o endereço do tradutor não foi encontrado";
             return null;
@@ -364,6 +340,34 @@ final class Translator {
                 con.disconnect();
             }
         }
+    }
+
+    /**
+     * Lê as duas respostas possíveis: a completa ([[["tradução","original",...],...],null,"en"...])
+     * e a simples ([["tradução","en"]] ou ["tradução"]). Retorna {tradução, idioma} ou null.
+     */
+    static String[] parse(String body) throws org.json.JSONException {
+        JSONArray root = new JSONArray(body);
+        Object first = root.opt(0);
+        if (first instanceof JSONArray && ((JSONArray) first).opt(0) instanceof JSONArray) {
+            JSONArray parts = (JSONArray) first;
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < parts.length(); i++) {
+                JSONArray part = parts.optJSONArray(i);
+                if (part != null && !part.isNull(0)) {
+                    sb.append(part.optString(0));
+                }
+            }
+            return new String[]{sb.toString(), root.optString(2, "")};
+        }
+        if (first instanceof JSONArray) {
+            JSONArray pair = (JSONArray) first;
+            return new String[]{pair.optString(0, ""), pair.optString(1, "")};
+        }
+        if (first instanceof String) {
+            return new String[]{(String) first, ""};
+        }
+        return null;
     }
 
     private static String base(String code) {
