@@ -27,6 +27,7 @@ public class TranslationActivity extends Activity {
     private SharedPreferences prefs;
     private Button btnSource;
     private Button btnTarget;
+    private Button btnClear;
     private TextToSpeech tts;
     private boolean ready;
 
@@ -71,6 +72,16 @@ public class TranslationActivity extends Activity {
                 ready = status == TextToSpeech.SUCCESS;
             }
         }, getPackageName());
+        Translator.init(this);
+        btnClear = findViewById(R.id.btn_clear_saved);
+        showSavedCount();
+        btnClear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                confirmClear();
+            }
+        });
+
         findViewById(R.id.btn_help).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -138,6 +149,42 @@ public class TranslationActivity extends Activity {
                 .show();
     }
 
+    private void showSavedCount() {
+        btnClear.setText("Apagar traduções guardadas (" + Translator.savedCount() + ")");
+    }
+
+    private void confirmClear() {
+        new AlertDialog.Builder(this)
+                .setTitle("Apagar as " + Translator.savedCount() + " traduções guardadas?")
+                .setMessage("Os textos voltam a ser traduzidos pela internet quando aparecerem de novo.")
+                .setPositiveButton("Apagar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface d, int which) {
+                        Translator.clearSaved();
+                        showSavedCount();
+                        Toast.makeText(TranslationActivity.this, "Traduções guardadas apagadas.", Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (btnClear != null) {
+            // O arquivo carrega em segundo plano: atualiza a contagem um pouco depois também.
+            showSavedCount();
+            btnClear.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    showSavedCount();
+                }
+            }, 500);
+        }
+    }
+
     private void test(final String text) {
         if (!ready) {
             Toast.makeText(this, "O motor ainda está carregando.", Toast.LENGTH_SHORT).show();
@@ -161,6 +208,7 @@ public class TranslationActivity extends Activity {
                         if (tts != null) {
                             tts.speak(out, TextToSpeech.QUEUE_FLUSH, null, "traducao");
                         }
+                        showSavedCount();
                     }
                 });
             }

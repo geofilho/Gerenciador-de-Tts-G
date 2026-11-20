@@ -42,6 +42,10 @@
             android:text="@string/translate_listen" />
 
         <Button
+            android:id="@+id/btn_clear_saved"
+            style="@style/Row" />
+
+        <Button
             android:id="@+id/btn_help"
             style="@style/Row"
             android:text="@string/audio_help_button" />

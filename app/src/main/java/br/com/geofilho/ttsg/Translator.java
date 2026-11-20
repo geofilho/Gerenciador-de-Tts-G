@@ -36,7 +36,8 @@ import java.util.concurrent.TimeoutException;
 final class Translator {
 
     private static final int MAX_TEXT = 4500;
-    private static final int CACHE_SIZE = 400;
+    /** Traduções guardadas (memória e arquivo): as mais recentes. */
+    private static final int CACHE_SIZE = 5000;
     private static final long BACKOFF_MS = 15000;
     private static final String SAME = "\u0000";
 
@@ -101,6 +102,7 @@ final class Translator {
         if (!Prefs.translateOn(p)) {
             return text;
         }
+        init(c);
         lastError = "";
         String out = translate(text, Prefs.translateSource(p), Prefs.translateTarget(p), false, stop);
         String err = lastError;
@@ -199,7 +201,174 @@ final class Translator {
         synchronized (CACHE) {
             CACHE.put(key, out == text ? SAME : out);
         }
+        save(key, out == text ? SAME : out); // guarda também no aparelho
         return out;
+    }
+
+    // ----- traduções guardadas no aparelho -----
+
+    /** Grava em segundo plano, um de cada vez, sem atrasar a fala. */
+    private static final ExecutorService DISK = Executors.newSingleThreadExecutor(new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r, "traducoes-guardadas");
+            t.setDaemon(true);
+            return t;
+        }
+    });
+    private static volatile java.io.File file;
+    private static int linesInFile;
+
+    /** Carrega as traduções guardadas (uma vez, em segundo plano). */
+    static void init(Context c) {
+        if (file != null) {
+            return;
+        }
+        synchronized (Translator.class) {
+            if (file != null) {
+                return;
+            }
+            file = new java.io.File(Prefs.storage(c).getFilesDir(), "traducoes.txt");
+        }
+        DISK.submit(new Runnable() {
+            @Override
+            public void run() {
+                load();
+            }
+        });
+    }
+
+    private static void load() {
+        java.io.File f = file;
+        if (f == null || !f.exists()) {
+            return;
+        }
+        try {
+            java.io.BufferedReader r = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(new java.io.FileInputStream(f), "UTF-8"));
+            String line;
+            int n = 0;
+            Map<String, String> loaded = new LinkedHashMap<>();
+            while ((line = r.readLine()) != null) {
+                int tab = line.indexOf('\t');
+                if (tab > 0) {
+                    loaded.put(unescape(line.substring(0, tab)), unescape(line.substring(tab + 1)));
+                    n++;
+                }
+            }
+            r.close();
+            synchronized (CACHE) {
+                for (Map.Entry<String, String> e : loaded.entrySet()) {
+                    if (!CACHE.containsKey(e.getKey())) {
+                        CACHE.put(e.getKey(), e.getValue());
+                    }
+                }
+            }
+            linesInFile = n;
+        } catch (Exception ignored) {
+            // Arquivo corrompido: segue com o que já está na memória.
+        }
+    }
+
+    private static void save(final String key, final String value) {
+        if (file == null) {
+            return;
+        }
+        DISK.submit(new Runnable() {
+            @Override
+            public void run() {
+                java.io.File f = file;
+                if (f == null) {
+                    return;
+                }
+                try {
+                    if (linesInFile >= CACHE_SIZE * 2) {
+                        compact(f); // arquivo cresceu demais: regrava só as mais recentes
+                    }
+                    java.io.Writer w = new java.io.OutputStreamWriter(new java.io.FileOutputStream(f, true), "UTF-8");
+                    w.write(escape(key) + "\t" + escape(value) + "\n");
+                    w.close();
+                    linesInFile++;
+                } catch (Exception ignored) {
+                }
+            }
+        });
+    }
+
+    private static void compact(java.io.File f) throws java.io.IOException {
+        Map<String, String> copy;
+        synchronized (CACHE) {
+            copy = new LinkedHashMap<>(CACHE);
+        }
+        java.io.File tmp = new java.io.File(f.getPath() + ".tmp");
+        java.io.Writer w = new java.io.OutputStreamWriter(new java.io.FileOutputStream(tmp), "UTF-8");
+        for (Map.Entry<String, String> e : copy.entrySet()) {
+            w.write(escape(e.getKey()) + "\t" + escape(e.getValue()) + "\n");
+        }
+        w.close();
+        if (!tmp.renameTo(f)) {
+            tmp.delete();
+        }
+        linesInFile = copy.size();
+    }
+
+    /** Quantas traduções estão guardadas. */
+    static int savedCount() {
+        synchronized (CACHE) {
+            return CACHE.size();
+        }
+    }
+
+    /** Apaga todas as traduções guardadas (memória e arquivo). */
+    static void clearSaved() {
+        synchronized (CACHE) {
+            CACHE.clear();
+        }
+        DISK.submit(new Runnable() {
+            @Override
+            public void run() {
+                java.io.File f = file;
+                if (f != null) {
+                    f.delete();
+                }
+                linesInFile = 0;
+            }
+        });
+    }
+
+    private static String escape(String s) {
+        StringBuilder sb = new StringBuilder(s.length() + 8);
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '\\') {
+                sb.append("\\\\");
+            } else if (c == '\t') {
+                sb.append("\\t");
+            } else if (c == '\n') {
+                sb.append("\\n");
+            } else if (c == '\r') {
+                sb.append("\\r");
+            } else if (c == '\u0000') {
+                sb.append("\\0");
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+
+    private static String unescape(String s) {
+        StringBuilder sb = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '\\' && i + 1 < s.length()) {
+                char n = s.charAt(++i);
+                sb.append(n == 't' ? '\t' : n == 'n' ? '\n' : n == 'r' ? '\r' : n == '0' ? '\u0000' : n);
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     /** Deixa a conexão com o tradutor pronta (sem esperar), para a primeira tradução sair rápido. */

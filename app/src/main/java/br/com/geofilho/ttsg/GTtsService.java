@@ -121,6 +121,9 @@ public class GTtsService extends TextToSpeechService {
             } catch (Exception ignored) {
             }
         }
+        if (Prefs.translateOn(Prefs.get(this))) {
+            Translator.init(this); // carrega as traduções guardadas em segundo plano
+        }
         Translator.warm(this);
         mainEngine = new EngineClient(this, "principal");
         emojiEngine = new EngineClient(this, "emoji");
