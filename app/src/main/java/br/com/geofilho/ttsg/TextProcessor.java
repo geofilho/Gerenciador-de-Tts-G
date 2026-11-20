@@ -10,7 +10,8 @@ import java.util.Map;
  * diferentes) e, se ativado, agrupa emojis e símbolos repetidos:
  * cinco corações vermelhos viram "❤️ 5" (o motor fala "coração vermelho 5")
  * e "****" vira "asterisco 4". Emojis são agrupados a partir de 2 repetições;
- * símbolos, a partir de 3 (assim ".." e "!!" ficam como estão).
+ * símbolos, a partir de 3 (assim "!!" fica como está). Pontos seguidos, como
+ * ".." e reticências, nunca são agrupados.
  */
 final class TextProcessor {
 
@@ -115,7 +116,7 @@ final class TextProcessor {
 
             int cp = text.codePointAt(i);
             int len = Character.charCount(cp);
-            if (group && isSymbol(cp)) {
+            if (group && isSymbol(cp) && cp != '.') { // pontos seguidos ("..", "...") nunca são agrupados
                 int count = 1;
                 int j = i + len;
                 while (j < n && text.codePointAt(j) == cp) {
