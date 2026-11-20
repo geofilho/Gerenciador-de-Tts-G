@@ -1,0 +1,86 @@
+Gerenciador de TTS G (versão {versao})
+
+O Gerenciador de TTS G é um aplicativo Android leve, com cerca de 100 KB, feito para quem usa leitor de tela. Ele permite escolher o motor de voz e a voz do celular, ajustar velocidade, tonalidade e volume, criar um dicionário de pronúncia, usar uma voz separada para emojis, escolher como números e pontuação são lidos, manter o áudio do leitor de tela no telefone quando houver Bluetooth conectado e traduzir automaticamente o que estiver em outro idioma. Não tem propagandas e funciona do Android 5 em diante.
+
+LINK PARA BAIXAR
+
+https://github.com/geofilho/Gerenciador-de-Tts-G/raw/main/atualizacao/GerenciadorTtsG.apk
+
+Este link sempre baixa a versão mais recente do aplicativo.
+
+TELA PRINCIPAL, NA ORDEM DA VARREDURA
+
+1. Motor de TTS: lista todos os motores de voz instalados no aparelho, como Google, Eloquence, Vocalizer e RHVoice.
+
+2. Idioma: escolhe o idioma, e a lista de vozes aparece de acordo com ele.
+
+3. Voz: escolhe a voz do motor selecionado.
+
+4. Caixa de texto: vem com a frase "estou testando essa voz para usar neste aparelho". Pode apagar e escrever o que quiser para testar.
+
+5. Ouvir a voz: fala o texto da caixa com a voz e os ajustes do aplicativo, inclusive dicionário, números e pontuação.
+
+6. Velocidade, Tonalidade e Volume: barras de 0 a 100% que mudam de 1 em 1% ao deslizar para cima ou para baixo com o TalkBack. Em 50%, a velocidade e a tonalidade ficam no normal do motor.
+
+7. Dicionário: abre um menu com duas opções.
+- Adicionar palavra: abre os campos da palavra e da substituição. Aceita qualquer palavra ou frase, até com símbolos e pontuação. Exemplos: "vc" vira "você" e ":-)" vira "sorriso". Não diferencia letras maiúsculas de minúsculas.
+- Gerenciar dicionário: abre a lista de palavras. Tocando numa palavra, aparecem as opções Editar e Remover. No fim da página ficam os botões para exportar e importar o dicionário, e assim dá para trocar dicionários entre amigos.
+
+8. Leitura de números, pontuação e emojis: abre uma página com estas opções.
+- Leitura de números: número inteiro, um a um ou dois a dois. Exemplo com 2026: inteiro fala "dois mil e vinte e seis", um a um fala "2 0 2 6" e dois a dois fala "20 26".
+- Velocidade dos números: barra de 0 a 100% para os números serem falados numa velocidade diferente do resto do texto.
+- Leitura de pontuação: nenhuma, algumas ou todas. O padrão é nenhuma. Em "algumas", são falados os símbolos menos comuns, como arroba, cerquilha, cifrão, por cento e parênteses. Em "todas", é falada toda a pontuação, inclusive ponto, vírgula e interrogação. A pontuação que faz parte de um número, como em "1.250,99" ou "12:30", continua sendo lida como número.
+- Escolher TTS para falar emojis: abre uma página para escolher outro motor e outra voz só para os emojis, com o botão de ouvir e as barras de velocidade, tonalidade e volume. Nessa página fica também a chave de ler repetidos agrupados. Com ela ligada, cinco corações vermelhos são lidos como "coração vermelho 5", e quatro asteriscos como "asterisco 4". Emojis são agrupados a partir de 2 repetições e símbolos a partir de 3. Pontos seguidos, como ".." e reticências, nunca são agrupados.
+- Caixa de texto e botão Ouvir a voz: para testar as opções na hora.
+
+9. Usar como motor de TTS do sistema: leva às configurações de voz do Android. Quando o Gerenciador está ativo, o botão avisa.
+
+10. Saída de áudio do leitor de tela: abre uma página com a chave "Manter o áudio do leitor de tela no telefone". Com um fone, caixa de som ou som do carro Bluetooth conectado, a fala do leitor de tela sai no alto-falante do telefone, e músicas e vídeos continuam no Bluetooth. No Android 12 ou mais novo, os sons de navegação do leitor de tela também ficam no telefone, se o aparelho permitir. A chave só liga com Bluetooth conectado e desliga sozinha quando ele desconecta. A página mostra o dispositivo conectado, tem o botão Ouvir a voz e o botão "Caso tenha problemas, toque aqui para saber o motivo".
+
+11. Tradução de voz TTS: abre uma página com estas opções.
+- Tradução automática: chave para ligar e desligar. Com ela ligada, o que o leitor de tela falar em outro idioma é traduzido antes de ser falado.
+- Idioma de origem: o padrão é Automático, que reconhece o idioma sozinho.
+- Idioma de destino: o padrão é o idioma do aparelho.
+- A tradução é feita pela internet, pelo tradutor do Google. Se o Google limitar as consultas por um tempo, o tradutor MyMemory é usado como reserva. Textos que já estão no idioma de destino não são enviados.
+- Tradução salva: depois de navegar em um aplicativo em outro idioma, as traduções ficam salvas no celular, mesmo depois de religar. Quando você voltar a esse aplicativo, o que já foi traduzido é falado na hora, mesmo sem internet. A tradução salva só é usada com a chave ligada.
+- Atenção: com a tradução ligada, a fala pode ficar mais lenta em textos novos, porque o aplicativo busca a tradução na internet. Use só quando precisar. Com a chave desligada, a velocidade volta ao normal.
+- A página tem uma caixa de texto com o botão Ouvir a tradução, o botão Apagar traduções guardadas e o botão "Caso tenha problemas, toque aqui para saber o motivo".
+
+12. Verificar atualização: procura versão nova. Se houver, mostra as novidades e pergunta se quer baixar e instalar. O botão também informa a versão instalada.
+
+13. Diagnóstico: abre uma página com a chave para ativar o registro do que o leitor de tela envia ao motor, que vem desligada para não pesar, e os botões Ver relatório e Limpar relatório. O relatório traz os dados do aparelho, do sistema e das configurações, e pode ser copiado ou compartilhado, para ajudar a resolver problemas. Nessa página também fica o botão Compartilhar este aplicativo com amigos, que envia este texto.
+
+IMPORTANTE: ATIVAR O GERENCIADOR COMO MOTOR DE VOZ
+
+Para o dicionário, a voz dos emojis, os números, a pontuação, a saída de áudio, a tradução e os ajustes valerem no TalkBack e em todo o celular, o Gerenciador precisa ser o motor de voz padrão.
+1. Abra o aplicativo e escolha o motor, a voz e os ajustes.
+2. Toque no botão "Usar como motor de TTS do sistema".
+3. Em "Mecanismo preferido", escolha "Gerenciador de TTS G". O nome dessa opção pode mudar conforme o celular.
+
+O Gerenciador recebe o texto do leitor de tela, aplica as regras e repassa tudo ao motor e à voz que você escolheu.
+
+Depois de religar o celular, antes de digitar a senha, o Gerenciador fala com o motor padrão do aparelho, como o da Samsung ou o do Google, porque a maioria dos motores só funciona depois da senha. Assim que a senha é digitada, ele volta sozinho para a voz escolhida. Se o motor escolhido falhar a qualquer momento, a fala sai pelo motor padrão do aparelho, para o celular não ficar mudo.
+
+COMO INSTALAR
+
+1. Abra o link para baixar, que está no começo deste texto. O navegador baixa o arquivo GerenciadorTtsG.apk.
+2. Quando o download terminar, toque no arquivo, pela notificação ou pela pasta Downloads.
+3. O Android vai pedir permissão para instalar aplicativos daquele lugar, por exemplo do Chrome ou do gerenciador de arquivos. Toque em Configurações, ative "Permitir desta fonte" e volte.
+4. Toque em Instalar.
+
+O AVISO DO PLAY PROTECT
+
+Como o aplicativo não vem da Play Store, o Play Protect, a proteção do Google, pode mostrar um aviso de aplicativo desconhecido. Isso é normal para aplicativos instalados fora da loja.
+- O melhor caminho é, no próprio aviso, tocar em "Mais detalhes" e depois em "Instalar mesmo assim". O nome dessas opções pode variar.
+- Se o celular não mostrar essa opção e bloquear a instalação, desative o Play Protect só durante a instalação: abra a Play Store, toque na sua foto de perfil, entre em Play Protect, toque em Configurações e desative "Verificar apps com o Play Protect". Instale o aplicativo e depois volte e ative de novo. É importante reativar, porque o Play Protect protege o celular contra aplicativos perigosos.
+
+COMO ATUALIZAR
+
+1. No aplicativo, toque em "Verificar atualização", na tela principal.
+2. Se houver versão nova, aparecem as novidades e os botões "OK, baixar" e "Cancelar". Toque em "OK, baixar".
+3. Na primeira atualização, o Android pede uma autorização: permitir que o Gerenciador de TTS G instale aplicativos. O aplicativo explica e abre a configuração. Ative a opção e volte, que a instalação continua sozinha. Essa autorização só é pedida uma vez.
+4. Confirme a instalação. Se aparecer o aviso do Play Protect, siga as orientações acima.
+
+A atualização é instalada por cima e mantém o dicionário, as traduções salvas e todas as configurações.
+
+Esta é uma versão de teste. Toda sugestão é bem-vinda!
