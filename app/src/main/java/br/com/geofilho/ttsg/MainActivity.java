@@ -1,13 +1,14 @@
 package br.com.geofilho.ttsg;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
-import android.view.accessibility.AccessibilityEvent;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -18,9 +19,6 @@ import java.util.List;
 public class MainActivity extends Activity {
 
     private VoiceSection voice;
-    private View addBox;
-    private EditText editWord;
-    private EditText editReplacement;
     private Button btnSystem;
     private Updater updater;
 
@@ -42,40 +40,10 @@ public class MainActivity extends Activity {
             }
         });
 
-        addBox = findViewById(R.id.add_box);
-        editWord = findViewById(R.id.edit_word);
-        editReplacement = findViewById(R.id.edit_replacement);
-
-        findViewById(R.id.btn_add_word).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btn_dictionary).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                addBox.setVisibility(View.VISIBLE);
-                editWord.requestFocus();
-                editWord.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED);
-            }
-        });
-        findViewById(R.id.btn_save_word).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                saveWord();
-            }
-        });
-        findViewById(R.id.btn_cancel_word).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                closeAddBox();
-            }
-        });
-        findViewById(R.id.btn_manage_dictionary).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, DictionaryActivity.class));
-            }
-        });
-        findViewById(R.id.btn_emoji).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, EmojiActivity.class));
+                showDictionaryMenu();
             }
         });
         btnSystem = findViewById(R.id.btn_system);
@@ -96,6 +64,13 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(MainActivity.this, AudioActivity.class));
+            }
+        });
+
+        findViewById(R.id.btn_translation).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, TranslationActivity.class));
             }
         });
 
@@ -143,26 +118,50 @@ public class MainActivity extends Activity {
         super.onDestroy();
     }
 
-    private void saveWord() {
-        String word = editWord.getText().toString();
-        if (word.trim().isEmpty()) {
-            editWord.setError("Digite a palavra ou frase");
-            editWord.requestFocus();
-            return;
-        }
-        Dictionary.get(this).put(word, editReplacement.getText().toString());
-        Toast.makeText(this, "Salvo no dicionário: " + word.trim(), Toast.LENGTH_SHORT).show();
-        closeAddBox();
+    /** Menu "Dicionário": Adicionar palavra ou Gerenciar dicionário. */
+    private void showDictionaryMenu() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.dictionary)
+                .setItems(new String[]{getString(R.string.add_word_short), getString(R.string.manage_dictionary)},
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface d, int which) {
+                                if (which == 0) {
+                                    addWordDialog();
+                                } else {
+                                    startActivity(new Intent(MainActivity.this, DictionaryActivity.class));
+                                }
+                            }
+                        })
+                .setNegativeButton("Cancelar", null)
+                .show();
     }
 
-    private void closeAddBox() {
-        editWord.setText("");
-        editReplacement.setText("");
-        editWord.setError(null);
-        addBox.setVisibility(View.GONE);
-        View btn = findViewById(R.id.btn_add_word);
-        btn.requestFocus();
-        btn.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED);
+    /** Janela com os campos "Palavra ou frase" e "Substituir por". */
+    private void addWordDialog() {
+        View form = getLayoutInflater().inflate(R.layout.dialog_entry, null);
+        final EditText word = form.findViewById(R.id.edit_word);
+        final EditText replacement = form.findViewById(R.id.edit_replacement);
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.add_word_short)
+                .setView(form)
+                .setPositiveButton("Salvar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface d, int which) {
+                        String w = word.getText().toString();
+                        if (w.trim().isEmpty()) {
+                            Toast.makeText(MainActivity.this, "A palavra não pode ficar vazia.", Toast.LENGTH_SHORT)
+                                    .show();
+                            return;
+                        }
+                        Dictionary.get(MainActivity.this).put(w, replacement.getText().toString());
+                        Toast.makeText(MainActivity.this, "Salvo no dicionário: " + w.trim(), Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+        word.requestFocus();
     }
 
     private void openTtsSettings() {

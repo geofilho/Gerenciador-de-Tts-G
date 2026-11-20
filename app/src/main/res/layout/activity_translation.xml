@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <Switch
+            android:id="@+id/switch_translate"
+            style="@style/Row"
+            android:text="@string/translate_switch" />
+
+        <Button
+            android:id="@+id/btn_source"
+            style="@style/Row" />
+
+        <Button
+            android:id="@+id/btn_target"
+            style="@style/Row" />
+
+        <TextView
+            style="@style/Row"
+            android:focusable="true"
+            android:text="@string/translate_note" />
+
+        <EditText
+            android:id="@+id/edit_test"
+            style="@style/Row"
+            android:hint="@string/hint_test_text"
+            android:importantForAutofill="no"
+            android:inputType="textMultiLine|textCapSentences"
+            android:text="@string/translate_test_text" />
+
+        <Button
+            android:id="@+id/btn_test"
+            style="@style/Row"
+            android:text="@string/translate_listen" />
+    </LinearLayout>
+</ScrollView>

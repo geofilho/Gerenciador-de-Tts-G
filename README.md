@@ -15,18 +15,19 @@ Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para 
 4. Caixa de texto de teste
 5. Ouvir a voz
 6. Velocidade, Tonalidade e Volume (0 a 100%, de 1 em 1%; 50% é o normal)
-7. Adicionar palavra ao dicionário (abre os campos "Palavra ou frase" e "Substituir por")
-8. Gerenciar dicionário (tocar numa palavra: Editar ou Remover; exportar e importar)
-9. Escolher TTS para falar emojis (motor, voz, ouvir, ajustes e chave de agrupar repetidos)
-10. Leitura de números e pontuação (abre uma página com: leitura de números
-    inteiro, um a um ou dois a dois; velocidade dos números; leitura de
-    pontuação nenhuma, algumas ou todas; caixa de texto e Ouvir a voz)
-11. Usar como motor de TTS do sistema
-12. Saída de áudio do leitor de tela (manter a fala no telefone quando houver
-    Bluetooth conectado; a mídia continua no Bluetooth)
-13. Verificar atualização (mostra as novidades e, com o OK, baixa e instala)
-14. Diagnóstico (ativar ou desativar o registro; ver, copiar, compartilhar e
-    limpar o relatório com os dados do aparelho, do sistema e das configurações)
+7. Dicionário (Adicionar palavra; Gerenciar dicionário, com editar, remover,
+   exportar e importar)
+8. Leitura de números, pontuação e emojis (números inteiro, um a um ou dois a
+   dois; velocidade dos números; pontuação nenhuma, algumas ou todas; voz para
+   emojis; caixa de texto e Ouvir a voz)
+9. Usar como motor de TTS do sistema
+10. Saída de áudio do leitor de tela (manter a fala e, no Android 12+, os sons
+    do leitor no telefone quando houver Bluetooth conectado)
+11. Tradução de voz TTS (tradução automática pela internet: chave, idioma de
+    origem, idioma de destino e teste)
+12. Verificar atualização (mostra as novidades e, com o OK, baixa e instala)
+13. Diagnóstico (ativar ou desativar o registro; ver, copiar, compartilhar e
+    limpar o relatório)
 
 ## Como funciona
 O app também é um motor de TTS. Quando ele é escolhido como motor padrão do

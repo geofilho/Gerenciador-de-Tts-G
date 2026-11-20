@@ -19,7 +19,7 @@
     <string name="dictionary_empty">O dicionário está vazio.</string>
     <string name="group_switch">Ler emojis e símbolos repetidos agrupados, exemplo: coração vermelho 5</string>
     <string name="check_update">Verificar atualização</string>
-    <string name="title_numbers">Leitura de números e pontuação</string>
+    <string name="title_numbers">Leitura de números, pontuação e emojis</string>
     <string name="numbers_test_text">Meu telefone é 11987654321, o valor é R$ 1.250,99 às 12:30 e o e-mail é joao@site.com. Tudo certo?</string>
     <string name="title_audio">Saída de áudio do leitor de tela</string>
     <string name="keep_on_phone">Manter o áudio do leitor de tela no telefone</string>
@@ -31,4 +31,11 @@
     <string name="diag_switch">Ativar diagnóstico: registrar o que o leitor de tela envia ao motor</string>
     <string name="diag_view">Ver relatório</string>
     <string name="diag_clear">Limpar relatório</string>
+    <string name="dictionary">Dicionário</string>
+    <string name="add_word_short">Adicionar palavra</string>
+    <string name="title_translation">Tradução de voz TTS</string>
+    <string name="translate_switch">Tradução automática: falar em outro idioma traduzido</string>
+    <string name="translate_note">A tradução usa a internet: os textos em outro idioma são enviados ao tradutor do Google e voltam traduzidos. Textos que já estão no idioma de destino não são enviados. Sem internet, o texto é lido no idioma original.</string>
+    <string name="translate_test_text">Hello! This text is in English. If you can hear it in your language, the translation is working.</string>
+    <string name="translate_listen">Ouvir a tradução</string>
 </resources>

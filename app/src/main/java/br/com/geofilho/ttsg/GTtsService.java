@@ -236,6 +236,11 @@ public class GTtsService extends TextToSpeechService {
         float reqPitch = request.getPitch() / 100f;
 
         String original = text;
+        // Tradução automática (se ligada): antes do dicionário, que está no idioma do usuário.
+        text = Translator.maybeTranslate(this, text);
+        if (stopped) {
+            return;
+        }
         text = Dictionary.get(this).apply(text);
         boolean separateNumbers = Prefs.separateNumbers(p);
         List<TextProcessor.Segment> segments = TextProcessor.process(text, Prefs.groupRepeats(p),

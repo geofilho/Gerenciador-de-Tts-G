@@ -26,6 +26,11 @@
             android:id="@+id/btn_punctuation"
             style="@style/Row" />
 
+        <Button
+            android:id="@+id/btn_emoji"
+            style="@style/Row"
+            android:text="@string/emoji_voice" />
+
         <EditText
             android:id="@+id/edit_test"
             style="@style/Row"

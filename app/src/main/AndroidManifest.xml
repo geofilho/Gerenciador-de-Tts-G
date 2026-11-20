@@ -50,6 +50,11 @@
             android:label="@string/title_diagnostics" />
 
         <activity
+            android:name=".TranslationActivity"
+            android:exported="false"
+            android:label="@string/title_translation" />
+
+        <activity
             android:name=".EmojiActivity"
             android:exported="false"
             android:label="@string/title_emoji" />

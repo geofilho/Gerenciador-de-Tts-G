@@ -120,6 +120,20 @@ final class Prefs {
         return p.getBoolean("diagnostics_on", false);
     }
 
+    static boolean translateOn(SharedPreferences p) {
+        return p.getBoolean("translate_on", false);
+    }
+
+    /** Idioma de origem da tradução: "auto" detecta sozinho. */
+    static String translateSource(SharedPreferences p) {
+        return p.getString("translate_src", "auto");
+    }
+
+    /** Idioma de destino da tradução: padrão é o idioma do aparelho. */
+    static String translateTarget(SharedPreferences p) {
+        return p.getString("translate_dst", Translator.deviceLanguage());
+    }
+
     static boolean keepOnPhone(SharedPreferences p) {
         return p.getBoolean("keep_on_phone", false);
     }

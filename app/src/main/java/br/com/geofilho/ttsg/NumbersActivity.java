@@ -15,7 +15,7 @@ import android.widget.Toast;
 import java.util.List;
 import java.util.Set;
 
-/** Página "Leitura de números e pontuação". */
+/** Página "Leitura de números, pontuação e emojis". */
 public class NumbersActivity extends Activity {
 
     /** Na mesma ordem das constantes NUMBERS_* do TextProcessor. */
@@ -57,6 +57,13 @@ public class NumbersActivity extends Activity {
         }
         VoiceSection.bindSlider(this, prefs, R.id.seek_number_rate, R.id.lbl_number_rate,
                 "Velocidade dos números", "number_rate", Prefs.numberRate(prefs));
+
+        findViewById(R.id.btn_emoji).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new android.content.Intent(NumbersActivity.this, EmojiActivity.class));
+            }
+        });
 
         final EditText editTest = findViewById(R.id.edit_test);
         String engine = Prefs.engine(prefs, Prefs.MAIN);
