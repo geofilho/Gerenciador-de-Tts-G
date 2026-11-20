@@ -83,11 +83,21 @@ final class Translator {
         if (!Prefs.translateOn(p)) {
             return text;
         }
-        return translate(text, Prefs.translateSource(p), Prefs.translateTarget(p));
+        String out = translate(text, Prefs.translateSource(p), Prefs.translateTarget(p));
+        String err = lastError;
+        if (!err.isEmpty()) {
+            Diagnostics.note(c, "a tradução falhou: " + err + ".");
+        }
+        return out;
     }
 
     /** Traduz {@code text} de {@code src} ("auto" = detectar) para {@code dst}; devolve o original se não precisar ou falhar. */
     static String translate(String text, String src, String dst) {
+        return translate(text, src, dst, false);
+    }
+
+    /** {@code force}: usado pelo teste, tenta mesmo logo depois de uma falha. */
+    static String translate(String text, String src, String dst, boolean force) {
         if (text == null || letters(text) < 2 || text.length() > MAX_TEXT) {
             return text;
         }
@@ -96,12 +106,16 @@ final class Translator {
         java.util.regex.Matcher m = TRAILING_ROLES.matcher(text);
         if (m.find() && m.start() > 0) {
             String head = text.substring(0, m.start());
-            return translateText(head, src, dst) + text.substring(m.start());
+            return translateText(head, src, dst, force) + text.substring(m.start());
         }
-        return translateText(text, src, dst);
+        return translateText(text, src, dst, force);
     }
 
     private static String translateText(String text, String src, String dst) {
+        return translateText(text, src, dst, false);
+    }
+
+    private static String translateText(String text, String src, String dst, boolean force) {
         if (letters(text) < 2) {
             return text;
         }
@@ -120,7 +134,7 @@ final class Translator {
                 return SAME.equals(hit) ? text : hit;
             }
         }
-        if (System.currentTimeMillis() < failedUntil) {
+        if (System.currentTimeMillis() < failedUntil && !force) {
             return text;
         }
         String[] result = request(text, dst);
@@ -138,21 +152,49 @@ final class Translator {
         return out;
     }
 
+    /** Motivo da última falha, para o teste e o diagnóstico. */
+    static volatile String lastError = "";
+
+    private static final String BROWSER_UA =
+            "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36";
+
     /** Consulta o tradutor. Retorna {texto traduzido, idioma detectado} ou null. */
     private static String[] request(String text, String dst) {
+        String[] r = request(text, dst, true);
+        if (r == null) {
+            // Segunda tentativa: pedido simples (GET), como um navegador faz.
+            r = request(text, dst, false);
+        }
+        if (r != null) {
+            lastError = "";
+        }
+        return r;
+    }
+
+    private static String[] request(String text, String dst, boolean post) {
         HttpURLConnection con = null;
         try {
-            con = (HttpURLConnection) new URL(URL_GTX + URLEncoder.encode(dst, "UTF-8")).openConnection();
+            String address = URL_GTX + URLEncoder.encode(dst, "UTF-8");
+            if (!post) {
+                address += "&q=" + URLEncoder.encode(text, "UTF-8");
+            }
+            con = (HttpURLConnection) new URL(address).openConnection();
             con.setConnectTimeout(2500);
             con.setReadTimeout(3500);
-            con.setRequestMethod("POST");
-            con.setDoOutput(true);
-            con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
-            byte[] body = ("q=" + URLEncoder.encode(text, "UTF-8")).getBytes("UTF-8");
-            OutputStream os = con.getOutputStream();
-            os.write(body);
-            os.close();
-            if (con.getResponseCode() != 200) {
+            con.setRequestProperty("User-Agent", BROWSER_UA);
+            con.setRequestProperty("Accept", "*/*");
+            if (post) {
+                con.setRequestMethod("POST");
+                con.setDoOutput(true);
+                con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+                byte[] body = ("q=" + URLEncoder.encode(text, "UTF-8")).getBytes("UTF-8");
+                OutputStream os = con.getOutputStream();
+                os.write(body);
+                os.close();
+            }
+            int code = con.getResponseCode();
+            if (code != 200) {
+                lastError = "o tradutor respondeu com o código " + code;
                 return null;
             }
             InputStream in = con.getInputStream();
@@ -175,7 +217,14 @@ final class Translator {
                 }
             }
             return new String[]{sb.toString(), root.optString(2, "")};
+        } catch (java.net.UnknownHostException e) {
+            lastError = "sem internet ou o endereço do tradutor não foi encontrado";
+            return null;
+        } catch (java.net.SocketTimeoutException e) {
+            lastError = "o tradutor demorou demais para responder";
+            return null;
         } catch (Exception e) {
+            lastError = e.getClass().getSimpleName() + (e.getMessage() != null ? ": " + e.getMessage() : "");
             return null;
         } finally {
             if (con != null) {

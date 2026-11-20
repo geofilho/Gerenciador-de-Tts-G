@@ -134,13 +134,15 @@ public class TranslationActivity extends Activity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                final String out = Translator.translate(text, src, dst);
+                Translator.lastError = "";
+                final String out = Translator.translate(text, src, dst, true);
+                final String err = Translator.lastError;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (out.equals(text) && !Translator.looksLike(text, dst)) {
-                            Toast.makeText(TranslationActivity.this, "Não foi possível traduzir agora. "
-                                    + "Confira a internet. Lendo o texto original.", Toast.LENGTH_SHORT).show();
+                        if (!err.isEmpty()) {
+                            Toast.makeText(TranslationActivity.this, "Não foi possível traduzir agora. Motivo: "
+                                    + err + ". Lendo o texto original.", Toast.LENGTH_LONG).show();
                         }
                         if (tts != null) {
                             tts.speak(out, TextToSpeech.QUEUE_FLUSH, null, "traducao");
