@@ -187,7 +187,7 @@ final class Translator {
 
     /** Consulta e guarda na memória. Retorna o texto a falar ou null se falhou. */
     private static String fetch(String text, String src, String dst, String key) {
-        String[] result = request(text, dst);
+        String[] result = request(text, src, dst);
         if (result == null) {
             failedUntil = System.currentTimeMillis() + BACKOFF_MS;
             return null;
@@ -211,7 +211,7 @@ final class Translator {
         EXEC.submit(new Runnable() {
             @Override
             public void run() {
-                request("hello", dst);
+                request("hello", "en", dst);
             }
         });
     }
@@ -239,7 +239,7 @@ final class Translator {
     static volatile int testLimitedEndpoint = -1;
 
     /** Consulta o tradutor. Retorna {texto traduzido, idioma detectado} ou null. */
-    private static String[] request(String text, String dst) {
+    private static String[] request(String text, String src, String dst) {
         long now = System.currentTimeMillis();
         boolean limited = false;
         for (int i = 0; i < ENDPOINTS.length; i++) {
@@ -271,11 +271,115 @@ final class Translator {
                 return null; // sem internet ou sem resposta: não adianta tentar os outros agora
             }
         }
+        // Reserva: MyMemory, outro serviço, com limite separado (uso gratuito oficial, sem chave).
+        String[] r = myMemory(text, src, dst);
+        if (r != null) {
+            lastError = "";
+            lastNetwork = System.currentTimeMillis();
+            return r;
+        }
         if (limited) {
-            lastError = "o tradutor do Google limitou as consultas deste aparelho por alguns minutos (código 429); "
-                    + "enquanto isso, os textos são lidos no idioma original";
+            lastError = "o tradutor do Google limitou as consultas deste aparelho por alguns minutos (código 429)"
+                    + (myMemoryError.isEmpty() ? "" : " e o tradutor reserva também falhou: " + myMemoryError)
+                    + "; enquanto isso, os textos são lidos no idioma original";
         }
         return null;
+    }
+
+    // ----- MyMemory (reserva) -----
+
+    private static final String MYMEMORY = "https://api.mymemory.translated.net/get?langpair=";
+    private static volatile long myMemoryRestUntil;
+    private static volatile long myMemoryRestFor;
+    private static volatile String myMemoryError = "";
+    /** Só para testes fora do celular: o que o MyMemory "respondeu". */
+    static volatile String testMyMemoryBody;
+
+    /**
+     * Traduz pelo MyMemory. Ele aceita até 500 bytes por consulta e precisa do idioma de origem:
+     * usa o escolhido, ou o adivinhado pelo texto, ou deixa ele detectar ("Autodetect").
+     */
+    private static String[] myMemory(String text, String src, String dst) {
+        myMemoryError = "";
+        if (System.currentTimeMillis() < myMemoryRestUntil) {
+            myMemoryError = "limite do dia esgotado ou descansando";
+            return null;
+        }
+        HttpURLConnection con = null;
+        boolean ok = false;
+        try {
+            if (text.getBytes("UTF-8").length > 500) {
+                myMemoryError = "texto longo demais para o tradutor reserva";
+                return null;
+            }
+            String from = src;
+            if ("auto".equals(from)) {
+                String g = guess(text);
+                from = g != null ? g : "Autodetect";
+            }
+            String body;
+            int code;
+            if (testMyMemoryBody != null) {
+                body = testMyMemoryBody;
+                code = 200;
+            } else {
+                String address = MYMEMORY + URLEncoder.encode(from + "|" + dst, "UTF-8")
+                        + "&q=" + URLEncoder.encode(text, "UTF-8");
+                con = (HttpURLConnection) new URL(address).openConnection();
+                con.setConnectTimeout(2000);
+                con.setReadTimeout(2500);
+                con.setRequestProperty("User-Agent", BROWSER_UA);
+                code = con.getResponseCode();
+                InputStream in = code < 400 ? con.getInputStream() : con.getErrorStream();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                if (in != null) {
+                    byte[] buf = new byte[8192];
+                    int n;
+                    while ((n = in.read(buf)) > 0) {
+                        bos.write(buf, 0, n);
+                    }
+                    in.close();
+                }
+                body = bos.toString("UTF-8");
+            }
+            org.json.JSONObject json = new org.json.JSONObject(body);
+            int status = json.optInt("responseStatus", code);
+            org.json.JSONObject data = json.optJSONObject("responseData");
+            String translated = data != null ? data.optString("translatedText", "") : "";
+            boolean quota = json.optBoolean("quotaFinished", false)
+                    || translated.toUpperCase(Locale.ROOT).startsWith("MYMEMORY WARNING") || status == 429;
+            if (quota) {
+                // Limite diário do uso gratuito: descansa 1 hora (depois tenta de novo).
+                myMemoryRestFor = 3600000;
+                myMemoryRestUntil = System.currentTimeMillis() + myMemoryRestFor;
+                myMemoryError = "limite gratuito do dia esgotado";
+                return null;
+            }
+            if (status != 200 || translated.isEmpty()
+                    || translated.toUpperCase(Locale.ROOT).startsWith("INVALID")) {
+                myMemoryError = "respondeu com o código " + status;
+                return null;
+            }
+            ok = true;
+            String detected = data.optString("detectedLanguage", "");
+            if (detected.isEmpty() && !"Autodetect".equals(from)) {
+                detected = from;
+            }
+            return new String[]{translated, detected};
+        } catch (java.net.UnknownHostException e) {
+            myMemoryError = "não foi encontrado";
+            return null;
+        } catch (java.net.SocketTimeoutException e) {
+            myMemoryError = "demorou demais";
+            return null;
+        } catch (Exception e) {
+            myMemoryError = e.getClass().getSimpleName();
+            return null;
+        } finally {
+            if (con != null && !ok) {
+                con.disconnect();
+            }
+        }
     }
 
     /** Código HTTP da última consulta (0 = sem resposta). */
@@ -285,7 +389,7 @@ final class Translator {
         HttpURLConnection con = null;
         boolean ok = false;
         try {
-            if (endpoint == testLimitedEndpoint) {
+            if (endpoint == testLimitedEndpoint || testLimitedEndpoint == 99) {
                 lastCode = 429;
                 lastError = "o tradutor respondeu com o código 429";
                 return null;
@@ -445,6 +549,16 @@ final class Translator {
 
     private static void words(String lang, String list) {
         WORDS.put(lang, new HashSet<>(java.util.Arrays.asList(list.split(" "))));
+    }
+
+    /** Idioma mais provável do texto entre os conhecidos (pt, en, es, fr, de, it), ou null se não der para saber. */
+    static String guess(String text) {
+        for (String lang : WORDS.keySet()) {
+            if (looksLike(text, lang)) {
+                return lang;
+            }
+        }
+        return null;
     }
 
     /** O texto parece estar no idioma {@code lang}? (Só para pular a consulta; na dúvida, responde não.) */

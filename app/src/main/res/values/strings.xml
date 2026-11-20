@@ -35,7 +35,7 @@
     <string name="add_word_short">Adicionar palavra</string>
     <string name="title_translation">Tradução de voz TTS</string>
     <string name="translate_switch">Tradução automática: falar em outro idioma traduzido</string>
-    <string name="translate_note">A tradução é feita online, pelo tradutor do Google: os textos em outro idioma são enviados pela internet e voltam traduzidos. Textos que já estão no idioma de destino não são enviados, e as traduções repetidas ficam guardadas no celular, para sair na hora. Se a internet falhar ou demorar, o texto é lido no idioma original.</string>
+    <string name="translate_note">A tradução é feita online, pelo tradutor do Google. Se o Google limitar as consultas por um tempo, o tradutor MyMemory é usado como reserva. Os textos em outro idioma são enviados pela internet e voltam traduzidos. Textos que já estão no idioma de destino não são enviados, e as traduções repetidas ficam guardadas no celular, para sair na hora. Se a internet ou os tradutores falharem, o texto é lido no idioma original.</string>
     <string name="translate_test_text">Hello! This text is in English. If you can hear it in your language, the translation is working.</string>
     <string name="translate_listen">Ouvir a tradução</string>
 </resources>
