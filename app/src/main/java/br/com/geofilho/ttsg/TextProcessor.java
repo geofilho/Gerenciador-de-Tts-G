@@ -9,7 +9,8 @@ import java.util.Map;
  * Separa o texto em trechos normais e trechos de emoji (para usar vozes
  * diferentes) e, se ativado, agrupa emojis e símbolos repetidos:
  * cinco corações vermelhos viram "❤️ 5" (o motor fala "coração vermelho 5")
- * e "****" vira "asterisco 4". A regra vale para 2 ou mais repetições.
+ * e "****" vira "asterisco 4". Emojis são agrupados a partir de 2 repetições;
+ * símbolos, a partir de 3 (assim ".." e "!!" ficam como estão).
  */
 final class TextProcessor {
 
@@ -29,6 +30,9 @@ final class TextProcessor {
             this.number = number;
         }
     }
+
+    /** Símbolos só são agrupados a partir desta quantidade de repetições. */
+    private static final int MIN_SYMBOL_REPEAT = 3;
 
     private static final Map<Integer, String> SYMBOLS = new HashMap<>();
 
@@ -118,7 +122,7 @@ final class TextProcessor {
                     count++;
                     j += len;
                 }
-                if (count > 1) {
+                if (count >= MIN_SYMBOL_REPEAT) {
                     flushEmoji(out, emojis);
                     String name = SYMBOLS.get(cp);
                     normal.append(' ').append(name != null ? name : new String(Character.toChars(cp)))
