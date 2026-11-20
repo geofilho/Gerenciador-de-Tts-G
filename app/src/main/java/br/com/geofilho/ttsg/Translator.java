@@ -21,6 +21,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -165,14 +166,21 @@ final class Translator {
                 return fetch(text, src, dst, key);
             }
         });
-        long end = System.currentTimeMillis() + WAIT_MS;
+        // A fala espera no máximo 2,5 s; o teste da página espera até 8 s, para mostrar o motivo de uma falha.
+        long end = System.currentTimeMillis() + (force ? 8000 : WAIT_MS);
         while (true) {
             try {
                 String out = f.get(30, TimeUnit.MILLISECONDS);
                 return out == null ? text : out;
             } catch (TimeoutException e) {
-                if ((stop != null && stop.stopped()) || System.currentTimeMillis() > end) {
+                if (stop != null && stop.stopped()) {
                     return text; // segue sem esperar; a tradução fica guardada quando chegar
+                }
+                if (System.currentTimeMillis() > end) {
+                    if (force && lastError.isEmpty()) {
+                        lastError = "o tradutor demorou demais para responder";
+                    }
+                    return text;
                 }
             } catch (Exception e) {
                 return text;
@@ -216,19 +224,36 @@ final class Translator {
 
     private static final String BROWSER_UA =
             "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36";
-    /** Jeito de consultar que funcionou por último. Começa pelo POST, que responde mais rápido. */
-    private static volatile boolean preferGet = false;
+    /** Jeito de consultar que funciona neste aparelho (POST ou GET), descoberto na primeira tradução. */
+    private static volatile boolean preferGet;
+    private static volatile boolean methodKnown;
+    /** Para a "corrida" entre os dois jeitos de consultar. */
+    private static final ExecutorService RACE = Executors.newCachedThreadPool(new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r, "traducao-teste");
+            t.setDaemon(true);
+            return t;
+        }
+    });
 
     /** Consulta o tradutor. Retorna {texto traduzido, idioma detectado} ou null. */
     private static String[] request(String text, String dst) {
         // Textos longos não cabem no endereço: só por POST.
         boolean canGet = text.length() <= 1500;
-        boolean first = canGet && preferGet;
-        String[] r = request(text, dst, !first);
-        if (r == null && canGet) {
-            r = request(text, dst, first);
-            if (r != null) {
-                preferGet = !first; // lembra o jeito que deu certo
+        String[] r;
+        if (canGet && !methodKnown) {
+            r = race(text, dst);
+        } else {
+            boolean post = !canGet || !preferGet;
+            r = request(text, dst, post);
+            if (r == null && canGet) {
+                r = request(text, dst, !post);
+                if (r != null) {
+                    preferGet = post; // o outro jeito funcionou: passa a usar ele
+                } else {
+                    methodKnown = false; // nenhum funcionou: na próxima, testa os dois de novo
+                }
             }
         }
         if (r != null) {
@@ -238,10 +263,48 @@ final class Translator {
         return r;
     }
 
+    /** Tenta POST e GET ao mesmo tempo e fica com o primeiro que der certo; lembra qual foi. */
+    private static String[] race(final String text, final String dst) {
+        final LinkedBlockingQueue<Object[]> answers = new LinkedBlockingQueue<>();
+        for (final boolean post : new boolean[]{true, false}) {
+            RACE.submit(new Runnable() {
+                @Override
+                public void run() {
+                    String[] r = request(text, dst, post);
+                    answers.offer(new Object[]{post, r});
+                }
+            });
+        }
+        try {
+            for (int i = 0; i < 2; i++) {
+                Object[] a = answers.poll(8, TimeUnit.SECONDS);
+                if (a == null) {
+                    break;
+                }
+                String[] r = (String[]) a[1];
+                if (r != null) {
+                    preferGet = !(Boolean) a[0];
+                    methodKnown = true;
+                    return r;
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        return null;
+    }
+
+    /** Só para testes fora do celular: simula um aparelho em que o POST trava. */
+    static volatile boolean testHangPost;
+
     private static String[] request(String text, String dst, boolean post) {
         HttpURLConnection con = null;
         boolean ok = false;
         try {
+            if (post && testHangPost) {
+                Thread.sleep(3000);
+                throw new java.net.SocketTimeoutException();
+            }
             String address = URL_GTX + URLEncoder.encode(dst, "UTF-8");
             if (!post) {
                 address += "&q=" + URLEncoder.encode(text, "UTF-8");
