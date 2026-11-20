@@ -1,6 +1,6 @@
 {
-  "versionCode": 24,
-  "versionName": "1.23",
+  "versionCode": 26,
+  "versionName": "1.25",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Fala mais rápida: o Gerenciador começa a tocar o áudio enquanto o motor ainda está gerando, principalmente em textos longos.\n- Menos espera entre o fim da geração e o som.\n- O motor de emojis só é usado quando o texto tem emoji."
+  "novidades": "- Pontos seguidos, como .. e reticências, não são mais lidos como ponto 2 ou ponto 3.\n- Os outros símbolos repetidos só são agrupados a partir de 3 repetições; os emojis continuam a partir de 2."
 }
