@@ -1,6 +1,6 @@
 {
-  "versionCode": 26,
-  "versionName": "1.25",
+  "versionCode": 36,
+  "versionName": "1.35",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Pontos seguidos, como .. e reticências, não são mais lidos como ponto 2 ou ponto 3.\n- Os outros símbolos repetidos só são agrupados a partir de 3 repetições; os emojis continuam a partir de 2."
+  "novidades": "- O dicionário agora é um menu só: Adicionar palavra e Gerenciar dicionário.\n- A voz para emojis passou para a página Leitura de números, pontuação e emojis.\n- Nova função Tradução de voz TTS: traduz pela internet o que estiver em outro idioma, com tradutor reserva quando o Google limitar.\n- As traduções ficam salvas no celular e funcionam mesmo sem internet, com a chave ligada.\n- A página de tradução tem avisos e ajuda para quando não funcionar."
 }
