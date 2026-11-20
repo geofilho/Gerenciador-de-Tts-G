@@ -121,6 +121,7 @@ public class GTtsService extends TextToSpeechService {
             } catch (Exception ignored) {
             }
         }
+        Translator.warm(this);
         mainEngine = new EngineClient(this, "principal");
         emojiEngine = new EngineClient(this, "emoji");
         fallbackEngine = new EngineClient(this, "reserva");
@@ -237,7 +238,7 @@ public class GTtsService extends TextToSpeechService {
 
         String original = text;
         // Tradução automática (se ligada): antes do dicionário, que está no idioma do usuário.
-        text = Translator.maybeTranslate(this, text);
+        text = Translator.maybeTranslate(this, text, stopFlag);
         if (stopped) {
             return;
         }

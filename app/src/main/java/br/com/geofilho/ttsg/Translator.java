@@ -17,6 +17,13 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Tradução automática de voz, pela internet (tradutor do Google, sem chave).
@@ -77,13 +84,27 @@ final class Translator {
         return name.isEmpty() ? code : name.substring(0, 1).toUpperCase(Locale.getDefault()) + name.substring(1);
     }
 
+    /** Traduções em segundo plano: o leitor de tela não fica preso esperando a internet. */
+    private static final ExecutorService EXEC = Executors.newFixedThreadPool(2, new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r, "traducao");
+            t.setDaemon(true);
+            return t;
+        }
+    });
+    /** Tempo máximo que uma fala espera pela tradução; depois, lê o original. */
+    private static final long WAIT_MS = 2500;
+    private static volatile long lastNetwork;
+
     /** Usado pelo motor a cada fala: traduz se a função estiver ligada e for preciso. */
-    static String maybeTranslate(Context c, String text) {
+    static String maybeTranslate(Context c, String text, EngineClient.StopFlag stop) {
         SharedPreferences p = Prefs.get(c);
         if (!Prefs.translateOn(p)) {
             return text;
         }
-        String out = translate(text, Prefs.translateSource(p), Prefs.translateTarget(p));
+        lastError = "";
+        String out = translate(text, Prefs.translateSource(p), Prefs.translateTarget(p), false, stop);
         String err = lastError;
         if (!err.isEmpty()) {
             Diagnostics.note(c, "a tradução falhou: " + err + ".");
@@ -93,11 +114,15 @@ final class Translator {
 
     /** Traduz {@code text} de {@code src} ("auto" = detectar) para {@code dst}; devolve o original se não precisar ou falhar. */
     static String translate(String text, String src, String dst) {
-        return translate(text, src, dst, false);
+        return translate(text, src, dst, false, null);
     }
 
-    /** {@code force}: usado pelo teste, tenta mesmo logo depois de uma falha. */
-    static String translate(String text, String src, String dst, boolean force) {
+    /**
+     * {@code force}: usado pelo teste, tenta mesmo logo depois de uma falha.
+     * {@code stop}: se o leitor de tela pular para outra fala, para de esperar
+     * (a tradução termina em segundo plano e fica guardada).
+     */
+    static String translate(String text, String src, String dst, boolean force, EngineClient.StopFlag stop) {
         if (text == null || letters(text) < 2 || text.length() > MAX_TEXT) {
             return text;
         }
@@ -106,16 +131,13 @@ final class Translator {
         java.util.regex.Matcher m = TRAILING_ROLES.matcher(text);
         if (m.find() && m.start() > 0) {
             String head = text.substring(0, m.start());
-            return translateText(head, src, dst, force) + text.substring(m.start());
+            return translateText(head, src, dst, force, stop) + text.substring(m.start());
         }
-        return translateText(text, src, dst, force);
+        return translateText(text, src, dst, force, stop);
     }
 
-    private static String translateText(String text, String src, String dst) {
-        return translateText(text, src, dst, false);
-    }
-
-    private static String translateText(String text, String src, String dst, boolean force) {
+    private static String translateText(final String text, final String src, final String dst, boolean force,
+                                        EngineClient.StopFlag stop) {
         if (letters(text) < 2) {
             return text;
         }
@@ -127,7 +149,7 @@ final class Translator {
         if (looksLike(check, dst)) {
             return text; // já está no idioma de destino: nem consulta a internet
         }
-        String key = src + ">" + dst + ":" + text;
+        final String key = src + ">" + dst + ":" + text;
         synchronized (CACHE) {
             String hit = CACHE.get(key);
             if (hit != null) {
@@ -137,10 +159,33 @@ final class Translator {
         if (System.currentTimeMillis() < failedUntil && !force) {
             return text;
         }
+        Future<String> f = EXEC.submit(new Callable<String>() {
+            @Override
+            public String call() {
+                return fetch(text, src, dst, key);
+            }
+        });
+        long end = System.currentTimeMillis() + WAIT_MS;
+        while (true) {
+            try {
+                String out = f.get(30, TimeUnit.MILLISECONDS);
+                return out == null ? text : out;
+            } catch (TimeoutException e) {
+                if ((stop != null && stop.stopped()) || System.currentTimeMillis() > end) {
+                    return text; // segue sem esperar; a tradução fica guardada quando chegar
+                }
+            } catch (Exception e) {
+                return text;
+            }
+        }
+    }
+
+    /** Consulta e guarda na memória. Retorna o texto a falar ou null se falhou. */
+    private static String fetch(String text, String src, String dst, String key) {
         String[] result = request(text, dst);
         if (result == null) {
             failedUntil = System.currentTimeMillis() + BACKOFF_MS;
-            return text;
+            return null;
         }
         String detected = base(result[1]);
         boolean keep = detected.equals(base(dst)) || (!"auto".equals(src) && !detected.isEmpty()
@@ -152,35 +197,58 @@ final class Translator {
         return out;
     }
 
+    /** Deixa a conexão com o tradutor pronta (sem esperar), para a primeira tradução sair rápido. */
+    static void warm(Context c) {
+        if (!Prefs.translateOn(Prefs.get(c)) || System.currentTimeMillis() - lastNetwork < 60000) {
+            return;
+        }
+        final String dst = Prefs.translateTarget(Prefs.get(c));
+        EXEC.submit(new Runnable() {
+            @Override
+            public void run() {
+                request("hello", dst);
+            }
+        });
+    }
+
     /** Motivo da última falha, para o teste e o diagnóstico. */
     static volatile String lastError = "";
 
     private static final String BROWSER_UA =
             "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36";
+    /** Jeito de consultar que funcionou por último. Começa pelo POST, que responde mais rápido. */
+    private static volatile boolean preferGet = false;
 
     /** Consulta o tradutor. Retorna {texto traduzido, idioma detectado} ou null. */
     private static String[] request(String text, String dst) {
-        String[] r = request(text, dst, true);
-        if (r == null) {
-            // Segunda tentativa: pedido simples (GET), como um navegador faz.
-            r = request(text, dst, false);
+        // Textos longos não cabem no endereço: só por POST.
+        boolean canGet = text.length() <= 1500;
+        boolean first = canGet && preferGet;
+        String[] r = request(text, dst, !first);
+        if (r == null && canGet) {
+            r = request(text, dst, first);
+            if (r != null) {
+                preferGet = !first; // lembra o jeito que deu certo
+            }
         }
         if (r != null) {
             lastError = "";
+            lastNetwork = System.currentTimeMillis();
         }
         return r;
     }
 
     private static String[] request(String text, String dst, boolean post) {
         HttpURLConnection con = null;
+        boolean ok = false;
         try {
             String address = URL_GTX + URLEncoder.encode(dst, "UTF-8");
             if (!post) {
                 address += "&q=" + URLEncoder.encode(text, "UTF-8");
             }
             con = (HttpURLConnection) new URL(address).openConnection();
-            con.setConnectTimeout(2500);
-            con.setReadTimeout(3500);
+            con.setConnectTimeout(2000);
+            con.setReadTimeout(2500);
             con.setRequestProperty("User-Agent", BROWSER_UA);
             con.setRequestProperty("Accept", "*/*");
             if (post) {
@@ -204,7 +272,7 @@ final class Translator {
             while ((n = in.read(buf)) > 0) {
                 bos.write(buf, 0, n);
             }
-            in.close();
+            in.close(); // lido até o fim: a conexão fica aberta para a próxima tradução
             JSONArray root = new JSONArray(bos.toString("UTF-8"));
             StringBuilder sb = new StringBuilder();
             JSONArray parts = root.optJSONArray(0);
@@ -216,6 +284,7 @@ final class Translator {
                     }
                 }
             }
+            ok = true;
             return new String[]{sb.toString(), root.optString(2, "")};
         } catch (java.net.UnknownHostException e) {
             lastError = "sem internet ou o endereço do tradutor não foi encontrado";
@@ -227,7 +296,8 @@ final class Translator {
             lastError = e.getClass().getSimpleName() + (e.getMessage() != null ? ": " + e.getMessage() : "");
             return null;
         } finally {
-            if (con != null) {
+            // Só fecha a conexão quando deu erro; com sucesso ela é reaproveitada (bem mais rápido).
+            if (con != null && !ok) {
                 con.disconnect();
             }
         }

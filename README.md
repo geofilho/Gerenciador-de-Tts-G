@@ -31,8 +31,21 @@ Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para 
 
 ## Como funciona
 O app também é um motor de TTS. Quando ele é escolhido como motor padrão do
-sistema, todo texto do leitor de tela passa pelo dicionário e pelas regras de
-emojis e só então vai para o motor e a voz escolhidos no app.
+sistema, todo texto do leitor de tela passa por ele e, nesta ordem: é traduzido
+(se a tradução estiver ligada), passa pelo dicionário e pelas regras de
+emojis, números e pontuação, e só então vai para o motor e a voz escolhidos no
+app.
+
+- Antes de digitar a senha, depois de religar, o app fala com o motor reserva
+  (Samsung ou Google) e volta sozinho para a voz escolhida depois da senha.
+- Se o motor escolhido falhar, a fala sai pelo motor reserva.
+- O áudio começa a tocar enquanto o motor ainda está gerando.
+
+### Tradução de voz
+Online, pelo tradutor do Google. Texto que já está no idioma de destino não é
+enviado; traduções repetidas ficam guardadas; o leitor de tela não espera mais
+de 2,5 segundos nem fica preso quando você passa para outro item. Sem
+internet, lê o texto original.
 
 ## Gerar o APK
 - Android Studio: abrir a pasta e rodar `assembleRelease`.

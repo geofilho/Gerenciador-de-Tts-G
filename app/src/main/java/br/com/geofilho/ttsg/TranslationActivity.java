@@ -42,6 +42,9 @@ public class TranslationActivity extends Activity {
             @Override
             public void onCheckedChanged(CompoundButton b, boolean checked) {
                 prefs.edit().putBoolean("translate_on", checked).apply();
+                if (checked) {
+                    Translator.warm(TranslationActivity.this); // conexão pronta para a primeira tradução
+                }
             }
         });
 
@@ -135,7 +138,7 @@ public class TranslationActivity extends Activity {
             @Override
             public void run() {
                 Translator.lastError = "";
-                final String out = Translator.translate(text, src, dst, true);
+                final String out = Translator.translate(text, src, dst, true, null);
                 final String err = Translator.lastError;
                 runOnUiThread(new Runnable() {
                     @Override
