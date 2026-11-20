@@ -40,5 +40,10 @@
             android:id="@+id/btn_test"
             style="@style/Row"
             android:text="@string/translate_listen" />
+
+        <Button
+            android:id="@+id/btn_help"
+            style="@style/Row"
+            android:text="@string/audio_help_button" />
     </LinearLayout>
 </ScrollView>

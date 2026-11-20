@@ -71,6 +71,17 @@ public class TranslationActivity extends Activity {
                 ready = status == TextToSpeech.SUCCESS;
             }
         }, getPackageName());
+        findViewById(R.id.btn_help).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(TranslationActivity.this)
+                        .setTitle(R.string.audio_help_title)
+                        .setMessage(R.string.translate_help_text)
+                        .setPositiveButton("Fechar", null)
+                        .show();
+            }
+        });
+
         final EditText edit = findViewById(R.id.edit_test);
         findViewById(R.id.btn_test).setOnClickListener(new View.OnClickListener() {
             @Override
