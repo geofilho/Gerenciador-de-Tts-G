@@ -47,4 +47,7 @@ Se o seu aparelho tiver o tradutor do próprio Android, ele é usado primeiro, s
     <string name="system_download">Baixar idiomas do tradutor do Android</string>
     <string name="email_explain">Opcional. Com um e-mail, o tradutor reserva MyMemory traduz até cerca de 50 mil letras por dia, em vez de 5 mil. Pode ser qualquer e-mail seu, desde que esteja ativo. Não precisa criar conta nem confirmar o e-mail: é só digitar e salvar. O e-mail é enviado ao MyMemory junto com cada pedido de tradução.</string>
     <string name="email_hint">Seu e-mail</string>
+    <string name="shortcut_dictionary">Dicionário</string>
+    <string name="shortcut_audio_short">Saída de áudio</string>
+    <string name="shortcut_translation_short">Tradução</string>
 </resources>

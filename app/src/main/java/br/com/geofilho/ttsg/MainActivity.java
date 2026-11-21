@@ -81,6 +81,8 @@ public class MainActivity extends Activity {
             }
         });
 
+        handleShortcut(getIntent());
+
         updater = new Updater(this);
         Button btnUpdate = findViewById(R.id.btn_update);
         try {
@@ -116,6 +118,21 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         voice.shutdown();
         super.onDestroy();
+    }
+
+    /** Atalho "Dicionário" do ícone: abre a tela principal já com o menu do dicionário. */
+    private void handleShortcut(Intent intent) {
+        if (intent != null && "br.com.geofilho.ttsg.DICIONARIO".equals(intent.getAction())) {
+            intent.setAction(Intent.ACTION_MAIN); // não reabre o menu ao girar a tela
+            showDictionaryMenu();
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleShortcut(intent);
     }
 
     /** Menu "Dicionário": Adicionar palavra ou Gerenciar dicionário. */

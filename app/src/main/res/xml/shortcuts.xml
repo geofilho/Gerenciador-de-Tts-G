@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Atalhos ao manter pressionado o ícone do app (Android 7.1+). Em cada um, a tela principal fica
+     por baixo, para o botão Voltar levar até ela. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="dicionario"
+        android:enabled="true"
+        android:icon="@drawable/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_dictionary"
+        android:shortcutLongLabel="@string/shortcut_dictionary">
+        <intent
+            android:action="br.com.geofilho.ttsg.DICIONARIO"
+            android:targetPackage="br.com.geofilho.ttsg"
+            android:targetClass="br.com.geofilho.ttsg.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="saida_audio"
+        android:enabled="true"
+        android:icon="@drawable/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_audio_short"
+        android:shortcutLongLabel="@string/title_audio">
+        <intent
+            android:action="android.intent.action.MAIN"
+            android:targetPackage="br.com.geofilho.ttsg"
+            android:targetClass="br.com.geofilho.ttsg.MainActivity" />
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="br.com.geofilho.ttsg"
+            android:targetClass="br.com.geofilho.ttsg.AudioActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="traducao"
+        android:enabled="true"
+        android:icon="@drawable/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_translation_short"
+        android:shortcutLongLabel="@string/title_translation">
+        <intent
+            android:action="android.intent.action.MAIN"
+            android:targetPackage="br.com.geofilho.ttsg"
+            android:targetClass="br.com.geofilho.ttsg.MainActivity" />
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="br.com.geofilho.ttsg"
+            android:targetClass="br.com.geofilho.ttsg.TranslationActivity" />
+    </shortcut>
+</shortcuts>
