@@ -1,6 +1,6 @@
 {
-  "versionCode": 54,
-  "versionName": "1.53",
+  "versionCode": 57,
+  "versionName": "1.56",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Os widgets de Tradução e de Saída de áudio agora são chaves: cada toque liga ou desliga a função e fala o novo estado, por exemplo Tradução ativada ou Tradução desativada.\n- Os botões de Tradução e de Saída de áudio nas configurações rápidas também ligam e desligam com um toque, até com a tela bloqueada.\n- Widgets e botões mostram o estado escrito e se atualizam sozinhos quando a opção muda pelo aplicativo, pelo MacroDroid ou quando o Bluetooth desconecta.\n- Texto de apresentação atualizado."
+  "novidades": "- Dicionário de tradução dentro do aplicativo: cerca de 1.400 palavras e frases comuns de aplicativos, do inglês para o português, traduzidas na hora e sem internet.\n- Traduções feitas pela internet ficam guardadas no celular até 20 mil frases. As que você ouve com frequência nunca saem; ao chegar no limite, sai só a que você não ouve há mais tempo.\n- Textos de ajuda e de apresentação atualizados."
 }
