@@ -64,6 +64,7 @@ public class AudioActivity extends Activity {
                     return;
                 }
                 prefs.edit().putBoolean("keep_on_phone", checked).apply();
+                Toggles.refresh(AudioActivity.this);
                 updateStatus();
             }
         });
@@ -119,6 +120,7 @@ public class AudioActivity extends Activity {
                     public void run() {
                         if (Prefs.keepOnPhone(prefs) && PhonePlayer.bluetoothOutputName(AudioActivity.this) == null) {
                             prefs.edit().putBoolean("keep_on_phone", false).apply();
+                            Toggles.refresh(AudioActivity.this);
                         }
                         updateStatus();
                     }

@@ -24,6 +24,8 @@ import java.util.List;
  */
 public class TranslationActivity extends Activity {
 
+    private Switch sw;
+
     private SharedPreferences prefs;
     private Button btnSource;
     private Button btnTarget;
@@ -40,12 +42,13 @@ public class TranslationActivity extends Activity {
         setContentView(R.layout.activity_translation);
         prefs = Prefs.get(this);
 
-        Switch sw = findViewById(R.id.switch_translate);
+        sw = findViewById(R.id.switch_translate);
         sw.setChecked(Prefs.translateOn(prefs));
         sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton b, boolean checked) {
                 prefs.edit().putBoolean("translate_on", checked).apply();
+                Toggles.refresh(TranslationActivity.this);
                 if (checked) {
                     Translator.warm(TranslationActivity.this); // conexão pronta para a primeira tradução
                 }
@@ -172,7 +175,10 @@ public class TranslationActivity extends Activity {
                     public void onClick(DialogInterface d, int which) {
                         prefs.edit().putString(source ? "translate_src" : "translate_dst", codes.get(which)).apply();
                         refresh();
-                        checkSystemTranslator();
+                        if (sw != null && sw.isChecked() != Prefs.translateOn(prefs)) {
+            sw.setChecked(Prefs.translateOn(prefs)); // pode ter mudado pelo widget ou pela barra
+        }
+        checkSystemTranslator();
                         d.dismiss();
                     }
                 })

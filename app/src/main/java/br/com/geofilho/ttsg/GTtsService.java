@@ -79,6 +79,7 @@ public class GTtsService extends TextToSpeechService {
         SharedPreferences p = Prefs.get(this);
         if (Prefs.keepOnPhone(p) && PhonePlayer.bluetoothOutputName(this) == null) {
             p.edit().putBoolean("keep_on_phone", false).apply();
+            Toggles.refresh(this);
             Diagnostics.note(this, "Bluetooth desconectado: a opção Manter o áudio do leitor de tela no telefone "
                     + "foi desativada.");
         }

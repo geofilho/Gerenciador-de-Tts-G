@@ -54,24 +54,13 @@ public class ActionActivity extends Activity {
             d.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(d);
         } else if (ACTION_TRANSLATE_ON.equals(action)) {
-            p.edit().putBoolean("translate_on", true).apply();
-            Translator.warm(this);
-            say("Tradução ligada.");
+            Toggles.setTranslation(this, true);
         } else if (ACTION_TRANSLATE_OFF.equals(action)) {
-            p.edit().putBoolean("translate_on", false).apply();
-            say("Tradução desligada.");
+            Toggles.setTranslation(this, false);
         } else if (ACTION_AUDIO_ON.equals(action)) {
-            if (android.os.Build.VERSION.SDK_INT < 23) {
-                say("A saída de áudio precisa do Android 6 ou mais novo.");
-            } else if (PhonePlayer.bluetoothOutputName(this) == null) {
-                say("Saída de áudio não ligada: nenhum dispositivo Bluetooth de áudio conectado.");
-            } else {
-                p.edit().putBoolean("keep_on_phone", true).apply();
-                say("Áudio do leitor de tela no telefone ligado.");
-            }
+            Toggles.setAudio(this, true);
         } else if (ACTION_AUDIO_OFF.equals(action)) {
-            p.edit().putBoolean("keep_on_phone", false).apply();
-            say("Áudio do leitor de tela no telefone desligado.");
+            Toggles.setAudio(this, false);
         }
         finish();
     }

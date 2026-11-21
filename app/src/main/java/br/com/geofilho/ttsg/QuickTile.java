@@ -8,28 +8,55 @@ import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 
 /**
- * Botões das configurações rápidas (barra que se abre puxando a tela de cima):
- * Dicionário, Saída de áudio e Tradução. Como os widgets, abrem a função numa
- * tarefa própria; ao sair, volta para onde a pessoa estava.
+ * Botões das configurações rápidas (barra que se abre puxando a tela de cima).
+ * Dicionário: abre o menu do dicionário numa tarefa própria.
+ * Tradução e Saída de áudio: são chaves; cada toque liga ou desliga, com aviso falado.
  */
 @TargetApi(24)
 public abstract class QuickTile extends TileService {
 
-    abstract Class<?> target();
-
     abstract int requestCode();
+
+    /** Tela que o botão abre; null quando o botão é uma chave. */
+    Class<?> target() {
+        return null;
+    }
+
+    boolean isOn() {
+        return false;
+    }
+
+    void toggle() {
+    }
 
     @Override
     public void onStartListening() {
         Tile t = getQsTile();
-        if (t != null) {
-            t.setState(Tile.STATE_INACTIVE); // é um botão que abre, não uma chave
-            t.updateTile();
+        if (t == null) {
+            return;
         }
+        if (target() == null) {
+            boolean on = isOn();
+            t.setState(on ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE);
+            if (Build.VERSION.SDK_INT >= 29) {
+                t.setSubtitle(Toggles.state(on)); // estado escrito, não só pela cor
+            }
+            if (Build.VERSION.SDK_INT >= 30) {
+                t.setStateDescription(Toggles.state(on));
+            }
+        } else {
+            t.setState(Tile.STATE_INACTIVE); // é um botão que abre, não uma chave
+        }
+        t.updateTile();
     }
 
     @Override
     public void onClick() {
+        if (target() == null) {
+            toggle(); // funciona também com a tela bloqueada
+            onStartListening();
+            return;
+        }
         if (isLocked()) {
             // Com a tela bloqueada, pede o desbloqueio e depois abre.
             unlockAndRun(new Runnable() {
@@ -74,11 +101,16 @@ public abstract class QuickTile extends TileService {
         }
     }
 
-    /** Configuração rápida "Saída de áudio do leitor de tela". */
+    /** Configuração rápida "Saída de áudio": chave. */
     public static class Audio extends QuickTile {
         @Override
-        Class<?> target() {
-            return AudioActivity.class;
+        boolean isOn() {
+            return Toggles.audioOn(this);
+        }
+
+        @Override
+        void toggle() {
+            Toggles.toggleAudio(this);
         }
 
         @Override
@@ -87,11 +119,16 @@ public abstract class QuickTile extends TileService {
         }
     }
 
-    /** Configuração rápida "Tradução de voz TTS". */
+    /** Configuração rápida "Tradução": chave. */
     public static class Translation extends QuickTile {
         @Override
-        Class<?> target() {
-            return TranslationActivity.class;
+        boolean isOn() {
+            return Toggles.translationOn(this);
+        }
+
+        @Override
+        void toggle() {
+            Toggles.toggleTranslation(this);
         }
 
         @Override
