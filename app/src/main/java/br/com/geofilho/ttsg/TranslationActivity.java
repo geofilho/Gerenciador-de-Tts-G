@@ -28,6 +28,7 @@ public class TranslationActivity extends Activity {
     private Button btnSource;
     private Button btnTarget;
     private Button btnClear;
+    private Button btnDeepL;
     private TextToSpeech tts;
     private boolean ready;
 
@@ -46,6 +47,15 @@ public class TranslationActivity extends Activity {
                 if (checked) {
                     Translator.warm(TranslationActivity.this); // conexão pronta para a primeira tradução
                 }
+            }
+        });
+
+        btnDeepL = findViewById(R.id.btn_deepl);
+        showDeepL();
+        btnDeepL.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deepLDialog();
             }
         });
 
@@ -149,6 +159,76 @@ public class TranslationActivity extends Activity {
                 .show();
     }
 
+    private void showDeepL() {
+        btnDeepL.setText(Prefs.deepLKey(prefs).isEmpty() ? "Chave do DeepL: não configurada"
+                : "Chave do DeepL: configurada");
+    }
+
+    /** Janela da chave do DeepL: explicação, botão para o site, campo para colar e Salvar. */
+    private void deepLDialog() {
+        View form = getLayoutInflater().inflate(R.layout.dialog_deepl, null);
+        final EditText key = form.findViewById(R.id.edit_deepl_key);
+        key.setText(Prefs.deepLKey(prefs));
+        form.findViewById(R.id.btn_deepl_site).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                            android.net.Uri.parse("https://www.deepl.com/pro-api")));
+                } catch (Exception e) {
+                    Toast.makeText(TranslationActivity.this, "Nenhum navegador encontrado.", Toast.LENGTH_SHORT)
+                            .show();
+                }
+            }
+        });
+        AlertDialog.Builder b = new AlertDialog.Builder(this)
+                .setTitle("Chave do DeepL")
+                .setView(form)
+                .setPositiveButton("Salvar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface d, int which) {
+                        saveDeepL(key.getText().toString().trim());
+                    }
+                })
+                .setNegativeButton("Cancelar", null);
+        if (!Prefs.deepLKey(prefs).isEmpty()) {
+            b.setNeutralButton("Apagar chave", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface d, int which) {
+                    saveDeepL("");
+                }
+            });
+        }
+        b.show();
+    }
+
+    private void saveDeepL(final String key) {
+        prefs.edit().putString("deepl_key", key).apply();
+        Translator.deepLKey = key;
+        showDeepL();
+        if (key.isEmpty()) {
+            Toast.makeText(this, "Chave do DeepL apagada.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Toast.makeText(this, "Chave salva. Testando…", Toast.LENGTH_SHORT).show();
+        final String dst = Prefs.translateTarget(prefs);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final String err = Translator.checkDeepLKey(key, dst);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(TranslationActivity.this, err.isEmpty()
+                                        ? "Chave do DeepL funcionando."
+                                        : "A chave do DeepL não funcionou: " + err + ".",
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        }).start();
+    }
+
     private void showSavedCount() {
         btnClear.setText("Apagar traduções guardadas (" + Translator.savedCount() + ")");
     }
@@ -196,6 +276,7 @@ public class TranslationActivity extends Activity {
             @Override
             public void run() {
                 Translator.lastError = "";
+                Translator.deepLKey = Prefs.deepLKey(prefs);
                 final String out = Translator.translate(text, src, dst, true, null);
                 final String err = Translator.lastError;
                 runOnUiThread(new Runnable() {

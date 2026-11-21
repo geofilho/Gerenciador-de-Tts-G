@@ -157,7 +157,9 @@ final class Diagnostics {
         sb.append("Tradução automática: ").append(Prefs.translateOn(p) ? "ativada" : "desativada")
                 .append(", origem ").append(Translator.displayName(Prefs.translateSource(p)))
                 .append(", destino ").append(Translator.displayName(Prefs.translateTarget(p)))
-                .append(", traduções guardadas ").append(Translator.savedCount()).append('\n');
+                .append(", traduções guardadas ").append(Translator.savedCount())
+                .append(", chave do DeepL ").append(Prefs.deepLKey(p).isEmpty() ? "não configurada" : "configurada")
+                .append('\n');
         sb.append("Manter o áudio do leitor de tela no telefone: ").append(Prefs.keepOnPhone(p) ? "sim" : "não")
                 .append('\n');
         sb.append("Palavras no dicionário: ").append(Dictionary.get(c).list().size()).append('\n');
