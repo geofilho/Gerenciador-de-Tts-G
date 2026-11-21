@@ -1,6 +1,6 @@
 {
-  "versionCode": 57,
-  "versionName": "1.56",
+  "versionCode": 58,
+  "versionName": "1.57",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Dicionário de tradução dentro do aplicativo: cerca de 1.400 palavras e frases comuns de aplicativos, do inglês para o português, traduzidas na hora e sem internet.\n- Traduções feitas pela internet ficam guardadas no celular até 20 mil frases. As que você ouve com frequência nunca saem; ao chegar no limite, sai só a que você não ouve há mais tempo.\n- Textos de ajuda e de apresentação atualizados."
+  "novidades": "- Primeira fala mais rápida: o Gerenciador já se conecta à voz escolhida assim que o serviço de voz abre, depois de religar o celular ou reiniciar o leitor de tela.\n- Com a Saída de áudio do leitor de tela ligada, o canal do alto-falante é reaproveitado entre as falas, e cada fala começa mais cedo na navegação rápida.\n- Menos trabalho com o áudio e com as configurações a cada fala, para uma resposta mais leve com o leitor de tela."
 }
