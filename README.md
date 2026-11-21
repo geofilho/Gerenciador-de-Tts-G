@@ -32,9 +32,11 @@ Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para 
 ## Acesso rápido
 - Atalhos ao manter o ícone pressionado (também nas rotinas da Samsung):
   Dicionário, Saída de áudio e Tradução.
-- Widgets da tela inicial para as mesmas três funções (ao sair, volta para a
-  tela inicial).
-- Botões nas configurações rápidas do Android.
+- Widgets da tela inicial para as mesmas três funções. Os de Tradução e Saída
+  de áudio são chaves: cada toque liga ou desliga e fala o novo estado. O do
+  Dicionário abre o menu (ao sair, volta para a tela inicial).
+- Botões nas configurações rápidas do Android, também com Tradução e Saída de
+  áudio como chaves de liga e desliga.
 - MacroDroid: "Iniciar atividade de aplicativo" com as entradas Dicionario,
   Ligar_traducao, Desligar_traducao, Ligar_saida_de_audio e
   Desligar_saida_de_audio; ou "Iniciar atalho" > Ações do Gerenciador de TTS G.

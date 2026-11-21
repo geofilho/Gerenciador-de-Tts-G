@@ -55,8 +55,8 @@ ACESSO RÁPIDO ÀS FUNÇÕES
 
 O Dicionário, a Saída de áudio do leitor de tela e a Tradução de voz TTS podem ser abertos sem passar pela tela principal:
 - Atalhos do ícone: mantenha pressionado o ícone do Gerenciador, na gaveta de aplicativos ou na tela inicial, e escolha Dicionário, Saída de áudio ou Tradução. Os atalhos também aparecem nas rotinas da Samsung.
-- Widgets: na tela inicial, adicione o widget da função que você mais usa. Ao sair da função, você volta direto para a tela inicial.
-- Configurações rápidas: na barra que se abre puxando a tela de cima, adicione os botões Dicionário, Saída de áudio e Tradução.
+- Widgets: na tela inicial, adicione os widgets Dicionário, Saída de áudio e Tradução. Os widgets de Tradução e de Saída de áudio são chaves: cada toque liga ou desliga a função e fala o novo estado, por exemplo "Tradução ativada". O widget do Dicionário abre o menu, e ao sair você volta direto para a tela inicial.
+- Configurações rápidas: na barra que se abre puxando a tela de cima, adicione os botões Dicionário, Saída de áudio e Tradução. Os botões de Tradução e de Saída de áudio também ligam e desligam com um toque, até com a tela bloqueada.
 - MacroDroid: na ação Iniciar atividade de aplicativo, escolha o Gerenciador de TTS G e uma destas entradas: Dicionario, Ligar_traducao, Desligar_traducao, Ligar_saida_de_audio ou Desligar_saida_de_audio. A ação acontece direto e é confirmada com um aviso falado. Também dá para usar a ação Iniciar atalho, escolhendo Ações do Gerenciador de TTS G.
 
 IMPORTANTE: ATIVAR O GERENCIADOR COMO MOTOR DE VOZ
