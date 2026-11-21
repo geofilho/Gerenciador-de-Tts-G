@@ -136,7 +136,7 @@ final class EngineClient {
      * Garante o motor pronto. Não trava a fala: se o motor demora ou falhou,
      * retorna false (o serviço usa o motor reserva) e tenta de novo depois.
      */
-    boolean ensure(final String wantPkg, StopFlag stop) {
+    synchronized boolean ensure(final String wantPkg, StopFlag stop) {
         if (wantPkg.isEmpty()) {
             return false;
         }
@@ -216,6 +216,41 @@ final class EngineClient {
     }
 
     /** Carrega a lista de vozes; se veio vazia ou falta a voz pedida, tenta de novo (no máximo a cada 3 s). */
+    /**
+     * Já escolhe a voz no motor, para ele carregar a voz antes da primeira fala
+     * (usado quando o serviço abre, para a primeira fala do leitor de tela sair rápido).
+     */
+    synchronized void prepareVoice(String voiceName) {
+        TextToSpeech t = tts;
+        if (t != null) {
+            applyVoice(t, voiceName);
+        }
+    }
+
+    private synchronized void applyVoice(TextToSpeech t, String voiceName) {
+        if (voiceName != null && !voiceName.isEmpty() && !voiceName.equals(currentVoice)) {
+            Voice v = voices.get(voiceName);
+            if (v == null) {
+                loadVoices(true);
+                v = voices.get(voiceName);
+            }
+            if (v != null) {
+                try {
+                    t.setVoice(v);
+                    currentVoice = voiceName;
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        if ((voiceName == null || voiceName.isEmpty()) && locale != null && !localeApplied) {
+            try {
+                t.setLanguage(locale);
+            } catch (Exception ignored) {
+            }
+            localeApplied = true;
+        }
+    }
+
     private void loadVoices(boolean force) {
         if (!voices.isEmpty() && !force) {
             return;
@@ -240,6 +275,9 @@ final class EngineClient {
     /** Recebe o áudio em pedaços, já em PCM 16 bits mono. Retorna false para interromper. */
     interface AudioSink {
         boolean write(short[] mono, int sampleRate);
+
+        /** Áudio já em 16 bits mono: pode seguir direto, sem conversão. */
+        boolean writePcm16(byte[] data, int len, int sampleRate);
     }
 
     /** Resultado de {@link #synth}. */
@@ -268,28 +306,7 @@ final class EngineClient {
         if (t == null) {
             return FAIL;
         }
-        if (voiceName != null && !voiceName.isEmpty() && !voiceName.equals(currentVoice)) {
-            Voice v = voices.get(voiceName);
-            if (v == null) {
-                // Logo depois de religar, o motor pode ainda não ter informado as vozes.
-                loadVoices(true);
-                v = voices.get(voiceName);
-            }
-            if (v != null) {
-                try {
-                    t.setVoice(v);
-                    currentVoice = voiceName;
-                } catch (Exception ignored) {
-                }
-            }
-        }
-        if ((voiceName == null || voiceName.isEmpty()) && locale != null && !localeApplied) {
-            try {
-                t.setLanguage(locale);
-            } catch (Exception ignored) {
-            }
-            localeApplied = true;
-        }
+        applyVoice(t, voiceName);
         t.setSpeechRate(rate);
         t.setPitch(pitch);
         file.delete();
@@ -338,6 +355,17 @@ final class EngineClient {
                     int frame = bytesPerSample(encoding) * channels;
                     int usable = data.length - data.length % frame;
                     carry = usable < data.length ? java.util.Arrays.copyOfRange(data, usable, data.length) : new byte[0];
+                    if (encoding == AudioFormat.ENCODING_PCM_16BIT && channels == 1) {
+                        // Formato mais comum: segue direto, sem converter.
+                        if (usable > 0) {
+                            streamed = true;
+                            if (!sink.writePcm16(data, usable, sampleRate)) {
+                                t.stop();
+                                return ABORTED;
+                            }
+                        }
+                        continue;
+                    }
                     short[] mono = toMono(data, usable, encoding, channels);
                     if (mono == null) {
                         continue;

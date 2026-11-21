@@ -28,16 +28,24 @@ final class Prefs {
      * digitar a senha depois de religar (assim o motor já fala na tela de bloqueio).
      */
     static Context storage(Context c) {
+        Context cached = storageCtx;
+        if (cached != null) {
+            return cached; // criado uma vez: cada fala lê as configurações várias vezes
+        }
         Context app = c.getApplicationContext() != null ? c.getApplicationContext() : c;
         if (Build.VERSION.SDK_INT < 24) {
+            storageCtx = app;
             return app;
         }
         Context de = app.createDeviceProtectedStorageContext();
         if (!migrated) {
             migrate(app, de);
         }
+        storageCtx = de;
         return de;
     }
+
+    private static volatile Context storageCtx;
 
     /** Leva as configurações e o dicionário das versões antigas para o armazenamento novo (uma vez). */
     @TargetApi(24)

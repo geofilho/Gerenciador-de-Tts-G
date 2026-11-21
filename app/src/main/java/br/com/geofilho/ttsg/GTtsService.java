@@ -129,6 +129,7 @@ public class GTtsService extends TextToSpeechService {
         mainEngine = new EngineClient(this, "principal");
         emojiEngine = new EngineClient(this, "emoji");
         fallbackEngine = new EngineClient(this, "reserva");
+        warmUp();
         if (Build.VERSION.SDK_INT >= 24) {
             try {
                 registerReceiver(unlockReceiver, new IntentFilter(Intent.ACTION_USER_UNLOCKED));
@@ -138,8 +139,35 @@ public class GTtsService extends TextToSpeechService {
         super.onCreate();
     }
 
+    /**
+     * Conecta já ao motor e à voz escolhidos, em segundo plano, para a primeira fala do leitor
+     * de tela não esperar essa conexão (depois de religar ou quando o Android reabre o serviço).
+     */
+    private void warmUp() {
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    SharedPreferences p = Prefs.get(GTtsService.this);
+                    String pkg = Prefs.engine(p, Prefs.MAIN);
+                    if (pkg.isEmpty()) {
+                        pkg = EngineClient.firstEngine(GTtsService.this);
+                    }
+                    if (mainEngine.ensure(pkg, null)) {
+                        mainEngine.prepareVoice(Prefs.voice(p, Prefs.MAIN));
+                    }
+                    Dictionary.get(GTtsService.this); // carrega o dicionário de pronúncia também
+                } catch (Exception ignored) {
+                }
+            }
+        }, "preparar-motor");
+        t.setDaemon(true);
+        t.start();
+    }
+
     @Override
     public void onDestroy() {
+        releaseIdlePlayer();
         if (router != null) {
             router.stop();
         }
@@ -304,6 +332,9 @@ public class GTtsService extends TextToSpeechService {
                 turnOffKeepOnPhoneIfNoBluetooth();
             }
         }
+        if (!toPhone) {
+            releaseIdlePlayer(); // a fala voltou para a saída normal: fecha o canal guardado
+        }
         Output out = new Output(cb, toPhone);
         speaking:
         for (TextProcessor.Segment seg : segments) {
@@ -371,10 +402,40 @@ public class GTtsService extends TextToSpeechService {
                     return false;
                 }
                 if (toPhone) {
-                    phonePlayer = PhonePlayer.open(GTtsService.this, outRate);
+                    phonePlayer = takePlayer(outRate);
                 }
             }
-            byte[] bytes = Pcm.toBytes(Pcm.resample(mono, rate, outRate), gain);
+            return send(Pcm.toBytes(Pcm.resample(mono, rate, outRate), gain));
+        }
+
+        @Override
+        public boolean writePcm16(byte[] data, int len, int rate) {
+            if (stopped) {
+                return false;
+            }
+            if ((outRate != 0 && rate != outRate) || gain < 0.999f) {
+                // Precisa ajustar volume ou taxa: converte e segue pelo caminho normal.
+                short[] mono = new short[len / 2];
+                for (int i = 0; i < mono.length; i++) {
+                    mono[i] = (short) ((data[2 * i] & 0xFF) | (data[2 * i + 1] << 8));
+                }
+                return write(mono, rate);
+            }
+            if (outRate == 0) {
+                outRate = rate;
+                if (cb.start(outRate, AudioFormat.ENCODING_PCM_16BIT, 1) != TextToSpeech.SUCCESS) {
+                    failed = true;
+                    return false;
+                }
+                if (toPhone) {
+                    phonePlayer = takePlayer(outRate);
+                }
+            }
+            // Já está no formato final: segue direto, sem copiar nem converter.
+            return send(len == data.length ? data : java.util.Arrays.copyOf(data, len));
+        }
+
+        private boolean send(byte[] bytes) {
             PhonePlayer pp = phonePlayer;
             boolean ok = pp != null ? pp.write(bytes) : GTtsService.this.write(cb, bytes);
             if (!ok) {
@@ -389,10 +450,65 @@ public class GTtsService extends TextToSpeechService {
         phonePlayer = null;
         if (pp != null) {
             if (waitEnd) {
-                pp.finish();
+                pp.waitEnd();
+                parkPlayer(pp); // guarda o canal para a próxima fala
             } else {
                 pp.release();
             }
+        }
+    }
+
+    // ----- canal do alto-falante guardado entre as falas -----
+
+    private final Object playerLock = new Object();
+    private PhonePlayer idlePlayer;
+    private static final long KEEP_PLAYER_MS = 8000;
+    private final Runnable releaseIdle = new Runnable() {
+        @Override
+        public void run() {
+            releaseIdlePlayer();
+        }
+    };
+
+    /** Canal guardado da fala anterior, se servir; senão abre um novo. */
+    private PhonePlayer takePlayer(int rate) {
+        PhonePlayer old;
+        synchronized (playerLock) {
+            old = idlePlayer;
+            idlePlayer = null;
+        }
+        handler.removeCallbacks(releaseIdle);
+        if (old != null) {
+            if (old.reuse(rate)) {
+                return old;
+            }
+            old.release();
+        }
+        return PhonePlayer.open(this, rate);
+    }
+
+    private void parkPlayer(PhonePlayer pp) {
+        pp.park();
+        PhonePlayer old;
+        synchronized (playerLock) {
+            old = idlePlayer;
+            idlePlayer = pp;
+        }
+        if (old != null && old != pp) {
+            old.release();
+        }
+        handler.removeCallbacks(releaseIdle);
+        handler.postDelayed(releaseIdle, KEEP_PLAYER_MS); // sem falas por 8 s: fecha o canal
+    }
+
+    private void releaseIdlePlayer() {
+        PhonePlayer old;
+        synchronized (playerLock) {
+            old = idlePlayer;
+            idlePlayer = null;
+        }
+        if (old != null) {
+            old.release();
         }
     }
 

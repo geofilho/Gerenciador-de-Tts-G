@@ -17,11 +17,42 @@ import android.os.Build;
 final class PhonePlayer {
 
     private final AudioTrack track;
+    private final int rate;
     private long framesWritten;
     private volatile boolean stopped;
 
-    private PhonePlayer(AudioTrack track) {
+    private PhonePlayer(AudioTrack track, int rate) {
         this.track = track;
+        this.rate = rate;
+    }
+
+    /**
+     * Reaproveita este canal na próxima fala (abrir um canal novo a cada fala atrasa o som).
+     * Retorna false se a taxa de áudio for outra ou o canal não servir mais.
+     */
+    boolean reuse(int sampleRate) {
+        if (sampleRate != rate) {
+            return false;
+        }
+        try {
+            if (track.getState() != AudioTrack.STATE_INITIALIZED) {
+                return false;
+            }
+            stopped = false;
+            framesWritten = track.getPlaybackHeadPosition() & 0xFFFFFFFFL; // conta a partir daqui
+            track.play();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Pausa o canal enquanto espera a próxima fala (não gasta bateria tocando silêncio). */
+    void park() {
+        try {
+            track.pause();
+        } catch (Exception ignored) {
+        }
     }
 
     /** Há um fone, caixa ou som de carro Bluetooth conectado como saída de áudio? */
@@ -83,7 +114,7 @@ final class PhonePlayer {
                     .build();
             t.setPreferredDevice(spk);
             t.play();
-            return new PhonePlayer(t);
+            return new PhonePlayer(t, sampleRate);
         } catch (Exception e) {
             return null;
         }
@@ -108,6 +139,12 @@ final class PhonePlayer {
 
     /** Espera terminar de tocar o que foi escrito, para a próxima fala não atropelar. */
     void finish() {
+        waitEnd();
+        release();
+    }
+
+    /** Espera terminar de tocar, sem fechar o canal. */
+    void waitEnd() {
         long end = System.currentTimeMillis() + 15000;
         try {
             while (!stopped && System.currentTimeMillis() < end) {
@@ -120,7 +157,6 @@ final class PhonePlayer {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        release();
     }
 
     void stop() {
