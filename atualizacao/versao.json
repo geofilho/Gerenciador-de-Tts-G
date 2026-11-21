@@ -1,6 +1,6 @@
 {
-  "versionCode": 37,
-  "versionName": "1.36",
+  "versionCode": 38,
+  "versionName": "1.37",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Novo botão Compartilhar este aplicativo com amigos, na página Diagnóstico: envia o texto de apresentação com o link para baixar."
+  "novidades": "- Mais acessível para baixa visão: dica dos campos com mais contraste, botões sem letras todas maiúsculas e mais espaço entre as linhas.\n- O app segue o tamanho da fonte, o tema escuro e as opções de acessibilidade do sistema."
 }
