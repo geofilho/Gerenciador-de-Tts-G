@@ -36,8 +36,6 @@ import java.util.concurrent.TimeoutException;
 final class Translator {
 
     private static final int MAX_TEXT = 4500;
-    /** Traduções guardadas (memória e arquivo): as mais recentes. */
-    private static final int CACHE_SIZE = 20000;
     private static final long BACKOFF_MS = 15000;
     private static final String SAME = "\u0000";
 
@@ -48,12 +46,11 @@ final class Translator {
             "ro", "hu", "ca", "bg", "hr", "sk", "sr", "fa", "ms", "tl", "sw", "af", "la", "eo"
     };
 
-    private static final Map<String, String> CACHE = new LinkedHashMap<String, String>(64, 0.75f, true) {
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<String, String> e) {
-            return size() > CACHE_SIZE;
-        }
-    };
+    /**
+     * Traduções guardadas (memória e arquivo traducoes.txt). Ficam para sempre: nenhuma é
+     * descartada; só o botão Apagar traduções guardadas limpa.
+     */
+    private static final Map<String, String> CACHE = new LinkedHashMap<>(1024);
     private static volatile long failedUntil;
 
     private Translator() {
@@ -333,8 +330,12 @@ final class Translator {
                     return;
                 }
                 try {
-                    if (linesInFile >= CACHE_SIZE * 2) {
-                        compact(f); // arquivo cresceu demais: regrava só as mais recentes
+                    int size;
+                    synchronized (CACHE) {
+                        size = CACHE.size();
+                    }
+                    if (linesInFile > size * 2 + 500) {
+                        compact(f); // linhas repetidas: regrava o arquivo sem repetição (nada é perdido)
                     }
                     java.io.Writer w = new java.io.OutputStreamWriter(new java.io.FileOutputStream(f, true), "UTF-8");
                     w.write(escape(key) + "\t" + escape(value) + "\n");
