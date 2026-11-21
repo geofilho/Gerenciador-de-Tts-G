@@ -28,6 +28,8 @@ public class TranslationActivity extends Activity {
     private Button btnSource;
     private Button btnTarget;
     private Button btnClear;
+    private android.widget.TextView txtSystem;
+    private Button btnSystemDownload;
     private TextToSpeech tts;
     private boolean ready;
 
@@ -73,6 +75,24 @@ public class TranslationActivity extends Activity {
             }
         }, getPackageName());
         Translator.init(this);
+        txtSystem = findViewById(R.id.txt_system);
+        btnSystemDownload = findViewById(R.id.btn_system_download);
+        btnSystemDownload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                android.app.PendingIntent pi = android.os.Build.VERSION.SDK_INT >= 31
+                        ? SystemTranslator.settingsIntent(TranslationActivity.this) : null;
+                try {
+                    if (pi == null) {
+                        throw new Exception();
+                    }
+                    pi.send();
+                } catch (Exception e) {
+                    Toast.makeText(TranslationActivity.this, "Este aparelho não tem tela para baixar idiomas do tradutor.",
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        });
         btnClear = findViewById(R.id.btn_clear_saved);
         showSavedCount();
         btnClear.setOnClickListener(new View.OnClickListener() {
@@ -142,6 +162,7 @@ public class TranslationActivity extends Activity {
                     public void onClick(DialogInterface d, int which) {
                         prefs.edit().putString(source ? "translate_src" : "translate_dst", codes.get(which)).apply();
                         refresh();
+                        checkSystemTranslator();
                         d.dismiss();
                     }
                 })
@@ -170,9 +191,35 @@ public class TranslationActivity extends Activity {
                 .show();
     }
 
+    /** Mostra se o tradutor do próprio Android existe neste aparelho (consulta em segundo plano). */
+    private void checkSystemTranslator() {
+        if (android.os.Build.VERSION.SDK_INT < 31) {
+            txtSystem.setText("Tradutor do Android: não disponível, precisa do Android 12 ou mais novo.");
+            return;
+        }
+        txtSystem.setText("Tradutor do Android: verificando…");
+        final String dst = Prefs.translateTarget(prefs);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                SystemTranslator.refresh(TranslationActivity.this, true);
+                final String st = SystemTranslator.status(TranslationActivity.this, dst);
+                final boolean dl = SystemTranslator.canDownload() && SystemTranslator.settingsIntent(TranslationActivity.this) != null;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        txtSystem.setText("Tradutor do Android: " + st + ".");
+                        btnSystemDownload.setVisibility(dl ? View.VISIBLE : View.GONE);
+                    }
+                });
+            }
+        }).start();
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
+        checkSystemTranslator();
         if (btnClear != null) {
             // O arquivo carrega em segundo plano: atualiza a contagem um pouco depois também.
             showSavedCount();
@@ -196,6 +243,7 @@ public class TranslationActivity extends Activity {
             @Override
             public void run() {
                 Translator.lastError = "";
+                Translator.lastProvider = "";
                 final String out = Translator.translate(text, src, dst, true, null);
                 final String err = Translator.lastError;
                 runOnUiThread(new Runnable() {
@@ -204,6 +252,9 @@ public class TranslationActivity extends Activity {
                         if (!err.isEmpty()) {
                             Toast.makeText(TranslationActivity.this, "Não foi possível traduzir agora. Motivo: "
                                     + err + ". Lendo o texto original.", Toast.LENGTH_LONG).show();
+                        } else if (!out.equals(text) && !Translator.lastProvider.isEmpty()) {
+                            Toast.makeText(TranslationActivity.this, "Traduzido por: "
+                                    + Translator.lastProvider + ".", Toast.LENGTH_SHORT).show();
                         }
                         if (tts != null) {
                             tts.speak(out, TextToSpeech.QUEUE_FLUSH, null, "traducao");

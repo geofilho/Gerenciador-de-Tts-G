@@ -24,6 +24,18 @@
             style="@style/Row" />
 
         <TextView
+            android:id="@+id/txt_system"
+            style="@style/Row"
+            android:accessibilityLiveRegion="polite"
+            android:focusable="true" />
+
+        <Button
+            android:id="@+id/btn_system_download"
+            style="@style/Row"
+            android:text="@string/system_download"
+            android:visibility="gone" />
+
+        <TextView
             style="@style/Row"
             android:focusable="true"
             android:text="@string/translate_note" />

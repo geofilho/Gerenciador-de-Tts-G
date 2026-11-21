@@ -153,6 +153,7 @@ final class Translator {
         synchronized (CACHE) {
             String hit = CACHE.get(key);
             if (hit != null) {
+                lastProvider = "tradução guardada no celular";
                 return SAME.equals(hit) ? text : hit;
             }
         }
@@ -251,6 +252,9 @@ final class Translator {
         }
     });
     private static volatile java.io.File file;
+    private static volatile Context appContext;
+    /** Quem fez a última tradução (para o teste da página). */
+    static volatile String lastProvider = "";
     private static int linesInFile;
 
     /** Carrega as traduções guardadas (uma vez, em segundo plano). */
@@ -263,11 +267,15 @@ final class Translator {
                 return;
             }
             file = new java.io.File(Prefs.storage(c).getFilesDir(), "traducoes.txt");
+            appContext = c.getApplicationContext();
         }
         DISK.submit(new Runnable() {
             @Override
             public void run() {
                 load();
+                if (android.os.Build.VERSION.SDK_INT >= 31) {
+                    SystemTranslator.refresh(appContext, false); // descobre se o Android traduz no aparelho
+                }
             }
         });
     }
@@ -464,6 +472,19 @@ final class Translator {
 
     /** Consulta o tradutor. Retorna {texto traduzido, idioma detectado} ou null. */
     private static String[] request(String text, String src, String dst) {
+        // 1º: tradutor do próprio Android, no aparelho (sem internet e sem limite), se existir.
+        Context ctx = appContext;
+        if (ctx != null && android.os.Build.VERSION.SDK_INT >= 31) {
+            String from = "auto".equals(src) ? guess(text) : src;
+            if (from != null) {
+                String sys = SystemTranslator.translate(ctx, text, from, dst, 1500);
+                if (sys != null && !sys.trim().isEmpty()) {
+                    lastError = "";
+                    lastProvider = "tradutor do Android, sem internet";
+                    return new String[]{sys, from};
+                }
+            }
+        }
         if (!pace()) {
             lastError = "muitas traduções seguidas; pausa de alguns segundos para o Google não bloquear o aparelho";
             return null;
@@ -484,6 +505,7 @@ final class Translator {
             String[] r = request(i, text, dst, post);
             if (r != null) {
                 restFor[i] = 0;
+                lastProvider = "tradutor do Google";
                 lastError = "";
                 lastNetwork = System.currentTimeMillis();
                 return r;
@@ -502,6 +524,7 @@ final class Translator {
         // Reserva: MyMemory, outro serviço, com limite separado (uso gratuito oficial, sem chave).
         String[] r = myMemory(text, src, dst);
         if (r != null) {
+            lastProvider = "tradutor reserva MyMemory";
             lastError = "";
             lastNetwork = System.currentTimeMillis();
             return r;

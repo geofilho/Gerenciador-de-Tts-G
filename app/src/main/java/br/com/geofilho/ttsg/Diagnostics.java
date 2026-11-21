@@ -158,6 +158,8 @@ final class Diagnostics {
                 .append(", origem ").append(Translator.displayName(Prefs.translateSource(p)))
                 .append(", destino ").append(Translator.displayName(Prefs.translateTarget(p)))
                 .append(", traduções guardadas ").append(Translator.savedCount()).append('\n');
+        sb.append("Tradutor do Android: ").append(Build.VERSION.SDK_INT >= 31
+                ? SystemTranslator.status(c, Prefs.translateTarget(p)) : "precisa do Android 12 ou mais novo").append('\n');
         sb.append("Manter o áudio do leitor de tela no telefone: ").append(Prefs.keepOnPhone(p) ? "sim" : "não")
                 .append('\n');
         sb.append("Palavras no dicionário: ").append(Dictionary.get(c).list().size()).append('\n');
