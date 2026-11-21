@@ -28,6 +28,7 @@ public class TranslationActivity extends Activity {
     private Button btnSource;
     private Button btnTarget;
     private Button btnClear;
+    private Button btnEmail;
     private android.widget.TextView txtSystem;
     private Button btnSystemDownload;
     private TextToSpeech tts;
@@ -48,6 +49,15 @@ public class TranslationActivity extends Activity {
                 if (checked) {
                     Translator.warm(TranslationActivity.this); // conexão pronta para a primeira tradução
                 }
+            }
+        });
+
+        btnEmail = findViewById(R.id.btn_email);
+        showEmail();
+        btnEmail.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                emailDialog();
             }
         });
 
@@ -170,6 +180,51 @@ public class TranslationActivity extends Activity {
                 .show();
     }
 
+    private void showEmail() {
+        String e = Prefs.myMemoryEmail(prefs);
+        btnEmail.setText("E-mail para o tradutor reserva: " + (e.isEmpty() ? "não informado" : e));
+    }
+
+    /** E-mail opcional que aumenta o limite diário do MyMemory. */
+    private void emailDialog() {
+        View form = getLayoutInflater().inflate(R.layout.dialog_email, null);
+        final EditText email = form.findViewById(R.id.edit_email);
+        email.setText(Prefs.myMemoryEmail(prefs));
+        AlertDialog.Builder b = new AlertDialog.Builder(this)
+                .setTitle("E-mail para o tradutor reserva")
+                .setView(form)
+                .setPositiveButton("Salvar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface d, int which) {
+                        String e = email.getText().toString().trim();
+                        if (!e.isEmpty() && !android.util.Patterns.EMAIL_ADDRESS.matcher(e).matches()) {
+                            Toast.makeText(TranslationActivity.this, "Esse e-mail não parece válido. Confira e tente de novo.",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        saveEmail(e);
+                    }
+                })
+                .setNegativeButton("Cancelar", null);
+        if (!Prefs.myMemoryEmail(prefs).isEmpty()) {
+            b.setNeutralButton("Apagar e-mail", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface d, int which) {
+                    saveEmail("");
+                }
+            });
+        }
+        b.show();
+        email.requestFocus();
+    }
+
+    private void saveEmail(String e) {
+        prefs.edit().putString("mymemory_email", e).apply();
+        Translator.myMemoryEmail = e;
+        showEmail();
+        Toast.makeText(this, e.isEmpty() ? "E-mail apagado." : "E-mail salvo.", Toast.LENGTH_SHORT).show();
+    }
+
     private void showSavedCount() {
         btnClear.setText("Apagar traduções guardadas (" + Translator.savedCount() + ")");
     }
@@ -244,6 +299,7 @@ public class TranslationActivity extends Activity {
             public void run() {
                 Translator.lastError = "";
                 Translator.lastProvider = "";
+                Translator.myMemoryEmail = Prefs.myMemoryEmail(prefs);
                 final String out = Translator.translate(text, src, dst, true, null);
                 final String err = Translator.lastError;
                 runOnUiThread(new Runnable() {

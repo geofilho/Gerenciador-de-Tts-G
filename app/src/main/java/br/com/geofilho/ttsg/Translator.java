@@ -103,6 +103,7 @@ final class Translator {
             return text;
         }
         init(c);
+        myMemoryEmail = Prefs.myMemoryEmail(p);
         lastError = "";
         String out = translate(text, Prefs.translateSource(p), Prefs.translateTarget(p), false, stop);
         String err = lastError;
@@ -521,8 +522,17 @@ final class Translator {
                 return null; // sem internet ou sem resposta: não adianta tentar os outros agora
             }
         }
-        // Reserva: MyMemory, outro serviço, com limite separado (uso gratuito oficial, sem chave).
-        String[] r = myMemory(text, src, dst);
+        // Reserva 1: servidores Lingva (públicos, gratuitos). Eles consultam o Google a partir de outro
+        // endereço, então o bloqueio do aparelho não atrapalha.
+        String[] r = lingva(text, src, dst);
+        if (r != null) {
+            lastProvider = "servidor Lingva";
+            lastError = "";
+            lastNetwork = System.currentTimeMillis();
+            return r;
+        }
+        // Reserva 2: MyMemory, outro serviço, com limite diário (uso gratuito oficial, sem chave).
+        r = myMemory(text, src, dst);
         if (r != null) {
             lastProvider = "tradutor reserva MyMemory";
             lastError = "";
@@ -531,10 +541,115 @@ final class Translator {
         }
         if (limited) {
             lastError = "o tradutor do Google limitou as consultas deste aparelho por alguns minutos (código 429)"
-                    + (myMemoryError.isEmpty() ? "" : " e o tradutor reserva também falhou: " + myMemoryError)
+                    + (lingvaError.isEmpty() ? "" : "; os servidores Lingva falharam: " + lingvaError)
+                    + (myMemoryError.isEmpty() ? "" : "; o MyMemory falhou: " + myMemoryError)
                     + "; enquanto isso, os textos são lidos no idioma original";
         }
         return null;
+    }
+
+    // ----- Lingva (reserva) -----
+
+    /** Servidores públicos do Lingva. Se um sair do ar, o próximo é usado. */
+    private static final String[] LINGVA = {
+            "lingva.ml", "lingva.lunar.icu", "translate.plausibility.cloud", "lingva.garudalinux.org",
+            "translate.projectsegfau.lt", "lingva.thedaviddelta.com",
+    };
+    private static final long[] lingvaRestUntil = new long[LINGVA.length];
+    private static volatile int lingvaFirst;
+    private static volatile String lingvaError = "";
+
+    /** Código de idioma no formato do Lingva (o mesmo do Google, com chinês e hebraico diferentes). */
+    private static String lingvaCode(String code) {
+        String b = base(code);
+        if ("zh-cn".equals(b)) {
+            return "zh";
+        }
+        if ("zh-tw".equals(b)) {
+            return "zh_HANT";
+        }
+        return "he".equals(b) ? "iw" : b;
+    }
+
+    /** Tenta até dois servidores (começando pelo que funcionou por último). */
+    private static String[] lingva(String text, String src, String dst) {
+        lingvaError = "";
+        if (text.length() > 1500) {
+            lingvaError = "texto longo demais";
+            return null;
+        }
+        long now = System.currentTimeMillis();
+        int tries = 0;
+        for (int k = 0; k < LINGVA.length && tries < 2; k++) {
+            int i = (lingvaFirst + k) % LINGVA.length;
+            if (now < lingvaRestUntil[i]) {
+                continue;
+            }
+            tries++;
+            String[] r = lingvaRequest(LINGVA[i], text, src, dst);
+            if (r != null) {
+                lingvaFirst = i;
+                return r;
+            }
+            lingvaRestUntil[i] = System.currentTimeMillis() + 600000; // fora do ar: descansa 10 min
+        }
+        if (tries == 0) {
+            lingvaError = "todos descansando depois de falhas";
+        }
+        return null;
+    }
+
+    private static String[] lingvaRequest(String host, String text, String src, String dst) {
+        HttpURLConnection con = null;
+        boolean ok = false;
+        try {
+            String from = "auto".equals(src) ? "auto" : lingvaCode(src);
+            String path = "/api/v1/" + from + "/" + lingvaCode(dst) + "/"
+                    + URLEncoder.encode(text, "UTF-8").replace("+", "%20");
+            con = (HttpURLConnection) new URL("https://" + host + path).openConnection();
+            con.setConnectTimeout(2000);
+            con.setReadTimeout(2500);
+            con.setRequestProperty("User-Agent", BROWSER_UA);
+            int code = con.getResponseCode();
+            if (code != 200) {
+                lingvaError = "código " + code;
+                return null;
+            }
+            InputStream in = con.getInputStream();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = in.read(buf)) > 0) {
+                bos.write(buf, 0, n);
+            }
+            in.close();
+            org.json.JSONObject json = new org.json.JSONObject(bos.toString("UTF-8"));
+            String translated = json.optString("translation", "");
+            if (translated.isEmpty()) {
+                lingvaError = "resposta vazia";
+                return null;
+            }
+            org.json.JSONObject info = json.optJSONObject("info");
+            String detected = info != null ? info.optString("detectedSource", "") : "";
+            if (detected.isEmpty() && !"auto".equals(from)) {
+                detected = from;
+            }
+            ok = true;
+            return new String[]{translated, detected};
+        } catch (java.net.UnknownHostException e) {
+            lingvaError = "servidor não encontrado";
+            return null;
+        } catch (java.net.SocketTimeoutException e) {
+            lingvaError = "demorou demais";
+            return null;
+        } catch (Exception e) {
+            lingvaError = "não respondeu";
+            return null;
+        } finally {
+            if (con != null && !ok) {
+                con.disconnect();
+            }
+        }
     }
 
     // ----- MyMemory (reserva) -----
@@ -543,6 +658,8 @@ final class Translator {
     private static volatile long myMemoryRestUntil;
     private static volatile long myMemoryRestFor;
     private static volatile String myMemoryError = "";
+    /** E-mail informado pela pessoa para aumentar o limite do MyMemory (vazio = sem e-mail). */
+    static volatile String myMemoryEmail = "";
     /** Só para testes fora do celular: o que o MyMemory "respondeu". */
     static volatile String testMyMemoryBody;
 
@@ -575,8 +692,11 @@ final class Translator {
                 body = testMyMemoryBody;
                 code = 200;
             } else {
+                String email = myMemoryEmail;
                 String address = MYMEMORY + URLEncoder.encode(from + "|" + dst, "UTF-8")
-                        + "&q=" + URLEncoder.encode(text, "UTF-8");
+                        + "&q=" + URLEncoder.encode(text, "UTF-8")
+                        // Com e-mail, o limite gratuito do dia passa de cerca de 5 mil para 50 mil letras.
+                        + (email.isEmpty() ? "" : "&de=" + URLEncoder.encode(email, "UTF-8"));
                 con = (HttpURLConnection) new URL(address).openConnection();
                 con.setConnectTimeout(2000);
                 con.setReadTimeout(2500);

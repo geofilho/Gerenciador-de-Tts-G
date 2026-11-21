@@ -35,6 +35,10 @@
             android:text="@string/system_download"
             android:visibility="gone" />
 
+        <Button
+            android:id="@+id/btn_email"
+            style="@style/Row" />
+
         <TextView
             style="@style/Row"
             android:focusable="true"

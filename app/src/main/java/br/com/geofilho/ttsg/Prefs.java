@@ -134,6 +134,11 @@ final class Prefs {
         return p.getString("translate_dst", Translator.deviceLanguage());
     }
 
+    /** E-mail para aumentar o limite diário do tradutor reserva MyMemory (vazio = sem e-mail). */
+    static String myMemoryEmail(SharedPreferences p) {
+        return p.getString("mymemory_email", "");
+    }
+
     static boolean keepOnPhone(SharedPreferences p) {
         return p.getBoolean("keep_on_phone", false);
     }
