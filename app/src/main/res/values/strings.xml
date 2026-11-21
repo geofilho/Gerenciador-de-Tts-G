@@ -50,4 +50,10 @@ Se o seu aparelho tiver o tradutor do próprio Android, ele é usado primeiro, s
     <string name="shortcut_dictionary">Dicionário</string>
     <string name="shortcut_audio_short">Saída de áudio</string>
     <string name="shortcut_translation_short">Tradução</string>
+    <string name="widget_dictionary_label">Dicionário</string>
+    <string name="widget_audio_label">Saída de áudio do leitor de tela</string>
+    <string name="widget_translation_label">Tradução de voz TTS</string>
+    <string name="widget_dictionary_desc">Abre o menu do dicionário: adicionar palavra ou gerenciar.</string>
+    <string name="widget_audio_desc">Abre a saída de áudio do leitor de tela.</string>
+    <string name="widget_translation_desc">Abre a tradução de voz TTS.</string>
 </resources>

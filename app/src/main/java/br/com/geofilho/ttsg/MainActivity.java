@@ -137,48 +137,7 @@ public class MainActivity extends Activity {
 
     /** Menu "Dicionário": Adicionar palavra ou Gerenciar dicionário. */
     private void showDictionaryMenu() {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.dictionary)
-                .setItems(new String[]{getString(R.string.add_word_short), getString(R.string.manage_dictionary)},
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface d, int which) {
-                                if (which == 0) {
-                                    addWordDialog();
-                                } else {
-                                    startActivity(new Intent(MainActivity.this, DictionaryActivity.class));
-                                }
-                            }
-                        })
-                .setNegativeButton("Cancelar", null)
-                .show();
-    }
-
-    /** Janela com os campos "Palavra ou frase" e "Substituir por". */
-    private void addWordDialog() {
-        View form = getLayoutInflater().inflate(R.layout.dialog_entry, null);
-        final EditText word = form.findViewById(R.id.edit_word);
-        final EditText replacement = form.findViewById(R.id.edit_replacement);
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.add_word_short)
-                .setView(form)
-                .setPositiveButton("Salvar", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface d, int which) {
-                        String w = word.getText().toString();
-                        if (w.trim().isEmpty()) {
-                            Toast.makeText(MainActivity.this, "A palavra não pode ficar vazia.", Toast.LENGTH_SHORT)
-                                    .show();
-                            return;
-                        }
-                        Dictionary.get(MainActivity.this).put(w, replacement.getText().toString());
-                        Toast.makeText(MainActivity.this, "Salvo no dicionário: " + w.trim(), Toast.LENGTH_SHORT)
-                                .show();
-                    }
-                })
-                .setNegativeButton("Cancelar", null)
-                .show();
-        word.requestFocus();
+        DictionaryDialogs.showMenu(this, null);
     }
 
     private void openTtsSettings() {

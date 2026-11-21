@@ -46,6 +46,7 @@
         <activity
             android:name=".AudioActivity"
             android:exported="false"
+            android:taskAffinity=""
             android:label="@string/title_audio" />
 
         <activity
@@ -56,12 +57,57 @@
         <activity
             android:name=".TranslationActivity"
             android:exported="false"
+            android:taskAffinity=""
             android:label="@string/title_translation" />
 
         <activity
             android:name=".EmojiActivity"
             android:exported="false"
             android:label="@string/title_emoji" />
+
+        <!-- Widget Dicionário: só o menu, por cima da tela inicial. -->
+        <activity
+            android:name=".DictionaryQuickActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:label="@string/dictionary"
+            android:taskAffinity=""
+            android:theme="@style/TranslucentTheme" />
+
+        <!-- Widgets da tela inicial: Dicionário, Saída de áudio e Tradução. -->
+        <receiver
+            android:name=".QuickWidget$Dictionary"
+            android:exported="false"
+            android:label="@string/widget_dictionary_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_dictionary" />
+        </receiver>
+        <receiver
+            android:name=".QuickWidget$Audio"
+            android:exported="false"
+            android:label="@string/widget_audio_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_audio" />
+        </receiver>
+        <receiver
+            android:name=".QuickWidget$Translation"
+            android:exported="false"
+            android:label="@string/widget_translation_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_translation" />
+        </receiver>
 
         <!-- Responde à verificação de dados de voz que o sistema faz nos motores. -->
         <activity
