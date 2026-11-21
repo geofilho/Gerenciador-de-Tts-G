@@ -226,8 +226,7 @@ final class Translator {
     private static String fetch(String text, String src, String dst, String key) {
         String[] result = request(text, src, dst);
         if (result == null) {
-            long now = System.currentTimeMillis();
-            failedUntil = now + (paceUntil > now ? paceUntil - now : BACKOFF_MS);
+            failedUntil = System.currentTimeMillis() + BACKOFF_MS;
             return null;
         }
         String detected = base(result[1]);
@@ -486,13 +485,11 @@ final class Translator {
                 }
             }
         }
-        if (!pace()) {
-            lastError = "muitas traduções seguidas; pausa de alguns segundos para o Google não bloquear o aparelho";
-            return null;
-        }
+        // O limite de ritmo vale só para o Google: passou dele, vai direto para os tradutores reserva.
+        boolean googleAllowed = pace();
         long now = System.currentTimeMillis();
-        boolean limited = false;
-        for (int i = 0; i < ENDPOINTS.length; i++) {
+        boolean limited = !googleAllowed;
+        for (int i = 0; googleAllowed && i < ENDPOINTS.length; i++) {
             if (now < restUntil[i]) {
                 limited = true;
                 continue; // descansando depois de um 429
