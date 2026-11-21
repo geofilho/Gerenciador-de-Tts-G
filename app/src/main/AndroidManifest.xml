@@ -109,6 +109,26 @@
                 android:resource="@xml/widget_translation" />
         </receiver>
 
+        <!-- Ações para atalhos (MacroDroid "Iniciar atalho" e lançadores). -->
+        <activity
+            android:name=".ShortcutPickerActivity"
+            android:exported="true"
+            android:label="@string/actions_label"
+            android:theme="@style/TranslucentTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <!-- Executa a ação do atalho sem mostrar tela (confere a senha interna do atalho). -->
+        <activity
+            android:name=".ActionActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay" />
+
         <!-- Configurações rápidas: Dicionário, Saída de áudio e Tradução (Android 7+). -->
         <service
             android:name=".QuickTile$Dictionary"

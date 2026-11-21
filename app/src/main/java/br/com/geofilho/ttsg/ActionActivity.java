@@ -1,0 +1,77 @@
+package br.com.geofilho.ttsg;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.widget.Toast;
+
+/**
+ * Executa as ações rápidas dos atalhos (MacroDroid e outros): Dicionário, ligar e
+ * desligar a tradução, ligar e desligar a saída de áudio. Não mostra tela: faz a
+ * ação, avisa com uma mensagem falada e fecha.
+ * Só aceita atalhos criados pelo próprio app (senha interna), para outro app não
+ * conseguir ligar a tradução escondido.
+ */
+public class ActionActivity extends Activity {
+
+    static final String ACTION_DICTIONARY = "br.com.geofilho.ttsg.acao.DICIONARIO";
+    static final String ACTION_TRANSLATE_ON = "br.com.geofilho.ttsg.acao.LIGAR_TRADUCAO";
+    static final String ACTION_TRANSLATE_OFF = "br.com.geofilho.ttsg.acao.DESLIGAR_TRADUCAO";
+    static final String ACTION_AUDIO_ON = "br.com.geofilho.ttsg.acao.LIGAR_SAIDA_AUDIO";
+    static final String ACTION_AUDIO_OFF = "br.com.geofilho.ttsg.acao.DESLIGAR_SAIDA_AUDIO";
+    static final String EXTRA_TOKEN = "senha";
+
+    /** Senha interna, criada uma vez, que vai dentro de cada atalho. */
+    static String token(SharedPreferences p) {
+        String t = p.getString("action_token", "");
+        if (t.isEmpty()) {
+            t = java.util.UUID.randomUUID().toString();
+            p.edit().putString("action_token", t).apply();
+        }
+        return t;
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        SharedPreferences p = Prefs.get(this);
+        Intent in = getIntent();
+        String action = in != null ? in.getAction() : null;
+        String sent = in != null ? in.getStringExtra(EXTRA_TOKEN) : null;
+        if (action == null || sent == null || !sent.equals(token(p))) {
+            say("Atalho inválido. Crie o atalho de novo pelo Gerenciador de TTS G.");
+            finish();
+            return;
+        }
+        if (ACTION_DICTIONARY.equals(action)) {
+            Intent d = new Intent(this, DictionaryQuickActivity.class);
+            d.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(d);
+        } else if (ACTION_TRANSLATE_ON.equals(action)) {
+            p.edit().putBoolean("translate_on", true).apply();
+            Translator.warm(this);
+            say("Tradução ligada.");
+        } else if (ACTION_TRANSLATE_OFF.equals(action)) {
+            p.edit().putBoolean("translate_on", false).apply();
+            say("Tradução desligada.");
+        } else if (ACTION_AUDIO_ON.equals(action)) {
+            if (android.os.Build.VERSION.SDK_INT < 23) {
+                say("A saída de áudio precisa do Android 6 ou mais novo.");
+            } else if (PhonePlayer.bluetoothOutputName(this) == null) {
+                say("Saída de áudio não ligada: nenhum dispositivo Bluetooth de áudio conectado.");
+            } else {
+                p.edit().putBoolean("keep_on_phone", true).apply();
+                say("Áudio do leitor de tela no telefone ligado.");
+            }
+        } else if (ACTION_AUDIO_OFF.equals(action)) {
+            p.edit().putBoolean("keep_on_phone", false).apply();
+            say("Áudio do leitor de tela no telefone desligado.");
+        }
+        finish();
+    }
+
+    private void say(String msg) {
+        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+    }
+}
