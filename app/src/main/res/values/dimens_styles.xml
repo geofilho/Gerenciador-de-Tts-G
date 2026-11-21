@@ -5,7 +5,12 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:minHeight">56dp</item>
         <item name="android:layout_marginTop">4dp</item>
+        <!-- Baixa visão: texto em sp (segue o tamanho de fonte do sistema), sem tudo em maiúsculas,
+             mais espaço entre linhas e dica dos campos com contraste de pelo menos 4,5:1. -->
         <item name="android:textSize">18sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:lineSpacingMultiplier">1.15</item>
+        <item name="android:textColorHint">?android:attr/textColorSecondary</item>
     </style>
 
     <style name="SliderLabel">
@@ -13,6 +18,7 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginTop">12dp</item>
         <item name="android:textSize">18sp</item>
+        <item name="android:lineSpacingMultiplier">1.15</item>
         <item name="android:importantForAccessibility">no</item>
     </style>
 
