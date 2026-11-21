@@ -51,6 +51,14 @@ TELA PRINCIPAL, NA ORDEM DA VARREDURA
 
 13. Diagnóstico: abre uma página com a chave para ativar o registro do que o leitor de tela envia ao motor, que vem desligada para não pesar, e os botões Ver relatório e Limpar relatório. O relatório traz os dados do aparelho, do sistema e das configurações, e pode ser copiado ou compartilhado, para ajudar a resolver problemas. Nessa página também fica o botão Compartilhar este aplicativo com amigos, que envia este texto.
 
+ACESSO RÁPIDO ÀS FUNÇÕES
+
+O Dicionário, a Saída de áudio do leitor de tela e a Tradução de voz TTS podem ser abertos sem passar pela tela principal:
+- Atalhos do ícone: mantenha pressionado o ícone do Gerenciador, na gaveta de aplicativos ou na tela inicial, e escolha Dicionário, Saída de áudio ou Tradução. Os atalhos também aparecem nas rotinas da Samsung.
+- Widgets: na tela inicial, adicione o widget da função que você mais usa. Ao sair da função, você volta direto para a tela inicial.
+- Configurações rápidas: na barra que se abre puxando a tela de cima, adicione os botões Dicionário, Saída de áudio e Tradução.
+- MacroDroid: na ação Iniciar atividade de aplicativo, escolha o Gerenciador de TTS G e uma destas entradas: Dicionario, Ligar_traducao, Desligar_traducao, Ligar_saida_de_audio ou Desligar_saida_de_audio. A ação acontece direto e é confirmada com um aviso falado. Também dá para usar a ação Iniciar atalho, escolhendo Ações do Gerenciador de TTS G.
+
 IMPORTANTE: ATIVAR O GERENCIADOR COMO MOTOR DE VOZ
 
 Para o dicionário, a voz dos emojis, os números, a pontuação, a saída de áudio, a tradução e os ajustes valerem no TalkBack e em todo o celular, o Gerenciador precisa ser o motor de voz padrão.

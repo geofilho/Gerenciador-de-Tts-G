@@ -29,6 +29,16 @@ Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para 
 13. Diagnóstico (ativar ou desativar o registro; ver, copiar, compartilhar e
     limpar o relatório)
 
+## Acesso rápido
+- Atalhos ao manter o ícone pressionado (também nas rotinas da Samsung):
+  Dicionário, Saída de áudio e Tradução.
+- Widgets da tela inicial para as mesmas três funções (ao sair, volta para a
+  tela inicial).
+- Botões nas configurações rápidas do Android.
+- MacroDroid: "Iniciar atividade de aplicativo" com as entradas Dicionario,
+  Ligar_traducao, Desligar_traducao, Ligar_saida_de_audio e
+  Desligar_saida_de_audio; ou "Iniciar atalho" > Ações do Gerenciador de TTS G.
+
 ## Como funciona
 O app também é um motor de TTS. Quando ele é escolhido como motor padrão do
 sistema, todo texto do leitor de tela passa por ele e, nesta ordem: é traduzido

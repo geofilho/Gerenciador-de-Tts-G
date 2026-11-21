@@ -1,6 +1,6 @@
 {
-  "versionCode": 46,
-  "versionName": "1.45",
+  "versionCode": 52,
+  "versionName": "1.51",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Texto de apresentação atualizado, no botão Compartilhar este aplicativo com amigos: agora explica o tradutor do Android, os servidores Lingva e o e-mail do tradutor reserva."
+  "novidades": "- Atalhos no ícone: mantenha pressionado o ícone do Gerenciador para abrir Dicionário, Saída de áudio ou Tradução. Os atalhos também aparecem nas rotinas da Samsung.\n- Widgets da tela inicial para Dicionário, Saída de áudio e Tradução. Ao sair da função, você volta direto para a tela inicial.\n- Botões nas configurações rápidas do Android para Dicionário, Saída de áudio e Tradução.\n- Ações para o MacroDroid: em Iniciar atividade de aplicativo, as entradas Dicionario, Ligar_traducao, Desligar_traducao, Ligar_saida_de_audio e Desligar_saida_de_audio.\n- Texto de apresentação atualizado com essas formas de acesso rápido."
 }
