@@ -1,6 +1,6 @@
 {
-  "versionCode": 45,
-  "versionName": "1.44",
+  "versionCode": 46,
+  "versionName": "1.45",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Tradução mais confiável: quando o Google limita as consultas, o app usa os servidores Lingva e o MyMemory, sem pausa.\n- Novo campo opcional de e-mail para o tradutor reserva MyMemory, que aumenta o limite diário para cerca de 50 mil letras.\n- Bem menos consultas ao Google: ao passar rápido pelos itens, as traduções abandonadas são canceladas.\n- Em aparelhos que oferecem o tradutor do próprio Android, ele é usado primeiro, sem internet e sem limite."
+  "novidades": "- Texto de apresentação atualizado, no botão Compartilhar este aplicativo com amigos: agora explica o tradutor do Android, os servidores Lingva e o e-mail do tradutor reserva."
 }
