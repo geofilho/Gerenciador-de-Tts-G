@@ -220,7 +220,7 @@ public class TranslationActivity extends Activity {
 
     private void saveEmail(String e) {
         prefs.edit().putString("mymemory_email", e).apply();
-        Translator.myMemoryEmail = e;
+        Translator.setMyMemoryEmail(e);
         showEmail();
         Toast.makeText(this, e.isEmpty() ? "E-mail apagado." : "E-mail salvo.", Toast.LENGTH_SHORT).show();
     }
@@ -299,7 +299,7 @@ public class TranslationActivity extends Activity {
             public void run() {
                 Translator.lastError = "";
                 Translator.lastProvider = "";
-                Translator.myMemoryEmail = Prefs.myMemoryEmail(prefs);
+                Translator.setMyMemoryEmail(Prefs.myMemoryEmail(prefs));
                 final String out = Translator.translate(text, src, dst, true, null);
                 final String err = Translator.lastError;
                 runOnUiThread(new Runnable() {

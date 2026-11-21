@@ -103,7 +103,7 @@ final class Translator {
             return text;
         }
         init(c);
-        myMemoryEmail = Prefs.myMemoryEmail(p);
+        setMyMemoryEmail(Prefs.myMemoryEmail(p));
         lastError = "";
         String out = translate(text, Prefs.translateSource(p), Prefs.translateTarget(p), false, stop);
         String err = lastError;
@@ -660,6 +660,19 @@ final class Translator {
     private static volatile String myMemoryError = "";
     /** E-mail informado pela pessoa para aumentar o limite do MyMemory (vazio = sem e-mail). */
     static volatile String myMemoryEmail = "";
+
+    /**
+     * Usa este e-mail no MyMemory. Se ele mudou, zera o descanso: o limite com e-mail é outro
+     * (o descanso podia ter vindo do limite sem e-mail).
+     */
+    static void setMyMemoryEmail(String email) {
+        String e = email == null ? "" : email.trim();
+        if (!e.equals(myMemoryEmail)) {
+            myMemoryEmail = e;
+            myMemoryRestUntil = 0;
+            myMemoryRestFor = 0;
+        }
+    }
     /** Só para testes fora do celular: o que o MyMemory "respondeu". */
     static volatile String testMyMemoryBody;
 
