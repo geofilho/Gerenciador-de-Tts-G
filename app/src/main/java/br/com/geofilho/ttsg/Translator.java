@@ -159,12 +159,26 @@ final class Translator {
         if (System.currentTimeMillis() < failedUntil && !force) {
             return text;
         }
-        Future<String> f = EXEC.submit(new Callable<String>() {
-            @Override
-            public String call() {
-                return fetch(text, src, dst, key);
+        Future<String> f;
+        synchronized (INFLIGHT) {
+            // O mesmo texto já está sendo traduzido (o leitor repete muito): espera essa resposta.
+            f = INFLIGHT.get(key);
+            if (f == null) {
+                f = EXEC.submit(new Callable<String>() {
+                    @Override
+                    public String call() {
+                        try {
+                            return fetch(text, src, dst, key);
+                        } finally {
+                            synchronized (INFLIGHT) {
+                                INFLIGHT.remove(key);
+                            }
+                        }
+                    }
+                });
+                INFLIGHT.put(key, f);
             }
-        });
+        }
         // A fala espera no máximo 2,5 s; o teste da página espera até 8 s, para mostrar o motivo de uma falha.
         long end = System.currentTimeMillis() + (force ? 8000 : WAIT_MS);
         while (true) {
@@ -173,9 +187,11 @@ final class Translator {
                 return out == null ? text : out;
             } catch (TimeoutException e) {
                 if (stop != null && stop.stopped()) {
-                    return text; // segue sem esperar; a tradução fica guardada quando chegar
+                    abandon(f, key);
+                    return text; // segue sem esperar; se já foi enviada, a tradução fica guardada quando chegar
                 }
                 if (System.currentTimeMillis() > end) {
+                    abandon(f, key);
                     if (force && lastError.isEmpty()) {
                         lastError = "o tradutor demorou demais para responder";
                     }
@@ -187,11 +203,29 @@ final class Translator {
         }
     }
 
+    /** Traduções em andamento, para não mandar a mesma consulta duas vezes. */
+    private static final Map<String, Future<String>> INFLIGHT = new HashMap<>();
+
+    /**
+     * O leitor passou para outro item: se a consulta ainda estava na fila, cancela (não gasta o
+     * limite do Google à toa). Se já foi enviada, deixa terminar e guardar o resultado.
+     */
+    private static void abandon(Future<String> f, String key) {
+        if (f.cancel(false)) {
+            synchronized (INFLIGHT) {
+                if (INFLIGHT.get(key) == f) {
+                    INFLIGHT.remove(key);
+                }
+            }
+        }
+    }
+
     /** Consulta e guarda na memória. Retorna o texto a falar ou null se falhou. */
     private static String fetch(String text, String src, String dst, String key) {
         String[] result = request(text, src, dst);
         if (result == null) {
-            failedUntil = System.currentTimeMillis() + BACKOFF_MS;
+            long now = System.currentTimeMillis();
+            failedUntil = now + (paceUntil > now ? paceUntil - now : BACKOFF_MS);
             return null;
         }
         String detected = base(result[1]);
@@ -407,8 +441,33 @@ final class Translator {
     /** Só para testes fora do celular: simula um endereço respondendo 429. */
     static volatile int testLimitedEndpoint = -1;
 
+    /** Limite de ritmo: no máximo 30 consultas por minuto, para o Google não bloquear o aparelho. */
+    private static final int MAX_PER_MINUTE = 30;
+    private static final java.util.ArrayDeque<Long> SENT = new java.util.ArrayDeque<>();
+    private static volatile long paceUntil;
+
+    /** Registra uma consulta; retorna false se o ritmo passaria do limite. */
+    private static boolean pace() {
+        long now = System.currentTimeMillis();
+        synchronized (SENT) {
+            while (!SENT.isEmpty() && now - SENT.peekFirst() > 60000) {
+                SENT.pollFirst();
+            }
+            if (SENT.size() >= MAX_PER_MINUTE) {
+                paceUntil = SENT.peekFirst() + 60000;
+                return false;
+            }
+            SENT.addLast(now);
+            return true;
+        }
+    }
+
     /** Consulta o tradutor. Retorna {texto traduzido, idioma detectado} ou null. */
     private static String[] request(String text, String src, String dst) {
+        if (!pace()) {
+            lastError = "muitas traduções seguidas; pausa de alguns segundos para o Google não bloquear o aparelho";
+            return null;
+        }
         long now = System.currentTimeMillis();
         boolean limited = false;
         for (int i = 0; i < ENDPOINTS.length; i++) {
@@ -466,7 +525,7 @@ final class Translator {
 
     /**
      * Traduz pelo MyMemory. Ele aceita até 500 bytes por consulta e precisa do idioma de origem:
-     * usa o escolhido, ou o adivinhado pelo texto, ou deixa ele detectar ("Autodetect").
+     * usa o escolhido, ou o adivinhado pelo texto, ou inglês.
      */
     private static String[] myMemory(String text, String src, String dst) {
         myMemoryError = "";
@@ -484,7 +543,8 @@ final class Translator {
             String from = src;
             if ("auto".equals(from)) {
                 String g = guess(text);
-                from = g != null ? g : "Autodetect";
+                // O MyMemory recusa a detecção automática (código 403): sem idioma reconhecido, usa inglês.
+                from = g != null ? g : "en";
             }
             String body;
             int code;
@@ -531,7 +591,7 @@ final class Translator {
             }
             ok = true;
             String detected = data.optString("detectedLanguage", "");
-            if (detected.isEmpty() && !"Autodetect".equals(from)) {
+            if (detected.isEmpty()) {
                 detected = from;
             }
             return new String[]{translated, detected};
