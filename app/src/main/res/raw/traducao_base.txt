@@ -1,0 +1,1405 @@
+ok	ok
+okay	ok
+cancel	cancelar
+yes	sim
+no	não
+done	concluído
+save	salvar
+delete	excluir
+remove	remover
+edit	editar
+add	adicionar
+close	fechar
+open	abrir
+back	voltar
+next	próximo
+previous	anterior
+continue	continuar
+skip	pular
+finish	concluir
+apply	aplicar
+confirm	confirmar
+submit	enviar
+send	enviar
+share	compartilhar
+copy	copiar
+cut	recortar
+paste	colar
+select all	selecionar tudo
+select	selecionar
+undo	desfazer
+redo	refazer
+search	pesquisar
+search…	pesquisar
+search...	pesquisar
+find	localizar
+filter	filtrar
+sort	ordenar
+sort by	ordenar por
+refresh	atualizar
+reload	recarregar
+retry	tentar novamente
+try again	tentar novamente
+update	atualizar
+upgrade	fazer upgrade
+download	baixar
+upload	enviar
+install	instalar
+uninstall	desinstalar
+settings	configurações
+setting	configuração
+preferences	preferências
+options	opções
+more options	mais opções
+more	mais
+less	menos
+show more	mostrar mais
+show less	mostrar menos
+see more	ver mais
+see all	ver tudo
+view all	ver tudo
+read more	ler mais
+learn more	saiba mais
+help	ajuda
+help & feedback	ajuda e feedback
+help and feedback	ajuda e feedback
+feedback	feedback
+send feedback	enviar feedback
+about	sobre
+about this app	sobre este app
+about phone	sobre o telefone
+version	versão
+privacy policy	política de privacidade
+terms of service	termos de serviço
+terms and conditions	termos e condições
+terms of use	termos de uso
+license	licença
+licenses	licenças
+open source licenses	licenças de código aberto
+menu	menu
+main menu	menu principal
+navigate up	navegar para cima
+navigation drawer	gaveta de navegação
+open navigation drawer	abrir gaveta de navegação
+close navigation drawer	fechar gaveta de navegação
+home	início
+start	iniciar
+stop	parar
+pause	pausar
+play	reproduzir
+resume	retomar
+record	gravar
+replay	repetir
+repeat	repetir
+shuffle	aleatório
+mute	silenciar
+unmute	ativar som
+volume	volume
+volume up	aumentar volume
+volume down	diminuir volume
+fast forward	avançar
+rewind	retroceder
+next track	próxima faixa
+previous track	faixa anterior
+full screen	tela cheia
+fullscreen	tela cheia
+exit full screen	sair da tela cheia
+exit fullscreen	sair da tela cheia
+exit	sair
+quit	sair
+log in	entrar
+login	entrar
+sign in	fazer login
+sign up	cadastrar-se
+register	cadastrar
+log out	sair
+logout	sair
+sign out	sair
+create account	criar conta
+create an account	criar uma conta
+account	conta
+accounts	contas
+my account	minha conta
+profile	perfil
+my profile	meu perfil
+edit profile	editar perfil
+username	nome de usuário
+user name	nome de usuário
+password	senha
+email	e-mail
+e-mail	e-mail
+email address	endereço de e-mail
+phone number	número de telefone
+phone	telefone
+forgot password?	esqueceu a senha?
+forgot your password?	esqueceu sua senha?
+forgot password	esqueci a senha
+reset password	redefinir senha
+change password	alterar senha
+show password	mostrar senha
+hide password	ocultar senha
+remember me	lembrar de mim
+keep me signed in	manter conectado
+name	nome
+first name	nome
+last name	sobrenome
+full name	nome completo
+address	endereço
+city	cidade
+state	estado
+country	país
+zip code	cep
+postal code	código postal
+date of birth	data de nascimento
+birthday	aniversário
+gender	gênero
+age	idade
+male	masculino
+female	feminino
+other	outro
+required	obrigatório
+optional	opcional
+loading	carregando
+loading…	carregando…
+loading...	carregando...
+please wait	aguarde
+please wait…	aguarde…
+please wait...	aguarde...
+processing	processando
+connecting	conectando
+connected	conectado
+disconnected	desconectado
+not connected	não conectado
+offline	off-line
+online	on-line
+error	erro
+warning	aviso
+success	sucesso
+failed	falhou
+failure	falha
+something went wrong	algo deu errado
+something went wrong. please try again.	algo deu errado. tente novamente.
+an error occurred	ocorreu um erro
+an error has occurred	ocorreu um erro
+unknown error	erro desconhecido
+no internet connection	sem conexão com a internet
+check your internet connection	verifique sua conexão com a internet
+network error	erro de rede
+connection error	erro de conexão
+no results	nenhum resultado
+no results found	nenhum resultado encontrado
+nothing here yet	nada aqui ainda
+no data	sem dados
+empty	vazio
+not available	indisponível
+unavailable	indisponível
+coming soon	em breve
+new	novo
+notifications	notificações
+notification	notificação
+messages	mensagens
+message	mensagem
+new message	nova mensagem
+chat	conversa
+chats	conversas
+inbox	caixa de entrada
+sent	enviados
+drafts	rascunhos
+draft	rascunho
+spam	spam
+trash	lixeira
+archive	arquivar
+archived	arquivados
+starred	com estrela
+important	importante
+reply	responder
+reply all	responder a todos
+forward	encaminhar
+compose	escrever
+attach	anexar
+attachment	anexo
+attachments	anexos
+attach file	anexar arquivo
+subject	assunto
+to	para
+from	de
+call	ligar
+calls	chamadas
+video call	chamada de vídeo
+voice call	chamada de voz
+missed call	chamada perdida
+end call	encerrar chamada
+answer	atender
+decline	recusar
+accept	aceitar
+reject	rejeitar
+allow	permitir
+deny	negar
+don't allow	não permitir
+block	bloquear
+unblock	desbloquear
+report	denunciar
+contacts	contatos
+contact	contato
+add contact	adicionar contato
+new contact	novo contato
+favorites	favoritos
+favorite	favorito
+add to favorites	adicionar aos favoritos
+remove from favorites	remover dos favoritos
+recent	recentes
+recents	recentes
+history	histórico
+clear history	limpar histórico
+clear	limpar
+clear all	limpar tudo
+reset	redefinir
+default	padrão
+restore defaults	restaurar padrões
+custom	personalizado
+automatic	automático
+auto	automático
+manual	manual
+on	ativado
+off	desativado
+enabled	ativado
+disabled	desativado
+enable	ativar
+disable	desativar
+turn on	ativar
+turn off	desativar
+active	ativo
+inactive	inativo
+show	mostrar
+hide	ocultar
+visible	visível
+hidden	oculto
+public	público
+private	privado
+lock	bloquear
+unlock	desbloquear
+locked	bloqueado
+unlocked	desbloqueado
+wi-fi	wi-fi
+wifi	wi-fi
+bluetooth	bluetooth
+airplane mode	modo avião
+flight mode	modo avião
+mobile data	dados móveis
+cellular data	dados móveis
+data saver	economia de dados
+hotspot	ponto de acesso
+mobile hotspot	ponto de acesso móvel
+location	localização
+gps	gps
+battery	bateria
+battery saver	economia de bateria
+power saving	economia de energia
+power saving mode	modo de economia de energia
+charging	carregando
+fully charged	totalmente carregado
+low battery	bateria fraca
+brightness	brilho
+display	tela
+screen	tela
+sound	som
+sounds	sons
+sound and vibration	sons e vibração
+sounds and vibration	sons e vibração
+vibration	vibração
+vibrate	vibrar
+silent	silencioso
+ringtone	toque
+do not disturb	não perturbe
+dark mode	modo escuro
+dark theme	tema escuro
+light mode	modo claro
+light theme	tema claro
+theme	tema
+font size	tamanho da fonte
+text size	tamanho do texto
+language	idioma
+languages	idiomas
+language and input	idioma e entrada
+keyboard	teclado
+storage	armazenamento
+memory	memória
+apps	apps
+app	app
+applications	aplicativos
+application	aplicativo
+app info	informações do app
+permissions	permissões
+permission	permissão
+security	segurança
+privacy	privacidade
+accessibility	acessibilidade
+date and time	data e hora
+date & time	data e hora
+date	data
+time	hora
+time zone	fuso horário
+system	sistema
+system update	atualização do sistema
+software update	atualização de software
+check for updates	verificar atualizações
+update available	atualização disponível
+up to date	atualizado
+your app is up to date	seu app está atualizado
+backup	backup
+back up	fazer backup
+restore	restaurar
+sync	sincronizar
+syncing	sincronizando
+synced	sincronizado
+devices	dispositivos
+device	dispositivo
+connected devices	dispositivos conectados
+pair	parear
+pair new device	parear novo dispositivo
+paired devices	dispositivos pareados
+forget	esquecer
+network	rede
+networks	redes
+network & internet	rede e internet
+network and internet	rede e internet
+internet	internet
+camera	câmera
+microphone	microfone
+gallery	galeria
+photos	fotos
+photo	foto
+take photo	tirar foto
+take a photo	tirar uma foto
+choose photo	escolher foto
+choose from gallery	escolher da galeria
+videos	vídeos
+video	vídeo
+music	música
+songs	músicas
+song	música
+albums	álbuns
+album	álbum
+artists	artistas
+artist	artista
+playlists	playlists
+playlist	playlist
+podcasts	podcasts
+library	biblioteca
+your library	sua biblioteca
+files	arquivos
+file	arquivo
+folder	pasta
+folders	pastas
+new folder	nova pasta
+documents	documentos
+document	documento
+downloads	downloads
+images	imagens
+image	imagem
+audio	áudio
+rename	renomear
+move	mover
+move to	mover para
+copy to	copiar para
+details	detalhes
+properties	propriedades
+info	informações
+information	informações
+size	tamanho
+type	tipo
+modified	modificado
+created	criado
+print	imprimir
+export	exportar
+import	importar
+calendar	calendário
+today	hoje
+yesterday	ontem
+tomorrow	amanhã
+now	agora
+just now	agora mesmo
+week	semana
+month	mês
+year	ano
+day	dia
+days	dias
+hours	horas
+minutes	minutos
+seconds	segundos
+this week	esta semana
+last week	semana passada
+next week	próxima semana
+this month	este mês
+event	evento
+events	eventos
+new event	novo evento
+reminder	lembrete
+reminders	lembretes
+alarm	alarme
+alarms	alarmes
+clock	relógio
+timer	temporizador
+stopwatch	cronômetro
+weather	clima
+maps	mapas
+map	mapa
+directions	rotas
+navigation	navegação
+nearby	por perto
+explore	explorar
+discover	descobrir
+browse	navegar
+categories	categorias
+category	categoria
+all	todos
+none	nenhum
+everyone	todos
+nobody	ninguém
+only me	somente eu
+friends	amigos
+friend	amigo
+add friend	adicionar amigo
+followers	seguidores
+following	seguindo
+follow	seguir
+unfollow	deixar de seguir
+like	curtir
+likes	curtidas
+liked	curtido
+unlike	descurtir
+comment	comentar
+comments	comentários
+add a comment	adicionar um comentário
+add a comment…	adicionar um comentário…
+write a comment	escreva um comentário
+write a comment…	escreva um comentário…
+post	publicar
+posts	publicações
+new post	nova publicação
+story	story
+stories	stories
+feed	feed
+for you	para você
+trending	em alta
+popular	popular
+latest	mais recentes
+top	principais
+saved	salvos
+save for later	salvar para depois
+bookmark	favoritar
+bookmarks	favoritos
+subscribe	inscrever-se
+subscribed	inscrito
+unsubscribe	cancelar inscrição
+subscriptions	inscrições
+channel	canal
+channels	canais
+live	ao vivo
+watch	assistir
+watch later	assistir mais tarde
+mentions	menções
+tag	marcar
+tags	tags
+groups	grupos
+group	grupo
+create group	criar grupo
+new group	novo grupo
+members	membros
+member	membro
+admin	administrador
+invite	convidar
+invite friends	convidar amigos
+join	participar
+leave	sair
+leave group	sair do grupo
+online now	on-line agora
+typing…	digitando…
+typing...	digitando...
+seen	visto
+delivered	entregue
+read	lido
+unread	não lido
+mark as read	marcar como lida
+mark as unread	marcar como não lida
+mark all as read	marcar todas como lidas
+emoji	emoji
+stickers	figurinhas
+sticker	figurinha
+gif	gif
+voice message	mensagem de voz
+type a message	digite uma mensagem
+type a message…	digite uma mensagem…
+write a message	escreva uma mensagem
+write a message…	escreva uma mensagem…
+message…	mensagem…
+shop	loja
+store	loja
+cart	carrinho
+shopping cart	carrinho de compras
+add to cart	adicionar ao carrinho
+remove from cart	remover do carrinho
+your cart is empty	seu carrinho está vazio
+checkout	finalizar compra
+buy	comprar
+buy now	comprar agora
+purchase	comprar
+order	pedido
+orders	pedidos
+my orders	meus pedidos
+place order	fazer pedido
+track order	rastrear pedido
+order history	histórico de pedidos
+price	preço
+total	total
+subtotal	subtotal
+discount	desconto
+free	grátis
+free shipping	frete grátis
+shipping	frete
+delivery	entrega
+quantity	quantidade
+in stock	em estoque
+out of stock	esgotado
+sold out	esgotado
+sale	promoção
+offers	ofertas
+deals	ofertas
+coupon	cupom
+coupons	cupons
+apply coupon	aplicar cupom
+payment	pagamento
+payments	pagamentos
+payment method	forma de pagamento
+payment methods	formas de pagamento
+pay	pagar
+pay now	pagar agora
+credit card	cartão de crédito
+debit card	cartão de débito
+card number	número do cartão
+expiration date	data de validade
+wallet	carteira
+balance	saldo
+transfer	transferir
+transactions	transações
+receipt	recibo
+invoice	fatura
+refund	reembolso
+reviews	avaliações
+review	avaliação
+write a review	escrever uma avaliação
+rating	avaliação
+ratings	avaliações
+rate	avaliar
+rate this app	avaliar este app
+rate us	avalie-nos
+stars	estrelas
+wishlist	lista de desejos
+add to wishlist	adicionar à lista de desejos
+products	produtos
+product	produto
+description	descrição
+specifications	especificações
+color	cor
+colour	cor
+brand	marca
+model	modelo
+customer service	atendimento ao cliente
+support	suporte
+contact us	fale conosco
+faq	perguntas frequentes
+frequently asked questions	perguntas frequentes
+get started	começar
+let's go	vamos lá
+got it	entendi
+i agree	eu concordo
+agree	concordo
+i accept	eu aceito
+accept all	aceitar tudo
+reject all	rejeitar tudo
+accept cookies	aceitar cookies
+cookies	cookies
+cookie settings	configurações de cookies
+manage cookies	gerenciar cookies
+not now	agora não
+maybe later	talvez mais tarde
+later	mais tarde
+remind me later	lembrar mais tarde
+never	nunca
+always	sempre
+ask every time	perguntar sempre
+only this time	apenas esta vez
+while using the app	durante o uso do app
+allow all the time	permitir o tempo todo
+dismiss	dispensar
+ignore	ignorar
+are you sure?	tem certeza?
+are you sure you want to delete this?	tem certeza de que deseja excluir isto?
+are you sure you want to log out?	tem certeza de que deseja sair?
+discard	descartar
+discard changes?	descartar alterações?
+discard changes	descartar alterações
+save changes	salvar alterações
+save changes?	salvar alterações?
+unsaved changes	alterações não salvas
+changes saved	alterações salvas
+saved successfully	salvo com sucesso
+deleted	excluído
+copied	copiado
+copied to clipboard	copiado para a área de transferência
+link copied	link copiado
+copy link	copiar link
+share link	compartilhar link
+link	link
+open link	abrir link
+open in browser	abrir no navegador
+open with	abrir com
+browser	navegador
+website	site
+visit website	visitar site
+url	url
+web	web
+go	ir
+go back	voltar
+go to	ir para
+go home	ir para o início
+up	para cima
+down	para baixo
+left	esquerda
+right	direita
+scroll up	rolar para cima
+scroll down	rolar para baixo
+expand	expandir
+collapse	recolher
+minimize	minimizar
+maximize	maximizar
+zoom in	aumentar zoom
+zoom out	diminuir zoom
+rotate	girar
+crop	cortar
+filters	filtros
+adjust	ajustar
+effects	efeitos
+text	texto
+draw	desenhar
+camera roll	rolo da câmera
+gallery permission	permissão da galeria
+scan	escanear
+scan qr code	escanear código qr
+qr code	código qr
+code	código
+verification code	código de verificação
+enter code	digite o código
+enter the code	digite o código
+resend code	reenviar código
+send code	enviar código
+verify	verificar
+verified	verificado
+verification	verificação
+two-factor authentication	autenticação de dois fatores
+fingerprint	impressão digital
+face unlock	desbloqueio facial
+pin	pin
+pattern	padrão
+enter pin	digite o pin
+enter password	digite a senha
+enter your password	digite sua senha
+enter your email	digite seu e-mail
+enter your name	digite seu nome
+enter your phone number	digite seu número de telefone
+confirm password	confirmar senha
+new password	nova senha
+current password	senha atual
+old password	senha antiga
+incorrect password	senha incorreta
+wrong password	senha incorreta
+invalid email	e-mail inválido
+invalid	inválido
+invalid code	código inválido
+this field is required	este campo é obrigatório
+field required	campo obrigatório
+or	ou
+and	e
+or continue with	ou continue com
+continue with google	continuar com o google
+continue with facebook	continuar com o facebook
+continue with apple	continuar com a apple
+sign in with google	fazer login com o google
+continue as guest	continuar como visitante
+guest	visitante
+already have an account?	já tem uma conta?
+don't have an account?	não tem uma conta?
+welcome	bem-vindo
+welcome back	bem-vindo de volta
+welcome!	bem-vindo!
+hello	olá
+hi	oi
+good morning	bom dia
+good afternoon	boa tarde
+good evening	boa noite
+good night	boa noite
+thank you	obrigado
+thanks	obrigado
+thank you!	obrigado!
+please	por favor
+sorry	desculpe
+excuse me	com licença
+goodbye	tchau
+bye	tchau
+see you	até mais
+congratulations	parabéns
+congratulations!	parabéns!
+games	jogos
+game	jogo
+play now	jogar agora
+play again	jogar novamente
+new game	novo jogo
+continue game	continuar jogo
+level	nível
+levels	níveis
+level up	subiu de nível
+score	pontuação
+high score	recorde
+best score	melhor pontuação
+points	pontos
+coins	moedas
+gems	gemas
+lives	vidas
+rewards	recompensas
+reward	recompensa
+claim	resgatar
+claim reward	resgatar recompensa
+collect	coletar
+daily reward	recompensa diária
+missions	missões
+achievements	conquistas
+leaderboard	classificação
+ranking	ranking
+players	jogadores
+player	jogador
+multiplayer	multijogador
+single player	um jogador
+you win	você venceu
+you win!	você venceu!
+you lose	você perdeu
+game over	fim de jogo
+victory	vitória
+defeat	derrota
+watch ad	assistir anúncio
+watch video	assistir vídeo
+ad	anúncio
+ads	anúncios
+remove ads	remover anúncios
+sponsored	patrocinado
+premium	premium
+go premium	assine o premium
+upgrade to premium	faça upgrade para o premium
+try for free	experimente grátis
+start free trial	iniciar avaliação gratuita
+free trial	avaliação gratuita
+subscription	assinatura
+manage subscription	gerenciar assinatura
+cancel subscription	cancelar assinatura
+restore purchases	restaurar compras
+monthly	mensal
+yearly	anual
+annual	anual
+per month	por mês
+per year	por ano
+weekly	semanal
+daily	diário
+best value	melhor valor
+most popular	mais popular
+pro	pro
+basic	básico
+plan	plano
+plans	planos
+choose a plan	escolha um plano
+tutorial	tutorial
+tips	dicas
+tip	dica
+guide	guia
+how to play	como jogar
+instructions	instruções
+controls	controles
+graphics	gráficos
+quality	qualidade
+high	alto
+medium	médio
+low	baixo
+very high	muito alto
+music volume	volume da música
+sound effects	efeitos sonoros
+subtitles	legendas
+captions	legendas
+audio language	idioma do áudio
+speed	velocidade
+playback speed	velocidade de reprodução
+normal	normal
+slow	lento
+fast	rápido
+resolution	resolução
+autoplay	reprodução automática
+quality settings	configurações de qualidade
+episodes	episódios
+episode	episódio
+season	temporada
+seasons	temporadas
+movies	filmes
+movie	filme
+series	séries
+tv shows	séries
+shows	programas
+trailer	trailer
+my list	minha lista
+add to list	adicionar à lista
+continue watching	continuar assistindo
+recommended	recomendados
+recommended for you	recomendados para você
+because you watched	porque você assistiu
+new releases	lançamentos
+top picks	escolhas principais
+news	notícias
+headlines	manchetes
+breaking news	notícia urgente
+sports	esportes
+entertainment	entretenimento
+business	negócios
+technology	tecnologia
+health	saúde
+science	ciência
+world	mundo
+politics	política
+local	local
+travel	viagem
+food	comida
+lifestyle	estilo de vida
+education	educação
+books	livros
+book	livro
+reading	leitura
+chapter	capítulo
+chapters	capítulos
+page	página
+pages	páginas
+contents	conteúdo
+table of contents	sumário
+notes	notas
+note	nota
+new note	nova nota
+add note	adicionar nota
+tasks	tarefas
+task	tarefa
+new task	nova tarefa
+add task	adicionar tarefa
+to-do	tarefa
+list	lista
+lists	listas
+new list	nova lista
+completed	concluído
+complete	concluir
+pending	pendente
+in progress	em andamento
+due date	data de vencimento
+priority	prioridade
+schedule	agenda
+upcoming	próximos
+overdue	atrasado
+repeat every	repetir a cada
+title	título
+untitled	sem título
+tap to edit	toque para editar
+tap to add	toque para adicionar
+tap to select	toque para selecionar
+tap to retry	toque para tentar novamente
+tap here	toque aqui
+press and hold	pressione e segure
+swipe up	deslize para cima
+swipe down	deslize para baixo
+swipe left	deslize para a esquerda
+swipe right	deslize para a direita
+pull to refresh	puxe para atualizar
+drag	arrastar
+drop	soltar
+tap	tocar
+double tap	tocar duas vezes
+long press	pressionar e segurar
+health data	dados de saúde
+steps	passos
+distance	distância
+calories	calorias
+workout	treino
+workouts	treinos
+activity	atividade
+activities	atividades
+heart rate	frequência cardíaca
+sleep	sono
+weight	peso
+height	altura
+goal	meta
+goals	metas
+progress	progresso
+statistics	estatísticas
+stats	estatísticas
+summary	resumo
+overview	visão geral
+dashboard	painel
+reports	relatórios
+analytics	análises
+insights	insights
+results	resultados
+result	resultado
+today's activity	atividade de hoje
+dictionary	dicionário
+translate	traduzir
+translation	tradução
+translator	tradutor
+detect language	detectar idioma
+english	inglês
+portuguese	português
+spanish	espanhol
+french	francês
+german	alemão
+italian	italiano
+japanese	japonês
+chinese	chinês
+korean	coreano
+russian	russo
+arabic	árabe
+voice	voz
+voices	vozes
+speak	falar
+listen	ouvir
+microphone access	acesso ao microfone
+voice search	pesquisa por voz
+text to speech	conversão de texto em voz
+speech rate	velocidade da fala
+pitch	tom
+are you sure you want to exit?	tem certeza de que deseja sair?
+do you want to save changes?	deseja salvar as alterações?
+this action cannot be undone	esta ação não pode ser desfeita
+this action cannot be undone.	esta ação não pode ser desfeita.
+please try again	tente novamente
+please try again later	tente novamente mais tarde
+please try again later.	tente novamente mais tarde.
+try again later	tente novamente mais tarde
+please check your internet connection	verifique sua conexão com a internet
+please check your internet connection and try again	verifique sua conexão com a internet e tente novamente
+please check your internet connection and try again.	verifique sua conexão com a internet e tente novamente.
+you are offline	você está off-line
+you're offline	você está off-line
+no connection	sem conexão
+connection lost	conexão perdida
+reconnecting	reconectando
+reconnecting…	reconectando…
+session expired	sessão expirada
+your session has expired	sua sessão expirou
+your session has expired. please log in again.	sua sessão expirou. faça login novamente.
+page not found	página não encontrada
+not found	não encontrado
+access denied	acesso negado
+permission denied	permissão negada
+permission required	permissão necessária
+allow access	permitir acesso
+allow notifications	permitir notificações
+turn on notifications	ativar notificações
+enable notifications	ativar notificações
+enable location	ativar localização
+turn on location	ativar localização
+location permission	permissão de localização
+camera permission	permissão da câmera
+storage permission	permissão de armazenamento
+go to settings	ir para configurações
+open settings	abrir configurações
+app settings	configurações do app
+notification settings	configurações de notificação
+account settings	configurações da conta
+privacy settings	configurações de privacidade
+manage account	gerenciar conta
+delete account	excluir conta
+deactivate account	desativar conta
+switch account	trocar de conta
+add account	adicionar conta
+log in to continue	faça login para continuar
+sign in to continue	faça login para continuar
+create a new account	criar uma nova conta
+by continuing, you agree to our terms of service and privacy policy	ao continuar, você concorda com nossos termos de serviço e política de privacidade
+by continuing, you agree to our terms of service and privacy policy.	ao continuar, você concorda com nossos termos de serviço e política de privacidade.
+i agree to the terms and conditions	concordo com os termos e condições
+i have read and agree to the terms	li e concordo com os termos
+upload photo	enviar foto
+change photo	alterar foto
+profile picture	foto do perfil
+profile photo	foto do perfil
+remove photo	remover foto
+cover photo	foto de capa
+bio	bio
+status	status
+about me	sobre mim
+edit info	editar informações
+personal information	informações pessoais
+contact information	informações de contato
+account information	informações da conta
+billing	cobrança
+billing address	endereço de cobrança
+shipping address	endereço de entrega
+add address	adicionar endereço
+add new address	adicionar novo endereço
+add payment method	adicionar forma de pagamento
+add card	adicionar cartão
+saved cards	cartões salvos
+order summary	resumo do pedido
+order details	detalhes do pedido
+order confirmed	pedido confirmado
+order placed	pedido realizado
+your order has been placed	seu pedido foi realizado
+thank you for your order	obrigado pelo seu pedido
+estimated delivery	entrega estimada
+delivered to	entregue em
+out for delivery	saiu para entrega
+shipped	enviado
+processing order	processando pedido
+cancel order	cancelar pedido
+return	devolver
+returns	devoluções
+return policy	política de devolução
+customer reviews	avaliações de clientes
+see all reviews	ver todas as avaliações
+write a review…	escrever uma avaliação…
+helpful	útil
+not helpful	não foi útil
+was this helpful?	isso foi útil?
+did you find this helpful?	isso foi útil para você?
+yes, thanks	sim, obrigado
+no, thanks	não, obrigado
+no thanks	não, obrigado
+tell us more	conte-nos mais
+how would you rate your experience?	como você avalia sua experiência?
+enjoying the app?	está gostando do app?
+do you like this app?	você gosta deste app?
+rate now	avaliar agora
+share this app	compartilhar este app
+share via	compartilhar via
+share to	compartilhar em
+send to	enviar para
+send message	enviar mensagem
+send a message	enviar uma mensagem
+message sent	mensagem enviada
+message deleted	mensagem excluída
+this message was deleted	esta mensagem foi apagada
+delete message	excluir mensagem
+delete for me	apagar para mim
+delete for everyone	apagar para todos
+delete chat	apagar conversa
+clear chat	limpar conversa
+mute notifications	silenciar notificações
+unmute notifications	ativar notificações
+block contact	bloquear contato
+report spam	denunciar spam
+search messages	pesquisar mensagens
+search contacts	pesquisar contatos
+search here	pesquisar aqui
+search for anything	pesquise qualquer coisa
+what are you looking for?	o que você está procurando?
+what's on your mind?	no que você está pensando?
+what's happening?	o que está acontecendo?
+recent searches	pesquisas recentes
+clear recent searches	limpar pesquisas recentes
+suggestions	sugestões
+suggested	sugeridos
+people you may know	pessoas que você talvez conheça
+people	pessoas
+see translation	ver tradução
+show translation	mostrar tradução
+show original	mostrar original
+translated	traduzido
+original	original
+view profile	ver perfil
+view more	ver mais
+view details	ver detalhes
+show details	mostrar detalhes
+hide details	ocultar detalhes
+load more	carregar mais
+show all	mostrar tudo
+see less	ver menos
+expand all	expandir tudo
+collapse all	recolher tudo
+back to top	voltar ao topo
+close dialog	fechar caixa de diálogo
+close menu	fechar menu
+open menu	abrir menu
+more actions	mais ações
+actions	ações
+action	ação
+tools	ferramentas
+tool	ferramenta
+extras	extras
+advanced	avançado
+advanced settings	configurações avançadas
+general	geral
+general settings	configurações gerais
+appearance	aparência
+display settings	configurações de tela
+data usage	uso de dados
+clear cache	limpar cache
+cache	cache
+clear data	limpar dados
+storage used	armazenamento usado
+free up space	liberar espaço
+version info	informações da versão
+build number	número da versão
+developer options	opções do desenvolvedor
+debug	depuração
+logs	registros
+diagnostics	diagnóstico
+monday	segunda-feira
+tuesday	terça-feira
+wednesday	quarta-feira
+thursday	quinta-feira
+friday	sexta-feira
+saturday	sábado
+sunday	domingo
+mon	seg
+tue	ter
+wed	qua
+thu	qui
+fri	sex
+sat	sáb
+sun	dom
+january	janeiro
+february	fevereiro
+march	março
+april	abril
+may	maio
+june	junho
+july	julho
+august	agosto
+september	setembro
+october	outubro
+november	novembro
+december	dezembro
+morning	manhã
+afternoon	tarde
+evening	noite
+night	noite
+am	am
+pm	pm
+hour	hora
+minute	minuto
+second	segundo
+ago	atrás
+1 minute ago	1 minuto atrás
+1 hour ago	1 hora atrás
+1 day ago	1 dia atrás
+a minute ago	um minuto atrás
+an hour ago	uma hora atrás
+a day ago	um dia atrás
+last seen	visto por último
+last seen recently	visto recentemente
+last updated	última atualização
+updated	atualizado
+new version	nova versão
+what's new	novidades
+release notes	notas da versão
+change log	registro de alterações
+changelog	registro de alterações
+beta	beta
+experimental	experimental
+feature	recurso
+features	recursos
+new features	novos recursos
+improvements	melhorias
+bug fixes	correções de erros
+bug fixes and performance improvements	correções de erros e melhorias de desempenho
+performance	desempenho
+welcome to	bem-vindo ao
+getting started	primeiros passos
+step	etapa
+step 1	etapa 1
+step 2	etapa 2
+step 3	etapa 3
+of	de
+yes, delete	sim, excluir
+yes, continue	sim, continuar
+no, cancel	não, cancelar
+keep	manter
+keep editing	continuar editando
+replace	substituir
+overwrite	substituir
+merge	mesclar
+duplicate	duplicar
+pin to top	fixar no topo
+unpin	desafixar
+pinned	fixado
+muted	silenciado
+hide post	ocultar publicação
+report post	denunciar publicação
+delete post	excluir publicação
+edit post	editar publicação
+save post	salvar publicação
+copy text	copiar texto
+select text	selecionar texto
+translate text	traduzir texto
+read aloud	ler em voz alta
+listen to this	ouvir isto
+dark	escuro
+light	claro
+system default	padrão do sistema
+use system default	usar padrão do sistema
+use device settings	usar configurações do dispositivo
+small	pequeno
+large	grande
+extra large	extragrande
+huge	enorme
+tiny	minúsculo
+big	grande
+short	curto
+long	longo
+slower	mais lento
+faster	mais rápido
+first	primeiro
+last	último
+newest	mais recentes
+oldest	mais antigos
+newest first	mais recentes primeiro
+oldest first	mais antigos primeiro
+a-z	a-z
+z-a	z-a
+alphabetical	ordem alfabética
+ascending	crescente
+descending	decrescente
+price: low to high	preço: menor para maior
+price: high to low	preço: maior para menor
+relevance	relevância
+most relevant	mais relevantes
+date added	data de inclusão
+name (a-z)	nome (a-z)
+grid view	visualização em grade
+list view	visualização em lista
+grid	grade
+view	visualizar
+preview	visualizar
+edit mode	modo de edição
+reading mode	modo de leitura
+dark mode on	modo escuro ativado
+offline mode	modo off-line
+private mode	modo privado
+incognito	anônimo
+new tab	nova guia
+new incognito tab	nova guia anônima
+tabs	guias
+tab	guia
+close tab	fechar guia
+close all tabs	fechar todas as guias
+bookmarks bar	barra de favoritos
+add bookmark	adicionar favorito
+desktop site	versão para computador
+find in page	localizar na página
+address bar	barra de endereço
+search or type url	pesquise ou digite o url
+search or type web address	pesquise ou digite um endereço da web
+downloads folder	pasta de downloads
+download complete	download concluído
+downloading	baixando
+downloading…	baixando…
+uploading	enviando
+uploading…	enviando…
+sending	enviando
+sending…	enviando…
+saving	salvando
+saving…	salvando…
+deleting	excluindo
+installing	instalando
+installing…	instalando…
+updating	atualizando
+updating…	atualizando…
+searching	pesquisando
+searching…	pesquisando…
+preparing	preparando
+preparing…	preparando…
+waiting	aguardando
+waiting…	aguardando…
+paused	pausado
+stopped	parado
+playing	reproduzindo
+now playing	tocando agora
+up next	a seguir
+queue	fila
+add to queue	adicionar à fila
+play next	tocar em seguida
+lyrics	letra
+radio	rádio
+download complete.	download concluído.
+download failed	falha no download
+upload failed	falha no envio
+failed to load	falha ao carregar
+failed to send	falha ao enviar
+failed to connect	falha ao conectar
+unable to connect	não foi possível conectar
+could not connect	não foi possível conectar
+could not load	não foi possível carregar
+couldn't load	não foi possível carregar
+couldn't connect	não foi possível conectar
+timeout	tempo esgotado
+request timed out	a solicitação expirou
+server error	erro no servidor
+try again in a few minutes	tente novamente em alguns minutos
+too many requests	muitas solicitações
+not supported	não compatível
+unsupported	não compatível
+unknown	desconhecido
+loading failed	falha ao carregar
+no notifications	nenhuma notificação
+no messages	nenhuma mensagem
+no new messages	nenhuma mensagem nova
+no comments yet	nenhum comentário ainda
+no items	nenhum item
+no items found	nenhum item encontrado
+no contacts	nenhum contato
+no files	nenhum arquivo
+item	item
+items	itens
+selected	selecionado
+1 selected	1 selecionado
+select items	selecionar itens
+deselect all	desmarcar tudo
+check all	marcar tudo
+uncheck all	desmarcar tudo
+choose	escolher
+choose file	escolher arquivo
+choose an option	escolha uma opção
+select an option	selecione uma opção
+select language	selecionar idioma
+choose language	escolher idioma
+select country	selecionar país
+select date	selecionar data
+select time	selecionar hora
+pick a date	escolha uma data
+pick a time	escolha um horário
+from date	data inicial
+to date	data final
+start date	data de início
+end date	data de término
+start time	hora de início
+end time	hora de término
+all day	dia inteiro
+does not repeat	não se repete
+location services	serviços de localização
+current location	localização atual
+use current location	usar localização atual
+my location	minha localização
+search location	pesquisar local
+enter address	digite o endereço
+set as default	definir como padrão
+make default	tornar padrão
+default address	endereço padrão
+home address	endereço residencial
+work	trabalho
+school	escola
+mobile	celular
+landline	telefone fixo
+fax	fax
+website url	url do site
+company	empresa
+job title	cargo
+department	departamento

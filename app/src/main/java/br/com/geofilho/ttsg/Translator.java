@@ -37,7 +37,7 @@ final class Translator {
 
     private static final int MAX_TEXT = 4500;
     /** Traduções guardadas (memória e arquivo): as mais recentes. */
-    private static final int CACHE_SIZE = 5000;
+    private static final int CACHE_SIZE = 20000;
     private static final long BACKOFF_MS = 15000;
     private static final String SAME = "\u0000";
 
@@ -149,6 +149,14 @@ final class Translator {
         }
         if (looksLike(check, dst)) {
             return text; // já está no idioma de destino: nem consulta a internet
+        }
+        // Dicionário de tradução do aplicativo (inglês para português): na hora, sem internet.
+        if ("pt".equals(base(dst)) && ("auto".equals(src) || "en".equals(base(src)))) {
+            String fromBase = BaseDictionary.lookup(appContext, text);
+            if (fromBase != null) {
+                lastProvider = "dicionário de tradução do aplicativo";
+                return fromBase;
+            }
         }
         final String key = src + ">" + dst + ":" + text;
         synchronized (CACHE) {
@@ -272,6 +280,7 @@ final class Translator {
         DISK.submit(new Runnable() {
             @Override
             public void run() {
+                BaseDictionary.load(appContext);
                 load();
                 if (android.os.Build.VERSION.SDK_INT >= 31) {
                     SystemTranslator.refresh(appContext, false); // descobre se o Android traduz no aparelho

@@ -54,8 +54,10 @@ app.
 - O áudio começa a tocar enquanto o motor ainda está gerando.
 
 ### Tradução de voz
-Online, pelo tradutor do Google. Texto que já está no idioma de destino não é
-enviado; traduções repetidas ficam guardadas; o leitor de tela não espera mais
+Primeiro, um dicionário de tradução embutido (res/raw/traducao_base.txt), com
+cerca de 1.400 palavras e frases comuns de aplicativos, do inglês para o
+português, sem internet. Depois, online, pelo tradutor do Google. Texto que já
+está no idioma de destino não é enviado; traduções repetidas ficam guardadas; o leitor de tela não espera mais
 de 2,5 segundos nem fica preso quando você passa para outro item. Sem
 internet, lê o texto original.
 
