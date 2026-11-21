@@ -47,10 +47,22 @@ final class Translator {
     };
 
     /**
-     * Traduções guardadas (memória e arquivo traducoes.txt). Ficam para sempre: nenhuma é
-     * descartada; só o botão Apagar traduções guardadas limpa.
+     * Traduções guardadas (memória e arquivo traducoes.txt), até 20 mil frases, para o app
+     * continuar leve. Cada vez que uma frase é falada, ela volta para o topo; ao passar do
+     * limite, sai a que não é ouvida há mais tempo. O arquivo é gravado nessa mesma ordem,
+     * então ela vale também depois de religar.
      */
-    private static final Map<String, String> CACHE = new LinkedHashMap<>(1024);
+    private static final int CACHE_SIZE = 20000;
+    private static final Map<String, String> CACHE = new LinkedHashMap<String, String>(1024, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, String> e) {
+            return size() > CACHE_SIZE;
+        }
+    };
+    /** Houve frases ouvidas desde a última gravação da ordem de uso. */
+    private static volatile boolean usedSinceRewrite;
+    private static volatile long lastRewrite;
+    private static final long REWRITE_EVERY_MS = 10 * 60 * 1000;
     private static volatile long failedUntil;
 
     private Translator() {
@@ -160,6 +172,7 @@ final class Translator {
             String hit = CACHE.get(key);
             if (hit != null) {
                 lastProvider = "tradução guardada no celular";
+                rememberUse();
                 return SAME.equals(hit) ? text : hit;
             }
         }
@@ -334,8 +347,8 @@ final class Translator {
                     synchronized (CACHE) {
                         size = CACHE.size();
                     }
-                    if (linesInFile > size * 2 + 500) {
-                        compact(f); // linhas repetidas: regrava o arquivo sem repetição (nada é perdido)
+                    if (linesInFile > size + 2000) {
+                        compact(f); // regrava só as que ficaram, na ordem de uso
                     }
                     java.io.Writer w = new java.io.OutputStreamWriter(new java.io.FileOutputStream(f, true), "UTF-8");
                     w.write(escape(key) + "\t" + escape(value) + "\n");
@@ -347,7 +360,34 @@ final class Translator {
         });
     }
 
+    /**
+     * Uma frase guardada foi ouvida: no máximo a cada 10 minutos, regrava o arquivo na ordem
+     * de uso, para as frases mais ouvidas não serem as descartadas depois de religar.
+     */
+    private static void rememberUse() {
+        usedSinceRewrite = true;
+        long now = System.currentTimeMillis();
+        if (file == null || now - lastRewrite < REWRITE_EVERY_MS) {
+            return;
+        }
+        lastRewrite = now;
+        DISK.submit(new Runnable() {
+            @Override
+            public void run() {
+                java.io.File f = file;
+                if (f == null || !usedSinceRewrite) {
+                    return;
+                }
+                try {
+                    compact(f);
+                } catch (Exception ignored) {
+                }
+            }
+        });
+    }
+
     private static void compact(java.io.File f) throws java.io.IOException {
+        usedSinceRewrite = false;
         Map<String, String> copy;
         synchronized (CACHE) {
             copy = new LinkedHashMap<>(CACHE);
