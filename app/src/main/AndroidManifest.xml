@@ -129,6 +129,34 @@
             android:taskAffinity=""
             android:theme="@android:style/Theme.NoDisplay" />
 
+        <!-- Entradas com nome que explica a ação, para "Iniciar atividade de aplicativo" do MacroDroid
+             (ele mostra o nome técnico da tela). Abrem a ação direto, sem mostrar tela. -->
+        <activity-alias
+            android:name=".Dicionario"
+            android:exported="true"
+            android:label="Dicionário"
+            android:targetActivity=".ActionActivity" />
+        <activity-alias
+            android:name=".Ligar_traducao"
+            android:exported="true"
+            android:label="Ligar tradução"
+            android:targetActivity=".ActionActivity" />
+        <activity-alias
+            android:name=".Desligar_traducao"
+            android:exported="true"
+            android:label="Desligar tradução"
+            android:targetActivity=".ActionActivity" />
+        <activity-alias
+            android:name=".Ligar_saida_de_audio"
+            android:exported="true"
+            android:label="Ligar saída de áudio"
+            android:targetActivity=".ActionActivity" />
+        <activity-alias
+            android:name=".Desligar_saida_de_audio"
+            android:exported="true"
+            android:label="Desligar saída de áudio"
+            android:targetActivity=".ActionActivity" />
+
         <!-- Configurações rápidas: Dicionário, Saída de áudio e Tradução (Android 7+). -->
         <service
             android:name=".QuickTile$Dictionary"

@@ -39,7 +39,12 @@ public class ActionActivity extends Activity {
         Intent in = getIntent();
         String action = in != null ? in.getAction() : null;
         String sent = in != null ? in.getStringExtra(EXTRA_TOKEN) : null;
-        if (action == null || sent == null || !sent.equals(token(p))) {
+        // Entradas com nome próprio (para "Iniciar atividade de aplicativo" do MacroDroid, que mostra
+        // o nome técnico da tela): a ação vem do nome da entrada, sem senha.
+        String byName = aliasAction(getComponentName() != null ? getComponentName().getClassName() : "");
+        if (byName != null) {
+            action = byName;
+        } else if (action == null || sent == null || !sent.equals(token(p))) {
             say("Atalho inválido. Crie o atalho de novo pelo Gerenciador de TTS G.");
             finish();
             return;
@@ -69,6 +74,27 @@ public class ActionActivity extends Activity {
             say("Áudio do leitor de tela no telefone desligado.");
         }
         finish();
+    }
+
+    /** Ação de cada entrada com nome próprio (activity-alias no manifesto). */
+    private static String aliasAction(String className) {
+        String n = className.substring(className.lastIndexOf('.') + 1);
+        if ("Dicionario".equals(n)) {
+            return ACTION_DICTIONARY;
+        }
+        if ("Ligar_traducao".equals(n)) {
+            return ACTION_TRANSLATE_ON;
+        }
+        if ("Desligar_traducao".equals(n)) {
+            return ACTION_TRANSLATE_OFF;
+        }
+        if ("Ligar_saida_de_audio".equals(n)) {
+            return ACTION_AUDIO_ON;
+        }
+        if ("Desligar_saida_de_audio".equals(n)) {
+            return ACTION_AUDIO_OFF;
+        }
+        return null;
     }
 
     private void say(String msg) {
