@@ -23,10 +23,6 @@
             android:id="@+id/btn_target"
             style="@style/Row" />
 
-        <Button
-            android:id="@+id/btn_deepl"
-            style="@style/Row" />
-
         <TextView
             style="@style/Row"
             android:focusable="true"

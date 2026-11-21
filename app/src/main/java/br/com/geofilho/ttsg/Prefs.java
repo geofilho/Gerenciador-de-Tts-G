@@ -134,11 +134,6 @@ final class Prefs {
         return p.getString("translate_dst", Translator.deviceLanguage());
     }
 
-    /** Chave da API do DeepL colada pela pessoa (vazia = não usa). */
-    static String deepLKey(SharedPreferences p) {
-        return p.getString("deepl_key", "");
-    }
-
     static boolean keepOnPhone(SharedPreferences p) {
         return p.getBoolean("keep_on_phone", false);
     }

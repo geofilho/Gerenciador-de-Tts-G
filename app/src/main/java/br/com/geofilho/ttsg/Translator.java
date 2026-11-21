@@ -103,7 +103,6 @@ final class Translator {
             return text;
         }
         init(c);
-        deepLKey = Prefs.deepLKey(p);
         lastError = "";
         String out = translate(text, Prefs.translateSource(p), Prefs.translateTarget(p), false, stop);
         String err = lastError;
@@ -465,13 +464,6 @@ final class Translator {
 
     /** Consulta o tradutor. Retorna {texto traduzido, idioma detectado} ou null. */
     private static String[] request(String text, String src, String dst) {
-        // Com a chave do DeepL, ele é o tradutor principal (cota própria, sem o bloqueio do Google).
-        String[] d = deepL(text, src, dst);
-        if (d != null) {
-            lastError = "";
-            lastNetwork = System.currentTimeMillis();
-            return d;
-        }
         if (!pace()) {
             lastError = "muitas traduções seguidas; pausa de alguns segundos para o Google não bloquear o aparelho";
             return null;
@@ -514,160 +506,12 @@ final class Translator {
             lastNetwork = System.currentTimeMillis();
             return r;
         }
-        if (limited && !deepLKey.isEmpty() && !deepLError.isEmpty()) {
-            lastError = "o DeepL falhou (" + deepLError + "), o Google limitou as consultas (código 429)"
-                    + (myMemoryError.isEmpty() ? "" : " e o MyMemory também falhou: " + myMemoryError)
-                    + "; enquanto isso, os textos são lidos no idioma original";
-        } else if (limited) {
+        if (limited) {
             lastError = "o tradutor do Google limitou as consultas deste aparelho por alguns minutos (código 429)"
                     + (myMemoryError.isEmpty() ? "" : " e o tradutor reserva também falhou: " + myMemoryError)
                     + "; enquanto isso, os textos são lidos no idioma original";
         }
         return null;
-    }
-
-    // ----- DeepL (com a chave da própria pessoa) -----
-
-    /** Chave do DeepL salva pela pessoa (vazia = não usa). */
-    static volatile String deepLKey = "";
-    private static volatile long deepLRestUntil;
-    private static volatile long deepLRestFor;
-    /** Motivo da última falha do DeepL (vazio = funcionou). */
-    static volatile String deepLError = "";
-
-    /** Idiomas que o DeepL traduz (destino), no formato dele. */
-    private static String deepLTarget(String dst) {
-        String b = base(dst);
-        if ("pt".equals(b)) {
-            return "PT-BR";
-        }
-        if ("en".equals(b)) {
-            return "EN-US";
-        }
-        if ("zh-cn".equals(b)) {
-            return "ZH-HANS";
-        }
-        if ("zh-tw".equals(b)) {
-            return "ZH-HANT";
-        }
-        if ("no".equals(b)) {
-            return "NB";
-        }
-        String[] ok = {"ar", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "he", "hu", "id", "it", "ja",
-                "ko", "lt", "lv", "nl", "pl", "ro", "ru", "sk", "sl", "sv", "th", "tr", "uk", "vi"};
-        for (String o : ok) {
-            if (o.equals(b)) {
-                return b.toUpperCase(Locale.ROOT);
-            }
-        }
-        return null;
-    }
-
-    private static String[] deepL(String text, String src, String dst) {
-        return deepL(text, src, dst, deepLKey, false);
-    }
-
-    /** Traduz pelo DeepL. {@code check}: usado ao salvar a chave, ignora a pausa depois de erro. */
-    private static String[] deepL(String text, String src, String dst, String key, boolean check) {
-        if (key == null || key.trim().isEmpty()) {
-            return null;
-        }
-        if (!check && System.currentTimeMillis() < deepLRestUntil) {
-            return null;
-        }
-        String target = deepLTarget(dst);
-        if (target == null) {
-            deepLError = "o DeepL não traduz para este idioma de destino";
-            return null;
-        }
-        key = key.trim();
-        HttpURLConnection con = null;
-        boolean ok = false;
-        try {
-            org.json.JSONObject req = new org.json.JSONObject();
-            req.put("text", new JSONArray().put(text));
-            req.put("target_lang", target);
-            String source = "auto".equals(src) ? null : deepLTarget(src);
-            if (source != null) {
-                req.put("source_lang", source.substring(0, 2)); // origem não usa variante (PT, EN, ZH)
-            }
-            String url = key.endsWith(":fx") ? "https://api-free.deepl.com/v2/translate"
-                    : "https://api.deepl.com/v2/translate";
-            con = (HttpURLConnection) new URL(url).openConnection();
-            con.setConnectTimeout(2000);
-            con.setReadTimeout(3000);
-            con.setRequestMethod("POST");
-            con.setDoOutput(true);
-            con.setRequestProperty("Authorization", "DeepL-Auth-Key " + key);
-            con.setRequestProperty("Content-Type", "application/json");
-            OutputStream os = con.getOutputStream();
-            os.write(req.toString().getBytes("UTF-8"));
-            os.close();
-            int code = con.getResponseCode();
-            if (code != 200) {
-                if (code == 403 || code == 401) {
-                    deepLError = "a chave do DeepL foi recusada; confira se ela foi colada inteira";
-                    deepLRestFor = 600000;
-                } else if (code == 456) {
-                    deepLError = "a cota gratuita do mês do DeepL acabou";
-                    deepLRestFor = 6 * 3600000L;
-                } else if (code == 429) {
-                    deepLError = "o DeepL pediu para esperar um pouco (código 429)";
-                    deepLRestFor = deepLRestFor == 0 ? 30000 : Math.min(600000, deepLRestFor * 2);
-                } else {
-                    deepLError = "o DeepL respondeu com o código " + code;
-                    deepLRestFor = 30000;
-                }
-                deepLRestUntil = System.currentTimeMillis() + deepLRestFor;
-                return null;
-            }
-            InputStream in = con.getInputStream();
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            byte[] buf = new byte[8192];
-            int n;
-            while ((n = in.read(buf)) > 0) {
-                bos.write(buf, 0, n);
-            }
-            in.close();
-            org.json.JSONObject t = new org.json.JSONObject(bos.toString("UTF-8"))
-                    .getJSONArray("translations").getJSONObject(0);
-            ok = true;
-            deepLError = "";
-            deepLRestFor = 0;
-            return new String[]{t.optString("text", ""),
-                    t.optString("detected_source_language", "").toLowerCase(Locale.ROOT)};
-        } catch (java.net.UnknownHostException e) {
-            deepLError = "sem internet";
-            restDeepL(30000);
-            return null;
-        } catch (java.net.SocketTimeoutException e) {
-            deepLError = "o DeepL demorou demais para responder";
-            restDeepL(30000);
-            return null;
-        } catch (Exception e) {
-            deepLError = "não foi possível falar com o DeepL; confira a internet";
-            restDeepL(30000);
-            return null;
-        } finally {
-            if (con != null && !ok) {
-                con.disconnect();
-            }
-        }
-    }
-
-    /** Depois de uma falha de conexão, não tenta o DeepL por um tempo (para não atrasar cada fala). */
-    private static void restDeepL(long ms) {
-        deepLRestUntil = System.currentTimeMillis() + ms;
-    }
-
-    /** Testa uma chave do DeepL (rede; não chamar na tela). Retorna "" se funcionou, ou o motivo. */
-    static String checkDeepLKey(String key, String dst) {
-        String[] r = deepL("Hello, the key is working.", "auto", dst, key, true);
-        if (r != null) {
-            deepLRestUntil = 0;
-            return "";
-        }
-        return deepLError.isEmpty() ? "não foi possível testar a chave" : deepLError;
     }
 
     // ----- MyMemory (reserva) -----
