@@ -1,0 +1,35 @@
+name: Guardar versão
+
+# Quando uma nova versão é publicada em atualizacao/, guarda uma cópia dela
+# numa publicação própria da página de versões (Releases). O link de sempre
+# (atualizacao/GerenciadorTtsG.apk) e o "Verificar atualização" não mudam.
+on:
+  push:
+    branches: [main]
+    paths:
+      - atualizacao/versao.json
+      - .github/workflows/guardar-versao.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  guardar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ler a versão
+        id: v
+        run: |
+          echo "nome=$(jq -r .versionName atualizacao/versao.json)" >> "$GITHUB_OUTPUT"
+          jq -r .novidades atualizacao/versao.json > novidades.txt
+      - name: Guardar esta versão
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.v.outputs.nome }}
+          name: Gerenciador de TTS G ${{ steps.v.outputs.nome }}
+          make_latest: true
+          target_commitish: ${{ github.sha }}
+          body_path: novidades.txt
+          files: atualizacao/GerenciadorTtsG.apk
