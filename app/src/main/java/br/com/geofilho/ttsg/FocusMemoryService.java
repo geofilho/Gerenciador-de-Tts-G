@@ -72,6 +72,8 @@ public class FocusMemoryService extends AccessibilityService {
             detailNotes = 0;
             seenApps.clear();
             recognized.clear();
+            focusSeen.clear();
+            pollNoted = false;
             Diagnostics.note(this, "Lembrar o foco: ligado em " + android.text.TextUtils.join(", ", apps) + ".");
         } catch (Exception ignored) {
         }
@@ -98,10 +100,19 @@ public class FocusMemoryService extends AccessibilityService {
             // O item da lista em que o foco está (ou que foi tocado) é o que será lembrado.
             // Não depende do toque: alguns apps, como o Telegram, abrem o item sem avisar o toque.
             AccessibilityNodeInfo src = event.getSource();
+            if (type == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED && focusSeen.add(String.valueOf(event.getPackageName()))) {
+                Diagnostics.note(this, "Lembrar o foco (detalhe): primeiro aviso de foco de " + event.getPackageName() + ".");
+            }
             if (listItem(src) == null && type == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED) {
                 noteDetail(src);
             }
             remember(src);
+        } else if (!leftList && (type == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
+                || type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)) {
+            // Alguns aplicativos (como o Telegram) não avisam quando o foco do leitor de tela muda:
+            // quando a tela muda, pergunta onde o foco está (no máximo a cada 0,4 s).
+            handler.removeCallbacks(poll);
+            handler.postDelayed(poll, 400);
         }
         if (savedKey == null) {
             return; // nada guardado: não faz nada (sem custo)
@@ -328,6 +339,51 @@ public class FocusMemoryService extends AccessibilityService {
                 || cls.endsWith("RecyclerListView");
     }
 
+    private final java.util.Set<String> focusSeen = new java.util.HashSet<>();
+    private AccessibilityNodeInfo lastPolled;
+    private boolean pollNoted;
+
+    private final Runnable poll = new Runnable() {
+        @Override
+        public void run() {
+            pollFocus();
+        }
+    };
+
+    /** Pergunta ao aplicativo onde está o foco do leitor de tela e guarda, se for item de lista. */
+    private void pollFocus() {
+        if (leftList) {
+            return;
+        }
+        AccessibilityNodeInfo root;
+        AccessibilityNodeInfo focused;
+        try {
+            root = getRootInActiveWindow();
+            focused = root != null ? root.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY) : null;
+        } catch (Exception e) {
+            return;
+        }
+        if (focused == null || focused.equals(lastPolled)) {
+            return;
+        }
+        lastPolled = focused;
+        if (!pollNoted) {
+            pollNoted = true;
+            String l = label(focused);
+            Diagnostics.note(this, "Lembrar o foco (detalhe): perguntou o foco a " + focused.getPackageName() + ": \""
+                    + (l != null ? shortLabel(l) : "sem texto") + "\" (" + shortClass(focused.getClassName())
+                    + (listItem(focused) != null ? ", item de lista" : ", não é item de lista") + ").");
+        }
+        if (listItem(focused) == null) {
+            noteDetail(focused);
+        }
+        remember(focused);
+        if (savedKey != null) {
+            handler.removeCallbacks(check);
+            handler.postDelayed(check, 700);
+        }
+    }
+
     /** Aplicativos dos quais já chegou algum evento / já houve lista reconhecida (desde que o serviço ligou). */
     private final java.util.Set<String> seenApps = new java.util.HashSet<>();
     private final java.util.Set<String> recognized = new java.util.HashSet<>();
@@ -356,7 +412,7 @@ public class FocusMemoryService extends AccessibilityService {
             return;
         }
         String l = label(source);
-        if (l == null || l.length() < 15) {
+        if (l == null || l.length() < 10) {
             return; // botões curtos ("Menu", "Pesquisar"): não interessam
         }
         detailNotes++;
@@ -440,6 +496,7 @@ public class FocusMemoryService extends AccessibilityService {
     public void onDestroy() {
         handler.removeCallbacks(check);
         handler.removeCallbacks(verify);
+        handler.removeCallbacks(poll);
         if (prefsListener != null) {
             Prefs.get(this).unregisterOnSharedPreferenceChangeListener(prefsListener);
         }
