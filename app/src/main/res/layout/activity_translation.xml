@@ -40,11 +40,10 @@
             android:text="@string/system_download"
             android:visibility="gone" />
 
-        <TextView
+        <Button
             android:id="@+id/txt_device"
             style="@style/Row"
-            android:accessibilityLiveRegion="polite"
-            android:focusable="true" />
+            android:accessibilityLiveRegion="polite" />
 
         <Button
             android:id="@+id/btn_device_download"

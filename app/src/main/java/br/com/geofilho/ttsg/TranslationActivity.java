@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class TranslationActivity extends Activity {
 
-    private TextView txtDevice;
+    private Button txtDevice;
     private Button btnDeviceDownload;
     private Switch sw;
 
@@ -125,6 +125,12 @@ public class TranslationActivity extends Activity {
             }
         });
         txtDevice = findViewById(R.id.txt_device);
+        txtDevice.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showDownloadedLanguages();
+            }
+        });
         btnDeviceDownload = findViewById(R.id.btn_device_download);
         btnDeviceDownload.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -219,6 +225,8 @@ public class TranslationActivity extends Activity {
                         prefs.edit().putString(source ? "translate_src" : "translate_dst", codes.get(which)).apply();
                         refresh();
                         checkSystemTranslator();
+                        // Idioma escolhido de novo: volta a valer para o download automático.
+                        DeviceTranslator.unmarkRemoved(TranslationActivity.this, codes.get(which));
                         if (Prefs.translateOn(prefs)) {
                             DeviceTranslator.resetAuto(); // idioma novo: baixa o pacote dele pelo Wi-Fi
                             Translator.prepareDevice(TranslationActivity.this);
@@ -297,6 +305,74 @@ public class TranslationActivity extends Activity {
                         showSavedCount();
                         Toast.makeText(TranslationActivity.this, "Traduções guardadas apagadas.", Toast.LENGTH_SHORT)
                                 .show();
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    /** Lista os idiomas baixados do tradutor no aparelho; tocar num idioma pergunta se quer excluir. */
+    private void showDownloadedLanguages() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final java.util.List<String> langs = DeviceTranslator.downloadedList(TranslationActivity.this);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (isFinishing()) {
+                            return;
+                        }
+                        if (langs.isEmpty()) {
+                            Toast.makeText(TranslationActivity.this, "Nenhum idioma do tradutor no aparelho está baixado.",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        String[] names = new String[langs.size()];
+                        for (int i = 0; i < names.length; i++) {
+                            names[i] = DeviceTranslator.name(langs.get(i)) + ". Toque para excluir";
+                        }
+                        new AlertDialog.Builder(TranslationActivity.this)
+                                .setTitle("Idiomas baixados (" + names.length + "). Cada um ocupa cerca de 30 MB")
+                                .setItems(names, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface d, int which) {
+                                        confirmDelete(langs.get(which));
+                                    }
+                                })
+                                .setNegativeButton("Fechar", null)
+                                .show();
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private void confirmDelete(final String lang) {
+        final String name = DeviceTranslator.name(lang);
+        new AlertDialog.Builder(this)
+                .setTitle("Excluir o idioma " + name + "?")
+                .setMessage("O tradutor no aparelho deixa de traduzir " + name + " sem internet. "
+                        + "Para usar de novo, baixe pelo botão Baixar o tradutor no aparelho.")
+                .setPositiveButton("Excluir", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface d, int w) {
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                final String err = DeviceTranslator.delete(TranslationActivity.this, lang);
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(TranslationActivity.this, err == null
+                                                ? name + " excluído."
+                                                : "Não foi possível excluir " + name + ": " + err + ".",
+                                                Toast.LENGTH_LONG).show();
+                                        checkDeviceTranslator();
+                                    }
+                                });
+                            }
+                        }).start();
                     }
                 })
                 .setNegativeButton("Cancelar", null)

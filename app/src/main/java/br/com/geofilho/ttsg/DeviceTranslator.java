@@ -192,6 +192,15 @@ final class DeviceTranslator {
                     if (s != null) {
                         langs.add(s);
                     }
+                    if (wifiOnly) {
+                        // Automático: não baixa de novo um idioma que a pessoa excluiu.
+                        langs.removeAll(removed(c));
+                    } else {
+                        // Botão: a pessoa pediu, então esses idiomas voltam a valer.
+                        for (String l : langs) {
+                            unmarkRemoved(c, l);
+                        }
+                    }
                     DownloadConditions.Builder cond = new DownloadConditions.Builder();
                     if (wifiOnly) {
                         cond.requireWifi();
@@ -244,6 +253,93 @@ final class DeviceTranslator {
         return downloading && !waitingWifi;
     }
 
+    // ----- idiomas baixados: lista e exclusão -----
+
+    private static final String REMOVED = "device_removed";
+
+    /** Idiomas que a pessoa excluiu (o download automático não baixa de novo). */
+    static Set<String> removed(Context c) {
+        Set<String> out = new HashSet<>();
+        for (String l : Prefs.get(c).getString(REMOVED, "").split(",")) {
+            if (!l.isEmpty()) {
+                out.add(l);
+            }
+        }
+        return out;
+    }
+
+    private static void saveRemoved(Context c, Set<String> set) {
+        StringBuilder b = new StringBuilder();
+        for (String l : set) {
+            if (b.length() > 0) {
+                b.append(',');
+            }
+            b.append(l);
+        }
+        Prefs.get(c).edit().putString(REMOVED, b.toString()).apply();
+    }
+
+    /** A pessoa escolheu esse idioma de novo (origem ou destino): o automático pode baixar. */
+    static void unmarkRemoved(Context c, String lang) {
+        String l = code(lang);
+        Set<String> set = removed(c);
+        if (l != null && set.remove(l)) {
+            saveRemoved(c, set);
+        }
+    }
+
+    /** Idiomas baixados, consultados agora, em ordem alfabética do nome. */
+    static java.util.List<String> downloadedList(Context c) {
+        checkedAt = 0;
+        java.util.List<String> list = new java.util.ArrayList<>(downloaded(c));
+        java.util.Collections.sort(list, new java.util.Comparator<String>() {
+            @Override
+            public int compare(String a, String b) {
+                return name(a).compareTo(name(b));
+            }
+        });
+        return list;
+    }
+
+    /** Nome do idioma em português, por exemplo "Inglês". */
+    static String name(String code) {
+        String n = new Locale(code).getDisplayLanguage(new Locale("pt", "BR"));
+        if (n == null || n.isEmpty()) {
+            return code;
+        }
+        return Character.toUpperCase(n.charAt(0)) + n.substring(1);
+    }
+
+    /** Exclui o pacote do idioma. Retorna null se deu certo, ou o motivo da falha. */
+    static String delete(Context c, String lang) {
+        if (!ready(c)) {
+            return "o tradutor no aparelho ainda não pode ser usado; desbloqueie o celular e tente de novo";
+        }
+        try {
+            synchronized (CLIENTS) {
+                java.util.Iterator<Map.Entry<String, Translator>> it = CLIENTS.entrySet().iterator();
+                while (it.hasNext()) {
+                    Map.Entry<String, Translator> e = it.next();
+                    String[] pair = e.getKey().split(">");
+                    if (lang.equals(pair[0]) || lang.equals(pair[1])) {
+                        e.getValue().close();
+                        it.remove();
+                    }
+                }
+            }
+            Tasks.await(RemoteModelManager.getInstance().deleteDownloadedModel(
+                    new TranslateRemoteModel.Builder(lang).build()), 30, TimeUnit.SECONDS);
+            Set<String> set = removed(c);
+            set.add(lang);
+            saveRemoved(c, set);
+            checkedAt = 0;
+            return null;
+        } catch (Throwable e) {
+            checkedAt = 0;
+            return "não foi possível excluir agora";
+        }
+    }
+
     /** Frase de estado para a página de tradução. */
     static String status(Context c, String src, String dst) {
         if (downloading) {
@@ -258,9 +354,11 @@ final class DeviceTranslator {
         boolean en = canTranslate(c, "en", dst);
         boolean own = "auto".equals(src) || canTranslate(c, src, dst);
         if (en && own) {
-            return "pronto, traduz sem internet";
+            return "pronto, traduz sem internet. Toque para ver ou excluir os idiomas baixados";
         }
         String err = downloadError;
-        return "idiomas não baixados" + (err.isEmpty() ? "" : " (" + err + ")");
+        boolean any = !downloaded(c).isEmpty();
+        return "idiomas não baixados" + (err.isEmpty() ? "" : " (" + err + ")")
+                + (any ? ". Toque para ver ou excluir os idiomas baixados" : "");
     }
 }
