@@ -24,7 +24,7 @@ import java.util.Locale;
  */
 final class Diagnostics {
     private static final int MAX = 15;
-    private static final int MAX_NOTES = 10;
+    private static final int MAX_NOTES = 30;
     private static final ArrayDeque<String> LAST = new ArrayDeque<>();
 
     private Diagnostics() {

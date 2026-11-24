@@ -69,6 +69,7 @@ public class FocusMemoryService extends AccessibilityService {
             info.packageNames = apps.toArray(new String[0]);
             setServiceInfo(info);
             forget();
+            detailNotes = 0;
             Diagnostics.note(this, "Lembrar o foco: ligado em " + android.text.TextUtils.join(", ", apps) + ".");
         } catch (Exception ignored) {
         }
@@ -93,7 +94,11 @@ public class FocusMemoryService extends AccessibilityService {
                 || type == AccessibilityEvent.TYPE_VIEW_CLICKED)) {
             // O item da lista em que o foco está (ou que foi tocado) é o que será lembrado.
             // Não depende do toque: alguns apps, como o Telegram, abrem o item sem avisar o toque.
-            remember(event.getSource());
+            AccessibilityNodeInfo src = event.getSource();
+            if (listItem(src) == null && type == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED) {
+                noteDetail(src);
+            }
+            remember(src);
         }
         if (savedKey == null) {
             return; // nada guardado: não faz nada (sem custo)
@@ -207,12 +212,63 @@ public class FocusMemoryService extends AccessibilityService {
         AccessibilityNodeInfo n = node;
         for (int i = 0; n != null && i < 6; i++) {
             AccessibilityNodeInfo parent = n.getParent();
-            if (parent != null && parent.isScrollable()) {
+            if (parent != null && isList(parent)) {
                 return n;
             }
             n = parent;
         }
         return null;
+    }
+
+    /** É uma lista? Rolável, ou que se apresenta como lista (alguns apps, como o Telegram, não dizem que rolam). */
+    private static boolean isList(AccessibilityNodeInfo n) {
+        if (n.isScrollable() || n.getCollectionInfo() != null) {
+            return true;
+        }
+        CharSequence c = n.getClassName();
+        String cls = c != null ? c.toString() : "";
+        return cls.endsWith("RecyclerView") || cls.endsWith("ListView") || cls.endsWith("GridView")
+                || cls.endsWith("RecyclerListView");
+    }
+
+    /** Detalhes para o relatório, quando o foco cai em algo que não parece item de lista (só no teste). */
+    private int detailNotes;
+
+    private void noteDetail(AccessibilityNodeInfo source) {
+        if (detailNotes >= 4) {
+            return;
+        }
+        if (source == null) {
+            detailNotes++;
+            Diagnostics.note(this, "Lembrar o foco (detalhe): o aplicativo não informou o item com foco.");
+            return;
+        }
+        String l = label(source);
+        if (l == null || l.length() < 15) {
+            return; // botões curtos ("Menu", "Pesquisar"): não interessam
+        }
+        detailNotes++;
+        StringBuilder b = new StringBuilder();
+        b.append("Lembrar o foco (detalhe): foco em ").append(source.getPackageName()).append(", \"");
+        b.append(l != null ? shortLabel(l) : "sem texto").append("\" (").append(source.getClassName()).append("); acima:");
+        AccessibilityNodeInfo p = source.getParent();
+        for (int i = 0; p != null && i < 6; i++) {
+            b.append(' ').append(shortClass(p.getClassName()));
+            if (p.isScrollable()) {
+                b.append("[rola]");
+            }
+            if (p.getCollectionInfo() != null) {
+                b.append("[lista]");
+            }
+            b.append('(').append(p.getChildCount()).append(')');
+            p = p.getParent();
+        }
+        Diagnostics.note(this, b.toString() + ".");
+    }
+
+    private static String shortClass(CharSequence c) {
+        String s = c != null ? c.toString() : "?";
+        return s.substring(s.lastIndexOf('.') + 1);
     }
 
     /** O que o leitor de tela fala do item: a descrição ou o texto dele e dos filhos. */
