@@ -3,6 +3,7 @@ name: Guardar versão
 # Quando uma nova versão é publicada em atualizacao/, guarda uma cópia dela
 # numa publicação própria da página de versões (Releases). O link de sempre
 # (atualizacao/GerenciadorTtsG.apk) e o "Verificar atualização" não mudam.
+# Depois, apaga da página as versões mais antigas: ficam só a última e a penúltima.
 on:
   push:
     branches: [main]
@@ -17,6 +18,8 @@ permissions:
 jobs:
   guardar:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
       - name: Ler a versão
@@ -33,3 +36,13 @@ jobs:
           target_commitish: ${{ github.sha }}
           body_path: novidades.txt
           files: atualizacao/GerenciadorTtsG.apk
+      # A página de versões fica só com a última e a penúltima. A 1.58 fica sempre,
+      # como a última versão leve (sem o tradutor no aparelho).
+      - name: Manter só as duas últimas versões
+        run: |
+          gh release list --limit 200 --json tagName -q '.[].tagName' | sort -V -r | tail -n +3 |
+          while read -r tag; do
+            [ "$tag" = "v1.58" ] && continue
+            gh release delete "$tag" --yes --cleanup-tag
+            echo "$tag apagada da página de versões"
+          done
