@@ -237,5 +237,19 @@
             android:authorities="br.com.geofilho.ttsg.apk"
             android:exported="false"
             android:grantUriPermissions="true" />
+
+        <!-- Lembrar o foco ao voltar (teste, só no Telegram). A pessoa ativa nas configurações de acessibilidade. -->
+        <service
+            android:name=".FocusMemoryService"
+            android:exported="true"
+            android:label="@string/focus_memory_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/focus_memory" />
+        </service>
     </application>
 </manifest>

@@ -57,4 +57,6 @@ Se o seu aparelho tiver o tradutor do próprio Android, ele é usado primeiro, s
     <string name="widget_audio_desc">Liga e desliga a saída de áudio do leitor de tela no telefone.</string>
     <string name="widget_translation_desc">Liga e desliga a tradução de voz TTS.</string>
     <string name="actions_label">Ações do Gerenciador de TTS G</string>
+    <string name="focus_memory_label">Gerenciador de TTS G: lembrar o foco ao voltar</string>
+    <string name="focus_memory_desc">No Telegram, quando você entra num grupo ou conversa e volta para a lista, o foco do leitor de tela volta para o item onde você estava. Funciona só no Telegram. Não lê nem guarda suas mensagens: guarda só o nome do item em que você tocou, até voltar para a lista.</string>
 </resources>

@@ -43,6 +43,10 @@
             android:text="@string/check_update" />
 
         <Button
+            android:id="@+id/btn_focus_memory"
+            style="@style/Row" />
+
+        <Button
             android:id="@+id/btn_diagnostics"
             style="@style/Row"
             android:text="@string/title_diagnostics" />
