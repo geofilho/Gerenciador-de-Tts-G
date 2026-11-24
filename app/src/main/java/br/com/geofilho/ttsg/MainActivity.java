@@ -117,9 +117,7 @@ public class MainActivity extends Activity {
             def = Settings.Secure.getString(getContentResolver(), "tts_default_synth");
         } catch (Exception ignored) {
         }
-        btnFocus.setText(focusMemoryOn()
-                ? "Lembrar o foco ao voltar, no Telegram: ativado. Toque para desativar ou saber mais"
-                : "Lembrar o foco ao voltar, no Telegram: desativado. Toque para ativar");
+        updateFocusButton();
         if (getPackageName().equals(def)) {
             btnSystem.setText("Motor do sistema: Gerenciador de TTS G ativo. Toque para abrir as configurações");
         } else {
@@ -194,40 +192,121 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** Lista de ações de "Lembrar o foco ao voltar". */
     private void explainFocusMemory() {
+        int n = Prefs.focusApps(Prefs.get(this)).size();
+        String[] items = {
+                "Escolher os aplicativos (" + n + (n == 1 ? " escolhido)" : " escolhidos)"),
+                (focusMemoryOn() ? "Desativar" : "Ativar") + " nas configurações de acessibilidade",
+                "Liberar configuração restrita, se a ativação estiver bloqueada",
+                "Como funciona"
+        };
         new AlertDialog.Builder(this)
                 .setTitle("Lembrar o foco ao voltar (teste)")
-                .setMessage("No Telegram, quando você entra num grupo e volta para a lista, o foco do leitor de tela "
-                        + "volta para o grupo onde você estava.\n\n"
-                        + "Para ativar: toque em Abrir configurações, depois em Aplicativos instalados, e ative "
-                        + "Gerenciador de TTS G: lembrar o foco ao voltar.\n\n"
-                        + "Se a opção estiver bloqueada (configuração restrita): abra Informações do app do "
-                        + "Gerenciador de TTS G, toque no menu de três pontos, no canto de cima, e em Permitir "
-                        + "configurações restritas. Depois volte e ative.\n\n"
-                        + "Funciona só no Telegram e não deixa a fala mais lenta. Não lê nem guarda suas mensagens: "
-                        + "guarda só o nome do grupo em que você tocou, até voltar para a lista.")
-                .setPositiveButton("Abrir configurações", new DialogInterface.OnClickListener() {
+                .setItems(items, new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(DialogInterface d, int w) {
-                        try {
-                            startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
-                        } catch (ActivityNotFoundException e) {
-                            startActivity(new Intent(Settings.ACTION_SETTINGS));
-                        }
-                    }
-                })
-                .setNeutralButton("Informações do app", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface d, int w) {
-                        try {
-                            startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                    android.net.Uri.parse("package:" + getPackageName())));
-                        } catch (ActivityNotFoundException ignored) {
+                    public void onClick(DialogInterface d, int which) {
+                        if (which == 0) {
+                            chooseFocusApps();
+                        } else if (which == 1) {
+                            try {
+                                startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+                                Toast.makeText(MainActivity.this, "Em Aplicativos instalados, toque em Gerenciador de TTS G: "
+                                        + "lembrar o foco ao voltar.", Toast.LENGTH_LONG).show();
+                            } catch (ActivityNotFoundException e) {
+                                startActivity(new Intent(Settings.ACTION_SETTINGS));
+                            }
+                        } else if (which == 2) {
+                            try {
+                                startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                        android.net.Uri.parse("package:" + getPackageName())));
+                                Toast.makeText(MainActivity.this, "Toque no menu de três pontos, no canto de cima, e em "
+                                        + "Permitir configurações restritas.", Toast.LENGTH_LONG).show();
+                            } catch (ActivityNotFoundException ignored) {
+                            }
+                        } else {
+                            new AlertDialog.Builder(MainActivity.this)
+                                    .setTitle("Como funciona")
+                                    .setMessage("Nos aplicativos que você escolher, quando você entra num item de uma "
+                                            + "lista, como um grupo do Telegram, e volta, o foco do leitor de tela volta "
+                                            + "para o item onde você estava.\n\n"
+                                            + "Os outros aplicativos, como os de banco, não são observados. Mesmo assim, "
+                                            + "alguns apps de banco desconfiam de qualquer serviço de acessibilidade "
+                                            + "ligado; se algum reclamar, desative esta opção.\n\n"
+                                            + "Não deixa a fala mais lenta. Não lê nem guarda suas mensagens: guarda só o "
+                                            + "nome do item em que você tocou, até voltar para a lista.")
+                                    .setPositiveButton("Fechar", null)
+                                    .show();
                         }
                     }
                 })
                 .setNegativeButton("Fechar", null)
                 .show();
+    }
+
+    /** Escolha dos aplicativos: lista dos instalados, com os escolhidos marcados primeiro. */
+    private void chooseFocusApps() {
+        final android.content.pm.PackageManager pm = getPackageManager();
+        Intent launcher = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
+        final java.util.Set<String> chosen = Prefs.focusApps(Prefs.get(this));
+        final java.util.List<String[]> apps = new java.util.ArrayList<>(); // {nome, pacote}
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (android.content.pm.ResolveInfo r : pm.queryIntentActivities(launcher, 0)) {
+            String pkg = r.activityInfo.packageName;
+            if (pkg.equals(getPackageName()) || !seen.add(pkg)) {
+                continue;
+            }
+            apps.add(new String[]{String.valueOf(r.loadLabel(pm)), pkg});
+        }
+        java.util.Collections.sort(apps, new java.util.Comparator<String[]>() {
+            @Override
+            public int compare(String[] a, String[] b) {
+                boolean ca = chosen.contains(a[1]);
+                boolean cb = chosen.contains(b[1]);
+                if (ca != cb) {
+                    return ca ? -1 : 1; // escolhidos primeiro
+                }
+                return a[0].compareToIgnoreCase(b[0]);
+            }
+        });
+        final String[] names = new String[apps.size()];
+        final boolean[] checked = new boolean[apps.size()];
+        for (int i = 0; i < names.length; i++) {
+            names[i] = apps.get(i)[0];
+            checked[i] = chosen.contains(apps.get(i)[1]);
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Aplicativos em que o foco é lembrado")
+                .setMultiChoiceItems(names, checked, new DialogInterface.OnMultiChoiceClickListener() {
+                    @Override
+                    public void onClick(DialogInterface d, int which, boolean isChecked) {
+                        checked[which] = isChecked;
+                    }
+                })
+                .setPositiveButton("Salvar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface d, int w) {
+                        java.util.List<String> out = new java.util.ArrayList<>();
+                        for (int i = 0; i < checked.length; i++) {
+                            if (checked[i]) {
+                                out.add(apps.get(i)[1]);
+                            }
+                        }
+                        Prefs.setFocusApps(Prefs.get(MainActivity.this), out);
+                        Toast.makeText(MainActivity.this, out.isEmpty() ? "Nenhum aplicativo escolhido."
+                                : out.size() + (out.size() == 1 ? " aplicativo escolhido." : " aplicativos escolhidos."),
+                                Toast.LENGTH_SHORT).show();
+                        updateFocusButton();
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void updateFocusButton() {
+        int n = Prefs.focusApps(Prefs.get(this)).size();
+        btnFocus.setText("Lembrar o foco ao voltar: " + (focusMemoryOn() ? "ativado" : "desativado") + ", em " + n
+                + (n == 1 ? " aplicativo" : " aplicativos") + ". Toque para escolher os aplicativos ou ativar");
     }
 
     /** Menu "Dicionário": Adicionar palavra ou Gerenciar dicionário. */

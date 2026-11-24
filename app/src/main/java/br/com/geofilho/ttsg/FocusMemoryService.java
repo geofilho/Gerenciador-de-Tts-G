@@ -10,12 +10,12 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import java.util.List;
 
 /**
- * "Lembrar o foco ao voltar" (teste, só no Telegram): ao tocar num item de uma lista (por
+ * "Lembrar o foco ao voltar" (teste): nos aplicativos escolhidos, ao tocar num item de uma lista (por
  * exemplo, um grupo), guarda qual era. Quando a pessoa volta para a lista, coloca o foco do
  * leitor de tela de novo nesse item, para continuar navegando de onde parou.
  *
- * Fica separado da fala: só recebe eventos do Telegram (packageNames no XML) e só procura o
- * item na tela enquanto há um item guardado esperando a volta.
+ * Fica separado da fala: só recebe eventos dos aplicativos escolhidos (os outros, como apps de
+ * banco, nem mandam eventos) e só procura o item na tela enquanto há um item guardado esperando a volta.
  */
 public class FocusMemoryService extends AccessibilityService {
 
@@ -28,6 +28,7 @@ public class FocusMemoryService extends AccessibilityService {
     /** Já saiu da lista (o item sumiu da tela)? Só depois disso a volta é esperada. */
     private boolean leftList;
     private long savedAt;
+    private String savedApp = "";
     private static final long KEEP_MS = 30 * 60 * 1000;
 
     private final Runnable check = new Runnable() {
@@ -36,6 +37,41 @@ public class FocusMemoryService extends AccessibilityService {
             checkReturn();
         }
     };
+
+    private android.content.SharedPreferences.OnSharedPreferenceChangeListener prefsListener;
+
+    @Override
+    protected void onServiceConnected() {
+        super.onServiceConnected();
+        applyApps();
+        prefsListener = new android.content.SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(android.content.SharedPreferences p, String key) {
+                if ("focus_apps".equals(key)) {
+                    applyApps();
+                }
+            }
+        };
+        Prefs.get(this).registerOnSharedPreferenceChangeListener(prefsListener);
+    }
+
+    /** Recebe eventos só dos aplicativos escolhidos. Nenhum escolhido: só do próprio Gerenciador (nada). */
+    private void applyApps() {
+        try {
+            android.accessibilityservice.AccessibilityServiceInfo info = getServiceInfo();
+            if (info == null) {
+                return;
+            }
+            java.util.Set<String> apps = Prefs.focusApps(Prefs.get(this));
+            if (apps.isEmpty()) {
+                apps.add(getPackageName());
+            }
+            info.packageNames = apps.toArray(new String[0]);
+            setServiceInfo(info);
+            forget();
+        } catch (Exception ignored) {
+        }
+    }
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -79,8 +115,10 @@ public class FocusMemoryService extends AccessibilityService {
         }
         savedLabel = label;
         savedKey = key(label);
+        savedApp = source != null && source.getPackageName() != null ? source.getPackageName().toString() : "";
         leftList = false;
         savedAt = SystemClock.uptimeMillis();
+        Diagnostics.note(this, "Lembrar o foco: guardou \"" + savedKey + "\" (" + savedApp + "; item: " + shortLabel(label) + ").");
         handler.removeCallbacks(check);
         handler.postDelayed(check, 800);
     }
@@ -109,6 +147,7 @@ public class FocusMemoryService extends AccessibilityService {
         if (!leftList) {
             if (target == null) {
                 leftList = true; // entrou no grupo: agora espera a volta para a lista
+                Diagnostics.note(this, "Lembrar o foco: saiu da lista, esperando a volta para \"" + savedKey + "\".");
             }
             return;
         }
@@ -117,9 +156,12 @@ public class FocusMemoryService extends AccessibilityService {
         }
         String key = savedKey;
         forget();
-        if (!target.isAccessibilityFocused()) {
+        if (target.isAccessibilityFocused()) {
+            Diagnostics.note(this, "Lembrar o foco: o foco já estava em \"" + key + "\".");
+        } else {
             boolean ok = target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
-            Diagnostics.note(this, "Lembrar o foco: voltou para \"" + key + "\"" + (ok ? "." : ", mas o Telegram não aceitou o foco."));
+            Diagnostics.note(this, "Lembrar o foco: voltou para \"" + key + "\""
+                    + (ok ? "." : ", mas o aplicativo não aceitou o foco."));
         }
     }
 
@@ -192,6 +234,10 @@ public class FocusMemoryService extends AccessibilityService {
         }
     }
 
+    private static String shortLabel(String l) {
+        return l.length() > 80 ? l.substring(0, 80) + "…" : l;
+    }
+
     /** Nome do grupo: o começo do texto, até a primeira vírgula, ponto ou quebra de linha. */
     static String key(String label) {
         int end = label.length();
@@ -216,6 +262,9 @@ public class FocusMemoryService extends AccessibilityService {
     @Override
     public void onDestroy() {
         handler.removeCallbacks(check);
+        if (prefsListener != null) {
+            Prefs.get(this).unregisterOnSharedPreferenceChangeListener(prefsListener);
+        }
         super.onDestroy();
     }
 }

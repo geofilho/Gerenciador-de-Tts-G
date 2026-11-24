@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Só o Telegram (e variantes): os outros aplicativos nem mandam eventos para este serviço. -->
+<!-- Começa só com o Telegram; a lista de aplicativos escolhidos é aplicada quando o serviço liga.
+     isAccessibilityTool: marca oficial de ferramenta de acessibilidade (apps de banco confiam mais). -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityEventTypes="typeViewClicked|typeViewAccessibilityFocused|typeWindowStateChanged|typeWindowContentChanged"
     android:accessibilityFeedbackType="feedbackGeneric"
     android:accessibilityFlags="flagDefault"
     android:canRetrieveWindowContent="true"
+    android:isAccessibilityTool="true"
     android:description="@string/focus_memory_desc"
     android:notificationTimeout="150"
     android:packageNames="org.telegram.messenger,org.telegram.messenger.web,org.telegram.messenger.beta,org.thunderdog.challegram" />
