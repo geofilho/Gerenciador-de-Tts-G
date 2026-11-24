@@ -2,7 +2,7 @@
 <!-- Começa só com o Telegram; a lista de aplicativos escolhidos é aplicada quando o serviço liga.
      isAccessibilityTool: marca oficial de ferramenta de acessibilidade (apps de banco confiam mais). -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accessibilityEventTypes="typeViewClicked|typeViewAccessibilityFocused|typeWindowStateChanged|typeWindowContentChanged"
+    android:accessibilityEventTypes="typeViewClicked|typeViewAccessibilityFocused|typeViewScrolled|typeWindowStateChanged|typeWindowContentChanged"
     android:accessibilityFeedbackType="feedbackGeneric"
     android:accessibilityFlags="flagDefault"
     android:canRetrieveWindowContent="true"

@@ -69,18 +69,31 @@ public class FocusMemoryService extends AccessibilityService {
             info.packageNames = apps.toArray(new String[0]);
             setServiceInfo(info);
             forget();
+            Diagnostics.note(this, "Lembrar o foco: ligado em " + android.text.TextUtils.join(", ", apps) + ".");
         } catch (Exception ignored) {
         }
     }
+
+    /** Última rolagem da lista: sumir da tela logo depois de rolar não é "entrar no item". */
+    private long lastScroll;
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         if (event == null) {
             return;
         }
-        if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_CLICKED) {
+        int type = event.getEventType();
+        if (type == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+            // Só conta a rolagem da lista do item guardado (a conversa que abre também rola).
+            AccessibilityNodeInfo src = event.getSource();
+            if (savedList == null || (src != null && src.equals(savedList))) {
+                lastScroll = SystemClock.uptimeMillis();
+            }
+        } else if (!leftList && (type == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED
+                || type == AccessibilityEvent.TYPE_VIEW_CLICKED)) {
+            // O item da lista em que o foco está (ou que foi tocado) é o que será lembrado.
+            // Não depende do toque: alguns apps, como o Telegram, abrem o item sem avisar o toque.
             remember(event.getSource());
-            return;
         }
         if (savedKey == null) {
             return; // nada guardado: não faz nada (sem custo)
@@ -91,39 +104,32 @@ public class FocusMemoryService extends AccessibilityService {
         }
         // Espera a tela assentar (o leitor de tela também mexe no foco ao voltar) e confere uma vez.
         handler.removeCallbacks(check);
-        handler.postDelayed(check, leftList ? 350 : 600);
+        handler.postDelayed(check, leftList ? 350 : 700);
     }
 
-    /** Tocou num item: se ele faz parte de uma lista rolável, guarda. */
+    /** Lista (rolável) do item guardado: itens de outras listas, como as mensagens, não trocam o guardado. */
+    private AccessibilityNodeInfo savedList;
+
+    /** Item de uma lista rolável: guarda (sem aviso; o aviso sai só ao entrar e ao voltar). */
     private void remember(AccessibilityNodeInfo source) {
         AccessibilityNodeInfo item = listItem(source);
         String label = item != null ? label(item) : null;
         if (label == null || label.length() < 2) {
             return; // não é item de lista: um botão, por exemplo
         }
-        if (savedKey != null && leftList) {
-            // Já está dentro do grupo: toques ali (numa mensagem, por exemplo) não trocam o item
-            // guardado. Só troca se a lista com o grupo guardado estiver na tela de novo.
-            AccessibilityNodeInfo root = null;
-            try {
-                root = getRootInActiveWindow();
-            } catch (Exception ignored) {
-            }
-            if (root == null || find(root) == null) {
-                return;
-            }
+        AccessibilityNodeInfo list = item.getParent();
+        if (savedKey != null && savedList != null && list != null && !list.equals(savedList)) {
+            return; // outra lista (as mensagens do grupo, por exemplo): continua com o item guardado
         }
+        savedList = list;
         savedLabel = label;
         savedKey = key(label);
         savedApp = source != null && source.getPackageName() != null ? source.getPackageName().toString() : "";
-        leftList = false;
         savedAt = SystemClock.uptimeMillis();
-        Diagnostics.note(this, "Lembrar o foco: guardou \"" + savedKey + "\" (" + savedApp + "; item: " + shortLabel(label) + ").");
-        handler.removeCallbacks(check);
-        handler.postDelayed(check, 800);
     }
 
     private void forget() {
+        savedList = null;
         savedLabel = null;
         savedKey = null;
         leftList = false;
@@ -145,22 +151,25 @@ public class FocusMemoryService extends AccessibilityService {
         }
         AccessibilityNodeInfo target = find(root);
         if (!leftList) {
-            if (target == null) {
-                leftList = true; // entrou no grupo: agora espera a volta para a lista
-                Diagnostics.note(this, "Lembrar o foco: saiu da lista, esperando a volta para \"" + savedKey + "\".");
+            // O item sumiu da tela sem a lista ter sido rolada: a pessoa entrou nele (ou abriu
+            // outra tela por cima). Agora espera a volta.
+            if (target == null && SystemClock.uptimeMillis() - lastScroll > 1500) {
+                leftList = true;
+                Diagnostics.note(this, "Lembrar o foco: saiu da lista em " + savedApp + ", esperando a volta para \""
+                        + savedKey + "\" (item: " + shortLabel(savedLabel) + ").");
             }
             return;
         }
         if (target == null) {
-            return; // ainda dentro do grupo (ou em outra tela)
+            return; // ainda dentro do item (ou em outra tela)
         }
-        String key = savedKey;
-        forget();
+        leftList = false; // de volta à lista: o item continua guardado até o foco ir para outro
+        savedAt = SystemClock.uptimeMillis();
         if (target.isAccessibilityFocused()) {
-            Diagnostics.note(this, "Lembrar o foco: o foco já estava em \"" + key + "\".");
+            Diagnostics.note(this, "Lembrar o foco: o foco já estava em \"" + savedKey + "\".");
         } else {
             boolean ok = target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
-            Diagnostics.note(this, "Lembrar o foco: voltou para \"" + key + "\""
+            Diagnostics.note(this, "Lembrar o foco: voltou para \"" + savedKey + "\""
                     + (ok ? "." : ", mas o aplicativo não aceitou o foco."));
         }
     }
