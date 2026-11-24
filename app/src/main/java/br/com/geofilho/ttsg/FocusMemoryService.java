@@ -70,6 +70,8 @@ public class FocusMemoryService extends AccessibilityService {
             setServiceInfo(info);
             forget();
             detailNotes = 0;
+            seenApps.clear();
+            recognized.clear();
             Diagnostics.note(this, "Lembrar o foco: ligado em " + android.text.TextUtils.join(", ", apps) + ".");
         } catch (Exception ignored) {
         }
@@ -84,6 +86,7 @@ public class FocusMemoryService extends AccessibilityService {
             return;
         }
         int type = event.getEventType();
+        noteFirst(event);
         if (type == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
             // Só conta a rolagem da lista do item guardado (a conversa que abre também rola).
             AccessibilityNodeInfo src = event.getSource();
@@ -125,6 +128,11 @@ public class FocusMemoryService extends AccessibilityService {
         AccessibilityNodeInfo list = item.getParent();
         if (savedKey != null && savedList != null && list != null && !list.equals(savedList)) {
             return; // outra lista (as mensagens do grupo, por exemplo): continua com o item guardado
+        }
+        String pkg = source.getPackageName() != null ? source.getPackageName().toString() : "";
+        if (recognized.add(pkg)) {
+            Diagnostics.note(this, "Lembrar o foco (detalhe): reconheceu lista em " + pkg + ", item \""
+                    + shortLabel(label) + "\" (" + shortClass(list != null ? list.getClassName() : null) + ").");
         }
         savedList = list;
         savedLabel = label;
@@ -229,6 +237,21 @@ public class FocusMemoryService extends AccessibilityService {
         String cls = c != null ? c.toString() : "";
         return cls.endsWith("RecyclerView") || cls.endsWith("ListView") || cls.endsWith("GridView")
                 || cls.endsWith("RecyclerListView");
+    }
+
+    /** Aplicativos dos quais já chegou algum evento / já houve lista reconhecida (desde que o serviço ligou). */
+    private final java.util.Set<String> seenApps = new java.util.HashSet<>();
+    private final java.util.Set<String> recognized = new java.util.HashSet<>();
+
+    /** Primeiro evento de cada aplicativo: mostra no relatório que o aplicativo está mandando informações. */
+    private void noteFirst(AccessibilityEvent e) {
+        CharSequence p = e.getPackageName();
+        String pkg = p != null ? p.toString() : "?";
+        if (!seenApps.add(pkg)) {
+            return;
+        }
+        Diagnostics.note(this, "Lembrar o foco (detalhe): primeiro sinal de " + pkg + ": "
+                + AccessibilityEvent.eventTypeToString(e.getEventType()) + ", " + shortClass(e.getClassName()) + ".");
     }
 
     /** Detalhes para o relatório, quando o foco cai em algo que não parece item de lista (só no teste). */
