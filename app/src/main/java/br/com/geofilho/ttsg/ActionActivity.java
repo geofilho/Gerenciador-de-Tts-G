@@ -20,6 +20,8 @@ public class ActionActivity extends Activity {
     static final String ACTION_TRANSLATE_OFF = "br.com.geofilho.ttsg.acao.DESLIGAR_TRADUCAO";
     static final String ACTION_AUDIO_ON = "br.com.geofilho.ttsg.acao.LIGAR_SAIDA_AUDIO";
     static final String ACTION_AUDIO_OFF = "br.com.geofilho.ttsg.acao.DESLIGAR_SAIDA_AUDIO";
+    static final String ACTION_TRANSLATE_TOGGLE = "br.com.geofilho.ttsg.acao.ALTERNAR_TRADUCAO";
+    static final String ACTION_AUDIO_TOGGLE = "br.com.geofilho.ttsg.acao.ALTERNAR_SAIDA_AUDIO";
     static final String EXTRA_TOKEN = "senha";
 
     /** Senha interna, criada uma vez, que vai dentro de cada atalho. */
@@ -61,6 +63,10 @@ public class ActionActivity extends Activity {
             Toggles.setAudio(this, true);
         } else if (ACTION_AUDIO_OFF.equals(action)) {
             Toggles.setAudio(this, false);
+        } else if (ACTION_TRANSLATE_TOGGLE.equals(action)) {
+            Toggles.toggleTranslation(this); // liga se estiver desligada, desliga se estiver ligada
+        } else if (ACTION_AUDIO_TOGGLE.equals(action)) {
+            Toggles.toggleAudio(this);
         }
         finish();
     }
@@ -82,6 +88,12 @@ public class ActionActivity extends Activity {
         }
         if ("Desligar_saida_de_audio".equals(n)) {
             return ACTION_AUDIO_OFF;
+        }
+        if ("Alternar_traducao".equals(n)) {
+            return ACTION_TRANSLATE_TOGGLE;
+        }
+        if ("Alternar_saida_de_audio".equals(n)) {
+            return ACTION_AUDIO_TOGGLE;
         }
         return null;
     }

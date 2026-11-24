@@ -156,6 +156,16 @@
             android:exported="true"
             android:label="Desligar saída de áudio"
             android:targetActivity=".ActionActivity" />
+        <activity-alias
+            android:name=".Alternar_traducao"
+            android:exported="true"
+            android:label="Alternar tradução"
+            android:targetActivity=".ActionActivity" />
+        <activity-alias
+            android:name=".Alternar_saida_de_audio"
+            android:exported="true"
+            android:label="Alternar saída de áudio"
+            android:targetActivity=".ActionActivity" />
 
         <!-- Configurações rápidas: Dicionário, Saída de áudio e Tradução (Android 7+). -->
         <service

@@ -38,8 +38,9 @@ Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para 
 - Botões nas configurações rápidas do Android, também com Tradução e Saída de
   áudio como chaves de liga e desliga.
 - MacroDroid: "Iniciar atividade de aplicativo" com as entradas Dicionario,
-  Ligar_traducao, Desligar_traducao, Ligar_saida_de_audio e
-  Desligar_saida_de_audio; ou "Iniciar atalho" > Ações do Gerenciador de TTS G.
+  Ligar_traducao, Desligar_traducao, Ligar_saida_de_audio,
+  Desligar_saida_de_audio, Alternar_traducao e Alternar_saida_de_audio (liga
+  e desliga no mesmo atalho); ou "Iniciar atalho" > Ações do Gerenciador de TTS G.
 
 ## Como funciona
 O app também é um motor de TTS. Quando ele é escolhido como motor padrão do

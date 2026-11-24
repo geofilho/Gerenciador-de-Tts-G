@@ -17,11 +17,13 @@ import android.os.Bundle;
 public class ShortcutPickerActivity extends Activity {
 
     private static final String[] NAMES = {
-            "Dicionário", "Ligar tradução", "Desligar tradução", "Ligar saída de áudio", "Desligar saída de áudio"
+            "Dicionário", "Ligar tradução", "Desligar tradução", "Ligar saída de áudio", "Desligar saída de áudio",
+            "Alternar tradução (liga e desliga)", "Alternar saída de áudio (liga e desliga)"
     };
     private static final String[] ACTIONS = {
             ActionActivity.ACTION_DICTIONARY, ActionActivity.ACTION_TRANSLATE_ON, ActionActivity.ACTION_TRANSLATE_OFF,
-            ActionActivity.ACTION_AUDIO_ON, ActionActivity.ACTION_AUDIO_OFF
+            ActionActivity.ACTION_AUDIO_ON, ActionActivity.ACTION_AUDIO_OFF,
+            ActionActivity.ACTION_TRANSLATE_TOGGLE, ActionActivity.ACTION_AUDIO_TOGGLE
     };
 
     @Override
