@@ -491,8 +491,9 @@ public class FocusMemoryService extends AccessibilityService {
                 || cls.contains("BottomNavigation") || cls.contains("NavigationBar")) {
             return true;
         }
-        AccessibilityNodeInfo.CollectionInfo ci = list.getCollectionInfo();
-        return ci != null && ci.getRowCount() == 1 && ci.getColumnCount() > 1;
+        // Uma grade de uma linha só (as categorias e os recentes do Meus Arquivos) é lista de verdade:
+        // só conta como barra de abas pelo tipo.
+        return false;
     }
 
     /** É uma lista? Rolável, ou que se apresenta como lista (alguns apps, como o Telegram, não dizem que rolam). */
