@@ -218,9 +218,78 @@ public class FocusMemoryService extends AccessibilityService {
         }
         Diagnostics.note(this, "Lembrar o foco: entrou em \"" + e.key + "\" (" + e.app + "), nível " + stack.size()
                 + "; esperando a volta.");
+        if (!isChatApp(e.app)) {
+            enteredAt = SystemClock.uptimeMillis();
+            handler.removeCallbacks(firstItem);
+            handler.postDelayed(firstItem, 900);
+        }
         if (current == e) {
             current = null;
         }
+    }
+
+    // ----- ao entrar numa pasta: foco no primeiro item, se o leitor de tela não pôs em nenhum -----
+
+    private long enteredAt;
+
+    private final Runnable firstItem = new Runnable() {
+        @Override
+        public void run() {
+            focusFirstItem();
+        }
+    };
+
+    /** Aplicativos de conversa: ao abrir um grupo, o primeiro item seria a mensagem mais antiga. */
+    private static boolean isChatApp(String pkg) {
+        return pkg.startsWith("org.telegram") || pkg.equals("org.thunderdog.challegram")
+                || pkg.startsWith("com.whatsapp");
+    }
+
+    private void focusFirstItem() {
+        if (SystemClock.uptimeMillis() - enteredAt > 3000) {
+            return;
+        }
+        AccessibilityNodeInfo root = root();
+        if (root == null) {
+            return;
+        }
+        AccessibilityNodeInfo focused = null;
+        try {
+            focused = root.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
+        } catch (Exception ignored) {
+        }
+        if (focused != null && listItem(focused) != null) {
+            return; // o leitor de tela já pôs o foco num item da lista
+        }
+        AccessibilityNodeInfo list = biggestList(root, 0);
+        if (list == null) {
+            return;
+        }
+        for (int i = 0; i < list.getChildCount(); i++) {
+            AccessibilityNodeInfo child = list.getChild(i);
+            String l = child != null ? label(child) : null;
+            if (child != null && child.isVisibleToUser() && l != null && l.length() >= 2) {
+                boolean ok = child.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
+                Diagnostics.note(this, "Lembrar o foco: ao entrar, pôs o foco no primeiro item, \"" + key(l) + "\""
+                        + (ok ? "." : ", mas o aplicativo não aceitou."));
+                return;
+            }
+        }
+    }
+
+    /** A lista com mais itens na tela (a principal), sem contar barras de abas. */
+    private static AccessibilityNodeInfo biggestList(AccessibilityNodeInfo n, int depth) {
+        if (n == null || depth > 25) {
+            return null;
+        }
+        AccessibilityNodeInfo best = isList(n) && !isTabBar(n) && n.getChildCount() > 0 ? n : null;
+        for (int i = 0; i < n.getChildCount(); i++) {
+            AccessibilityNodeInfo found = biggestList(n.getChild(i), depth + 1);
+            if (found != null && (best == null || found.getChildCount() > best.getChildCount())) {
+                best = found;
+            }
+        }
+        return best;
     }
 
     private void forget() {
@@ -404,14 +473,26 @@ public class FocusMemoryService extends AccessibilityService {
     /** Sobe a partir do nó até o item cujo pai é a lista rolável. */
     private static AccessibilityNodeInfo listItem(AccessibilityNodeInfo node) {
         AccessibilityNodeInfo n = node;
-        for (int i = 0; n != null && i < 6; i++) {
+        for (int i = 0; n != null && i < 10; i++) {
             AccessibilityNodeInfo parent = n.getParent();
             if (parent != null && isList(parent)) {
-                return n;
+                return isTabBar(parent) ? null : n; // abas ("Recentes", "Navegar") não são itens de lista
             }
             n = parent;
         }
         return null;
+    }
+
+    /** Barra de abas ou de navegação: uma linha só, na horizontal. Não é lembrada. */
+    private static boolean isTabBar(AccessibilityNodeInfo list) {
+        CharSequence c = list.getClassName();
+        String cls = c != null ? c.toString() : "";
+        if (cls.endsWith("HorizontalScrollView") || cls.contains("TabLayout") || cls.contains("TabWidget")
+                || cls.contains("BottomNavigation") || cls.contains("NavigationBar")) {
+            return true;
+        }
+        AccessibilityNodeInfo.CollectionInfo ci = list.getCollectionInfo();
+        return ci != null && ci.getRowCount() == 1 && ci.getColumnCount() > 1;
     }
 
     /** É uma lista? Rolável, ou que se apresenta como lista (alguns apps, como o Telegram, não dizem que rolam). */
@@ -608,6 +689,7 @@ public class FocusMemoryService extends AccessibilityService {
         handler.removeCallbacks(check);
         handler.removeCallbacks(verify);
         handler.removeCallbacks(poll);
+        handler.removeCallbacks(firstItem);
         if (prefsListener != null) {
             Prefs.get(this).unregisterOnSharedPreferenceChangeListener(prefsListener);
         }
