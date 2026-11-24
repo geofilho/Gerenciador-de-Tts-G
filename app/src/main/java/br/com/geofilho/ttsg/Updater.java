@@ -85,10 +85,38 @@ final class Updater {
         }
     }
 
+    /**
+     * Endereço do APK certo para este aparelho: a versão só de 64 bits ou só de 32 bits (menores),
+     * se publicadas; senão, o APK completo, que serve em todos.
+     */
+    static String apkFor(JSONObject info) {
+        String full = info.optString("apk", "");
+        String a64 = info.optString("apk_arm64", "");
+        String a32 = info.optString("apk_arm32", "");
+        if (!a64.isEmpty() && has(android.os.Build.SUPPORTED_64_BIT_ABIS, "arm64-v8a")) {
+            return a64;
+        }
+        if (!a32.isEmpty() && has(android.os.Build.SUPPORTED_ABIS, "armeabi-v7a")) {
+            return a32;
+        }
+        return full;
+    }
+
+    private static boolean has(String[] abis, String want) {
+        if (abis != null) {
+            for (String a : abis) {
+                if (want.equals(a)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private void showResult(JSONObject info) {
         int remoteCode = info.optInt("versionCode", 0);
         String remoteName = info.optString("versionName", "");
-        final String apkUrl = info.optString("apk", "");
+        final String apkUrl = apkFor(info);
         String news = info.optString("novidades", "").trim();
         int localCode = 0;
         String localName = "";

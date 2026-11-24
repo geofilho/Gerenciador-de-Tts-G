@@ -12,9 +12,23 @@ android {
         targetSdk 34
         versionCode 60
         versionName '1.59'
-        // Tradutor no aparelho (ML Kit): só as versões para celulares (ARM 64 e 32 bits).
-        ndk {
-            abiFilters 'arm64-v8a', 'armeabi-v7a'
+    }
+
+    // Tradutor no aparelho (ML Kit): um APK só de 64 bits e um só de 32 bits (a atualização baixa o
+    // certo para cada aparelho) e um completo, com os dois, para o link geral e as versões antigas.
+    // Sem as versões para computador (x86): o app é para celulares.
+    packagingOptions {
+        jniLibs {
+            excludes += ['lib/x86/**', 'lib/x86_64/**']
+        }
+    }
+
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'arm64-v8a', 'armeabi-v7a'
+            universalApk true
         }
     }
 
