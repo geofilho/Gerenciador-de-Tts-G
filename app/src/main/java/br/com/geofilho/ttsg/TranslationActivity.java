@@ -175,10 +175,7 @@ public class TranslationActivity extends Activity {
                     public void onClick(DialogInterface d, int which) {
                         prefs.edit().putString(source ? "translate_src" : "translate_dst", codes.get(which)).apply();
                         refresh();
-                        if (sw != null && sw.isChecked() != Prefs.translateOn(prefs)) {
-            sw.setChecked(Prefs.translateOn(prefs)); // pode ter mudado pelo widget ou pela barra
-        }
-        checkSystemTranslator();
+                        checkSystemTranslator();
                         d.dismiss();
                     }
                 })
@@ -280,6 +277,9 @@ public class TranslationActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (sw != null && sw.isChecked() != Prefs.translateOn(prefs)) {
+            sw.setChecked(Prefs.translateOn(prefs)); // pode ter mudado pelo widget ou pela barra
+        }
         checkSystemTranslator();
         if (btnClear != null) {
             // O arquivo carrega em segundo plano: atualiza a contagem um pouco depois também.

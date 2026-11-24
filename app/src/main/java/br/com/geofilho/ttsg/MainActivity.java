@@ -82,6 +82,7 @@ public class MainActivity extends Activity {
         });
 
         handleShortcut(getIntent());
+        removeDeviceTranslatorFiles();
 
         updater = new Updater(this);
         Button btnUpdate = findViewById(R.id.btn_update);
@@ -133,6 +134,42 @@ public class MainActivity extends Activity {
         super.onNewIntent(intent);
         setIntent(intent);
         handleShortcut(intent);
+    }
+
+    /**
+     * A versão de teste 1.59 tinha o tradutor no aparelho (ML Kit), que baixa pacotes de idioma
+     * de cerca de 30 MB cada. Esta versão leve não usa esses arquivos: apaga, para liberar espaço.
+     */
+    private void removeDeviceTranslatorFiles() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                java.io.File[] dirs = {getFilesDir(), getCacheDir(),
+                        android.os.Build.VERSION.SDK_INT >= 21 ? getNoBackupFilesDir() : null};
+                for (java.io.File dir : dirs) {
+                    java.io.File[] list = dir != null ? dir.listFiles() : null;
+                    if (list == null) {
+                        continue;
+                    }
+                    for (java.io.File f : list) {
+                        String n = f.getName().toLowerCase(java.util.Locale.ROOT);
+                        if (n.startsWith("com.google.mlkit") || n.startsWith("mlkit")) {
+                            deleteAll(f);
+                        }
+                    }
+                }
+            }
+        }, "limpar-tradutor").start();
+    }
+
+    private static void deleteAll(java.io.File f) {
+        java.io.File[] kids = f.listFiles();
+        if (kids != null) {
+            for (java.io.File k : kids) {
+                deleteAll(k);
+            }
+        }
+        f.delete();
     }
 
     /** Menu "Dicionário": Adicionar palavra ou Gerenciar dicionário. */
