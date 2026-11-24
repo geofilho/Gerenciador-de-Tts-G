@@ -126,10 +126,26 @@ public class FocusMemoryService extends AccessibilityService {
             return; // não é item de lista: um botão, por exemplo
         }
         AccessibilityNodeInfo list = item.getParent();
-        if (savedKey != null && savedList != null && list != null && !list.equals(savedList)) {
-            return; // outra lista (as mensagens do grupo, por exemplo): continua com o item guardado
-        }
         String pkg = source.getPackageName() != null ? source.getPackageName().toString() : "";
+        if (savedKey != null && savedList != null && list != null && !list.equals(savedList)
+                && pkg.equals(savedApp)) {
+            // Item de outra lista no mesmo aplicativo. Se o item guardado ainda está na tela, a pessoa
+            // só passou para outra lista da mesma tela: o item novo passa a ser o guardado. Se não está,
+            // ela entrou no item (as mensagens do grupo, por exemplo): continua com o guardado.
+            AccessibilityNodeInfo root = null;
+            try {
+                root = getRootInActiveWindow();
+            } catch (Exception ignored) {
+            }
+            if (root != null && find(root) == null) {
+                if (SystemClock.uptimeMillis() - lastScroll > 1500) {
+                    leftList = true;
+                    Diagnostics.note(this, "Lembrar o foco: saiu da lista em " + savedApp + ", esperando a volta para \""
+                            + savedKey + "\" (item: " + shortLabel(savedLabel) + ").");
+                }
+                return;
+            }
+        }
         if (recognized.add(pkg)) {
             Diagnostics.note(this, "Lembrar o foco (detalhe): reconheceu lista em " + pkg + ", item \""
                     + shortLabel(label) + "\" (" + shortClass(list != null ? list.getClassName() : null) + ").");
