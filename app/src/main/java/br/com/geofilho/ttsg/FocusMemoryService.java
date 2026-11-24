@@ -178,17 +178,90 @@ public class FocusMemoryService extends AccessibilityService {
         }
         leftList = false; // de volta à lista: o item continua guardado até o foco ir para outro
         savedAt = SystemClock.uptimeMillis();
+        restoreKey = savedKey;
+        restoreLabel = savedLabel;
+        restoreList = savedList;
         if (target.isAccessibilityFocused()) {
             Diagnostics.note(this, "Lembrar o foco: o foco já estava em \"" + savedKey + "\".");
         } else {
             boolean ok = target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
-            Diagnostics.note(this, "Lembrar o foco: voltou para \"" + savedKey + "\""
-                    + (ok ? "." : ", mas o aplicativo não aceitou o foco."));
+            Diagnostics.note(this, "Lembrar o foco: pôs o foco em \"" + savedKey + "\""
+                    + (ok ? "; conferindo se ficou." : ", mas o aplicativo não aceitou o foco."));
         }
+        verifyAttempt = 0;
+        handler.removeCallbacks(verify);
+        handler.postDelayed(verify, 900);
+    }
+
+    // ----- conferência: o leitor de tela pode mudar o foco logo depois -----
+
+    private String restoreKey;
+    private String restoreLabel;
+    private AccessibilityNodeInfo restoreList;
+    private int verifyAttempt;
+
+    private final Runnable verify = new Runnable() {
+        @Override
+        public void run() {
+            verifyFocus();
+        }
+    };
+
+    /** Confere onde o foco ficou; se o leitor de tela o levou para outro lugar, põe de novo uma vez. */
+    private void verifyFocus() {
+        if (restoreKey == null) {
+            return;
+        }
+        AccessibilityNodeInfo root;
+        try {
+            root = getRootInActiveWindow();
+        } catch (Exception e) {
+            return;
+        }
+        if (root == null) {
+            return;
+        }
+        AccessibilityNodeInfo target = find(root, restoreKey, restoreLabel);
+        AccessibilityNodeInfo focused = null;
+        try {
+            focused = root.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
+        } catch (Exception ignored) {
+        }
+        String where = focused != null && label(focused) != null ? shortLabel(label(focused)) : "nenhum item deste aplicativo";
+        if (target != null && target.isAccessibilityFocused()) {
+            Diagnostics.note(this, "Lembrar o foco: confirmado, o foco ficou em \"" + restoreKey + "\".");
+            restoreKey = null;
+            return;
+        }
+        if (target == null) {
+            Diagnostics.note(this, "Lembrar o foco: ao conferir, \"" + restoreKey + "\" não estava mais na tela. Foco em: "
+                    + where + ".");
+            restoreKey = null;
+            return;
+        }
+        if (verifyAttempt == 0) {
+            verifyAttempt = 1;
+            // O leitor de tela tirou o foco do item: volta o item guardado e tenta de novo.
+            savedKey = restoreKey;
+            savedLabel = restoreLabel;
+            savedList = restoreList;
+            savedAt = SystemClock.uptimeMillis();
+            boolean ok = target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
+            Diagnostics.note(this, "Lembrar o foco: o foco foi para \"" + where + "\"; pus de novo em \""
+                    + restoreKey + "\"" + (ok ? "." : ", mas o aplicativo não aceitou."));
+            handler.postDelayed(verify, 900);
+            return;
+        }
+        Diagnostics.note(this, "Lembrar o foco: não ficou em \"" + restoreKey + "\"; o foco está em \"" + where + "\".");
+        restoreKey = null;
     }
 
     /** Procura na tela o item guardado: começa com o mesmo nome e está numa lista rolável. */
     private AccessibilityNodeInfo find(AccessibilityNodeInfo root) {
+        return find(root, savedKey, savedLabel);
+    }
+
+    private static AccessibilityNodeInfo find(AccessibilityNodeInfo root, String savedKey, String savedLabel) {
         List<AccessibilityNodeInfo> found;
         try {
             found = root.findAccessibilityNodeInfosByText(savedKey);
@@ -350,6 +423,7 @@ public class FocusMemoryService extends AccessibilityService {
     @Override
     public void onDestroy() {
         handler.removeCallbacks(check);
+        handler.removeCallbacks(verify);
         if (prefsListener != null) {
             Prefs.get(this).unregisterOnSharedPreferenceChangeListener(prefsListener);
         }
