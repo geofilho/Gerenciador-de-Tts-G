@@ -1,5 +1,11 @@
 # Gerenciador de TTS G
 
+## Autoria e direitos autorais
+
+Este projeto é de autoria de **geofilho** ([github.com/geofilho](https://github.com/geofilho)). Todos os direitos são reservados (veja [LICENSE](LICENSE)).
+
+Você pode usar o projeto como inspiração para criar o seu próprio, com código, nome e identidade diferentes. Copiar, clonar ou republicar este app, mesmo trocando só nomes ou ícones, exige autorização do autor: [abra uma issue](https://github.com/geofilho/Gerenciador-de-Tts-G/issues) para pedir.
+
 ## Baixar
 
 [Baixar o aplicativo (APK, versão mais recente)](https://github.com/geofilho/Gerenciador-de-Tts-G/raw/main/atualizacao/GerenciadorTtsG.apk)
