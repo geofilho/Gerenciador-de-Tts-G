@@ -35,6 +35,18 @@
             android:text="@string/system_download"
             android:visibility="gone" />
 
+        <TextView
+            android:id="@+id/txt_device"
+            style="@style/Row"
+            android:accessibilityLiveRegion="polite"
+            android:focusable="true" />
+
+        <Button
+            android:id="@+id/btn_device_download"
+            style="@style/Row"
+            android:text="@string/device_download"
+            android:visibility="gone" />
+
         <Button
             android:id="@+id/btn_email"
             style="@style/Row" />

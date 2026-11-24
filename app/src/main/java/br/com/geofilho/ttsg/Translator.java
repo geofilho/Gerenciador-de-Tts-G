@@ -176,8 +176,9 @@ final class Translator {
                 return SAME.equals(hit) ? text : hit;
             }
         }
-        if (System.currentTimeMillis() < failedUntil && !force) {
-            return text;
+        if (System.currentTimeMillis() < failedUntil && !force
+                && !(appContext != null && DeviceTranslator.canTranslate(appContext, "en", dst))) {
+            return text; // a internet falhou há pouco e não há tradutor no aparelho
         }
         Future<String> f;
         synchronized (INFLIGHT) {
@@ -292,6 +293,10 @@ final class Translator {
             public void run() {
                 BaseDictionary.load(appContext);
                 load();
+                SharedPreferences sp = Prefs.get(appContext);
+                if (Prefs.translateOn(sp)) {
+                    DeviceTranslator.autoDownload(appContext, Prefs.translateSource(sp), Prefs.translateTarget(sp));
+                }
                 if (android.os.Build.VERSION.SDK_INT >= 31) {
                     SystemTranslator.refresh(appContext, false); // descobre se o Android traduz no aparelho
                 }
@@ -532,6 +537,31 @@ final class Translator {
                     lastError = "";
                     lastProvider = "tradutor do Android, sem internet";
                     return new String[]{sys, from};
+                }
+            }
+        }
+        // 2º: tradutor no aparelho (ML Kit), sem internet e sem limite, se os idiomas estiverem baixados.
+        if (ctx != null) {
+            String from = src;
+            if ("auto".equals(src)) {
+                from = DeviceTranslator.identify(ctx, text, 300);
+                if (from == null) {
+                    from = guess(text);
+                }
+                if (from == null && mostlyAscii(text)) {
+                    from = "en"; // rótulos curtos de aplicativo, sem acento: quase sempre inglês
+                }
+            }
+            if (from != null) {
+                if (base(from).equals(base(dst))) {
+                    lastError = "";
+                    return new String[]{text, from}; // já está no idioma de destino
+                }
+                String dev = DeviceTranslator.translate(ctx, text, from, dst, 1500);
+                if (dev != null) {
+                    lastError = "";
+                    lastProvider = "tradutor no aparelho, sem internet";
+                    return new String[]{dev, from};
                 }
             }
         }
@@ -984,6 +1014,35 @@ final class Translator {
     }
 
     /** Idioma mais provável do texto entre os conhecidos (pt, en, es, fr, de, it), ou null se não der para saber. */
+    /** Só letras sem acento (a-z), como nos rótulos em inglês. */
+    private static boolean mostlyAscii(String text) {
+        int letters = 0;
+        for (int i = 0; i < text.length(); i++) {
+            char ch = text.charAt(i);
+            if (Character.isLetter(ch)) {
+                if (ch > 127) {
+                    return false;
+                }
+                letters++;
+            }
+        }
+        return letters >= 2;
+    }
+
+    /** Com a tradução ligada, baixa pelo Wi-Fi os idiomas do tradutor no aparelho, se faltarem. */
+    static void prepareDevice(final Context c) {
+        final Context app = c.getApplicationContext();
+        DISK.submit(new Runnable() {
+            @Override
+            public void run() {
+                SharedPreferences p = Prefs.get(app);
+                if (Prefs.translateOn(p)) {
+                    DeviceTranslator.autoDownload(app, Prefs.translateSource(p), Prefs.translateTarget(p));
+                }
+            }
+        });
+    }
+
     static String guess(String text) {
         for (String lang : WORDS.keySet()) {
             if (looksLike(text, lang)) {

@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -24,6 +25,8 @@ import java.util.List;
  */
 public class TranslationActivity extends Activity {
 
+    private TextView txtDevice;
+    private Button btnDeviceDownload;
     private Switch sw;
 
     private SharedPreferences prefs;
@@ -51,6 +54,7 @@ public class TranslationActivity extends Activity {
                 Toggles.refresh(TranslationActivity.this);
                 if (checked) {
                     Translator.warm(TranslationActivity.this); // conexão pronta para a primeira tradução
+                    Translator.prepareDevice(TranslationActivity.this);
                 }
             }
         });
@@ -104,6 +108,31 @@ public class TranslationActivity extends Activity {
                     Toast.makeText(TranslationActivity.this, "Este aparelho não tem tela para baixar idiomas do tradutor.",
                             Toast.LENGTH_LONG).show();
                 }
+            }
+        });
+        txtDevice = findViewById(R.id.txt_device);
+        btnDeviceDownload = findViewById(R.id.btn_device_download);
+        btnDeviceDownload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                btnDeviceDownload.setVisibility(View.GONE);
+                txtDevice.setText("Tradutor no aparelho: baixando os idiomas, isso pode levar alguns minutos.");
+                String src = Prefs.translateSource(prefs);
+                DeviceTranslator.download(TranslationActivity.this, "auto".equals(src) ? null : src,
+                        Prefs.translateTarget(prefs), false, new DeviceTranslator.Done() {
+                            @Override
+                            public void done(final boolean ok, final String error) {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(TranslationActivity.this, ok
+                                                ? "Tradutor no aparelho pronto. Agora traduz sem internet."
+                                                : "Não foi possível baixar: " + error + ".", Toast.LENGTH_LONG).show();
+                                        checkDeviceTranslator();
+                                    }
+                                });
+                            }
+                        });
             }
         });
         btnClear = findViewById(R.id.btn_clear_saved);
@@ -175,10 +204,8 @@ public class TranslationActivity extends Activity {
                     public void onClick(DialogInterface d, int which) {
                         prefs.edit().putString(source ? "translate_src" : "translate_dst", codes.get(which)).apply();
                         refresh();
-                        if (sw != null && sw.isChecked() != Prefs.translateOn(prefs)) {
-            sw.setChecked(Prefs.translateOn(prefs)); // pode ter mudado pelo widget ou pela barra
-        }
-        checkSystemTranslator();
+                        checkSystemTranslator();
+                        checkDeviceTranslator();
                         d.dismiss();
                     }
                 })
@@ -252,6 +279,29 @@ public class TranslationActivity extends Activity {
                 .show();
     }
 
+    /** Mostra se o tradutor no aparelho (ML Kit) já tem os idiomas baixados. */
+    private void checkDeviceTranslator() {
+        final String src = Prefs.translateSource(prefs);
+        final String dst = Prefs.translateTarget(prefs);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final String st = DeviceTranslator.status(TranslationActivity.this, src, dst);
+                final boolean ready = DeviceTranslator.canTranslate(TranslationActivity.this, "en", dst)
+                        && ("auto".equals(src) || DeviceTranslator.canTranslate(TranslationActivity.this, src, dst));
+                final boolean busy = DeviceTranslator.isDownloading();
+                final boolean supported = DeviceTranslator.code(dst) != null;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        txtDevice.setText("Tradutor no aparelho: " + st + ".");
+                        btnDeviceDownload.setVisibility(!ready && !busy && supported ? View.VISIBLE : View.GONE);
+                    }
+                });
+            }
+        }).start();
+    }
+
     /** Mostra se o tradutor do próprio Android existe neste aparelho (consulta em segundo plano). */
     private void checkSystemTranslator() {
         if (android.os.Build.VERSION.SDK_INT < 31) {
@@ -280,7 +330,11 @@ public class TranslationActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (sw != null && sw.isChecked() != Prefs.translateOn(prefs)) {
+            sw.setChecked(Prefs.translateOn(prefs)); // pode ter mudado pelo widget ou pela barra
+        }
         checkSystemTranslator();
+        checkDeviceTranslator();
         if (btnClear != null) {
             // O arquivo carrega em segundo plano: atualiza a contagem um pouco depois também.
             showSavedCount();

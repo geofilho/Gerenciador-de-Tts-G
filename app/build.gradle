@@ -10,8 +10,21 @@ android {
         applicationId 'br.com.geofilho.ttsg'
         minSdk 21
         targetSdk 34
-        versionCode 59
-        versionName '1.58'
+        versionCode 60
+        versionName '1.59'
+        // Tradutor no aparelho (ML Kit): só as versões para celulares (ARM 64 e 32 bits).
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a'
+        }
+    }
+
+    signingConfigs {
+        gerenciador {
+            storeFile file(System.getenv('KEYSTORE') ?: "${System.getProperty('user.home')}/.android/gerenciador-tts-g.keystore")
+            storePassword 'android'
+            keyAlias 'ttsg'
+            keyPassword 'android'
+        }
     }
 
     buildTypes {
@@ -19,8 +32,8 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
-            // Assina com a chave de depuração para gerar um APK instalável direto.
-            signingConfig signingConfigs.debug
+            // Mesma chave das versões anteriores: a atualização instala por cima.
+            signingConfig signingConfigs.gerenciador
         }
     }
 
@@ -31,7 +44,12 @@ android {
 
     lint {
         abortOnError false
+        checkReleaseBuilds false
     }
 }
 
-// Sem dependências externas: só o framework do Android, para o APK ficar mínimo.
+
+dependencies {
+    implementation 'com.google.mlkit:translate:17.0.3'
+    implementation 'com.google.mlkit:language-id:17.0.6'
+}

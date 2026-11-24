@@ -35,6 +35,7 @@ final class Toggles {
         Prefs.get(c).edit().putBoolean("translate_on", on).apply();
         if (on) {
             Translator.warm(c);
+            Translator.prepareDevice(c);
         }
         say(c, on ? "Tradução ativada." : "Tradução desativada.");
         refresh(c);
