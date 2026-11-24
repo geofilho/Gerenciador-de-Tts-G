@@ -286,7 +286,10 @@ public class FocusMemoryService extends AccessibilityService {
         } catch (Exception ignored) {
         }
         String where = focused != null && label(focused) != null ? shortLabel(label(focused)) : "nenhum item deste aplicativo";
-        if (target != null && target.isAccessibilityFocused()) {
+        AccessibilityNodeInfo focusedItem = focused != null ? listItem(focused) : null;
+        String focusedLabel = focusedItem != null ? label(focusedItem) : null;
+        boolean sameItem = focusedLabel != null && key(focusedLabel).equals(e.key);
+        if ((target != null && target.isAccessibilityFocused()) || sameItem) {
             Diagnostics.note(this, "Lembrar o foco: confirmado, o foco ficou em \"" + e.key + "\".");
             restoring = null;
             return;
@@ -495,21 +498,49 @@ public class FocusMemoryService extends AccessibilityService {
         return l.length() > 80 ? l.substring(0, 80) + "…" : l;
     }
 
-    /** Nome do grupo: o começo do texto, até a primeira vírgula, ponto ou quebra de linha. */
+    /**
+     * Palavras de tipo que alguns aplicativos põem antes do nome (o Telegram fala "Canal. Nome do canal.
+     * Silenciado..."): não servem para identificar o item, então o nome vai junto.
+     */
+    private static final java.util.Set<String> TYPE_WORDS = new java.util.HashSet<>(java.util.Arrays.asList(
+            "canal", "grupo", "supergrupo", "bot", "chat", "chat secreto", "conversa secreta", "fixado", "fixada",
+            "contato", "verificado", "silenciado", "arquivado", "channel", "group", "supergroup", "secret chat",
+            "pinned", "contact", "verified", "muted", "archived"));
+
+    /**
+     * Nome do item: o começo do texto, até a primeira vírgula, ponto ou quebra de linha. Se esse
+     * começo for só o tipo ("Canal", "Grupo"), inclui os pedaços seguintes até chegar ao nome.
+     */
     static String key(String label) {
+        int pos = 0;
+        int end = 0;
+        for (int part = 0; part < 4; part++) {
+            int next = nextBreak(label, pos);
+            String piece = label.substring(pos, next).trim();
+            end = next;
+            if (!TYPE_WORDS.contains(piece.toLowerCase(java.util.Locale.ROOT)) || next >= label.length()) {
+                break;
+            }
+            pos = Math.min(label.length(), next + 1); // pula o separador
+        }
+        String k = label.substring(0, end).trim();
+        if (k.length() > 80) {
+            k = k.substring(0, 80);
+        }
+        return k.length() >= 2 ? k : label;
+    }
+
+    /** Posição do próximo ", ", ". " ou quebra de linha a partir de {@code from} (ou o fim do texto). */
+    private static int nextBreak(String label, int from) {
         int end = label.length();
         String[] marks = {", ", ". ", "\n"};
         for (String m : marks) {
-            int i = label.indexOf(m);
-            if (i > 0 && i < end) {
+            int i = label.indexOf(m, from);
+            if (i >= from && i < end) {
                 end = i;
             }
         }
-        String k = label.substring(0, end).trim();
-        if (k.length() > 60) {
-            k = k.substring(0, 60);
-        }
-        return k.length() >= 2 ? k : label;
+        return end;
     }
 
     @Override
