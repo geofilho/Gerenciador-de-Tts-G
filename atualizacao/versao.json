@@ -1,6 +1,6 @@
 {
-  "versionCode": 58,
-  "versionName": "1.57",
+  "versionCode": 59,
+  "versionName": "1.58",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Primeira fala mais rápida: o Gerenciador já se conecta à voz escolhida assim que o serviço de voz abre, depois de religar o celular ou reiniciar o leitor de tela.\n- Com a Saída de áudio do leitor de tela ligada, o canal do alto-falante é reaproveitado entre as falas, e cada fala começa mais cedo na navegação rápida.\n- Menos trabalho com o áudio e com as configurações a cada fala, para uma resposta mais leve com o leitor de tela."
+  "novidades": "- Novas ações para o MacroDroid: Alternar_traducao e Alternar_saida_de_audio. Um atalho só liga a função se estiver desligada e desliga se estiver ligada, com aviso falado.\n- Também na ação Iniciar atalho: Alternar tradução e Alternar saída de áudio.\n- Texto de apresentação atualizado."
 }
