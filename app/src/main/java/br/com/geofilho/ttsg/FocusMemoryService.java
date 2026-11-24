@@ -29,6 +29,8 @@ public class FocusMemoryService extends AccessibilityService {
         final String app;
         final AccessibilityNodeInfo list;
         long at;
+        /** Quando entrou na pilha. */
+        long pushedAt;
 
         Entry(String label, String app, AccessibilityNodeInfo list) {
             this.key = key(label);
@@ -46,7 +48,15 @@ public class FocusMemoryService extends AccessibilityService {
      * Ao voltar, o primeiro deles que reaparece na tela recebe o foco.
      */
     private final java.util.ArrayDeque<Entry> stack = new java.util.ArrayDeque<>();
-    private static final int MAX_LEVELS = 10;
+    private static final int MAX_LEVELS = 20;
+    /**
+     * Item que parece ter sumido (o foco foi para outro item e ele não estava na tela). Só conta como
+     * "entrou nele" se continuar sumido um pouco depois: a lista do Telegram se reorganiza sozinha.
+     */
+    private Entry maybeLeft;
+    private long maybeLeftAt;
+    /** Desde quando o item atual não aparece na tela (0 = está aparecendo). */
+    private long currentMissingSince;
     private static final long KEEP_MS = 30 * 60 * 1000;
 
     private final Runnable check = new Runnable() {
@@ -167,7 +177,8 @@ public class FocusMemoryService extends AccessibilityService {
             // lista seja a mesma (o Meus Arquivos troca os itens da mesma lista ao abrir uma pasta).
             AccessibilityNodeInfo root = root();
             if (root != null && find(root, current) == null && !recentlyScrolled()) {
-                enter(current);
+                maybeLeft = current; // confirma na próxima conferência
+                maybeLeftAt = SystemClock.uptimeMillis();
             }
         }
         if (recognized.add(pkg)) {
@@ -176,6 +187,7 @@ public class FocusMemoryService extends AccessibilityService {
                     + shortLabel(label) + "\" (" + shortClass(list != null ? list.getClassName() : null) + ").");
         }
         current = new Entry(label, pkg, item.getParent());
+        currentMissingSince = 0;
     }
 
     /** A pessoa entrou no item: guarda na pilha, para voltar o foco a ele. */
@@ -183,8 +195,24 @@ public class FocusMemoryService extends AccessibilityService {
         if (!stack.isEmpty() && stack.peek().label.equals(e.label) && stack.peek().app.equals(e.app)) {
             return;
         }
+        Entry top = stack.peek();
+        boolean replaced = false;
+        if (top != null && top.list != null && top.list.equals(e.list) && top.app.equals(e.app)
+                && lastWindowChange <= top.pushedAt) {
+            // Mesma lista e a tela não mudou: não é um nível novo (são mensagens saindo da tela dentro de
+            // um grupo, por exemplo). Troca o de cima, em vez de empilhar.
+            stack.pop();
+            replaced = true;
+        }
         stack.push(e);
         e.at = SystemClock.uptimeMillis();
+        e.pushedAt = e.at;
+        if (replaced) {
+            if (current == e) {
+                current = null;
+            }
+            return; // sem aviso: é só o item de dentro mudando
+        }
         while (stack.size() > MAX_LEVELS) {
             stack.removeLast();
         }
@@ -237,14 +265,36 @@ public class FocusMemoryService extends AccessibilityService {
                 return;
             }
         }
-        // O item atual sumiu da tela sem rolagem e sem outro foco: a pessoa entrou nele.
+        // O item que parecia ter sumido continua sumido: a pessoa entrou nele.
+        if (maybeLeft != null && now - maybeLeftAt >= 400) {
+            Entry m = maybeLeft;
+            maybeLeft = null;
+            if (m.app.equals(pkg) && find(root, m) == null && !recentlyScrolled()) {
+                enter(m);
+            }
+        } else if (maybeLeft != null) {
+            handler.removeCallbacks(check);
+            handler.postDelayed(check, 450);
+        }
+        // O item atual sumiu da tela sem rolagem e sem outro foco: confirma de novo antes de contar.
         if (current != null && current.app.equals(pkg) && find(root, current) == null && !recentlyScrolled()) {
-            enter(current);
+            if (currentMissingSince == 0) {
+                currentMissingSince = now;
+                handler.removeCallbacks(check);
+                handler.postDelayed(check, 450);
+            } else if (now - currentMissingSince >= 400) {
+                currentMissingSince = 0;
+                enter(current);
+            }
+        } else {
+            currentMissingSince = 0;
         }
     }
 
     private void restore(AccessibilityNodeInfo target, Entry e) {
         restoring = e;
+        maybeLeft = null;
+        currentMissingSince = 0;
         if (target.isAccessibilityFocused()) {
             Diagnostics.note(this, "Lembrar o foco: voltou, e o foco já estava em \"" + e.key + "\".");
         } else {
@@ -295,13 +345,19 @@ public class FocusMemoryService extends AccessibilityService {
             return;
         }
         if (target == null) {
+            if (verifyAttempt < 2) {
+                // A lista pode estar se reorganizando (o Telegram muda a ordem quando chegam mensagens).
+                verifyAttempt++;
+                handler.postDelayed(verify, 700);
+                return;
+            }
             Diagnostics.note(this, "Lembrar o foco: ao conferir, \"" + e.key + "\" não estava mais na tela. Foco em: "
                     + where + ".");
             restoring = null;
             return;
         }
-        if (verifyAttempt == 0) {
-            verifyAttempt = 1;
+        if (verifyAttempt < 2) {
+            verifyAttempt++;
             current = e; // o leitor de tela tirou o foco do item: volta a ser o atual e tenta de novo
             e.at = SystemClock.uptimeMillis();
             boolean ok = target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
