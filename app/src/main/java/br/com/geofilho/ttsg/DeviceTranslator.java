@@ -35,6 +35,8 @@ final class DeviceTranslator {
     private static volatile Set<String> downloaded;
     private static volatile long checkedAt;
     private static volatile boolean downloading;
+    /** O download em andamento espera o Wi-Fi (automático); o botão pode baixar na hora mesmo assim. */
+    private static volatile boolean waitingWifi;
     private static volatile String downloadError = "";
     private static volatile boolean autoTried;
     private static LanguageIdentifier identifier;
@@ -163,10 +165,13 @@ final class DeviceTranslator {
      */
     static void download(final Context c, final String src, final String dst, final boolean wifiOnly,
                          final Done done) {
-        if (downloading) {
-            return;
+        if (downloading && !waitingWifi) {
+            return; // já está baixando na hora, pelo botão
         }
+        // Downloads pelo Wi-Fi podem se somar (o ML Kit não baixa o mesmo idioma duas vezes);
+        // o botão passa na frente de um download que ainda espera o Wi-Fi.
         downloading = true;
+        waitingWifi = wifiOnly;
         downloadError = "";
         new Thread(new Runnable() {
             @Override
@@ -203,7 +208,10 @@ final class DeviceTranslator {
                 }
                 checkedAt = 0; // consulta de novo o que foi baixado
                 downloadError = err;
-                downloading = false;
+                if (waitingWifi == wifiOnly) {
+                    downloading = false;
+                    waitingWifi = false;
+                }
                 if (done != null) {
                     done.done(ok, err);
                 }
@@ -211,9 +219,17 @@ final class DeviceTranslator {
         }, "baixar-tradutor").start();
     }
 
-    /** Com a tradução ligada, baixa sozinho pelo Wi-Fi o que faltar (uma tentativa por vez que o app abre). */
+    /** Os idiomas escolhidos mudaram: o download automático pode tentar de novo. */
+    static void resetAuto() {
+        autoTried = false;
+    }
+
+    /**
+     * Com a tradução ligada, baixa sozinho pelo Wi-Fi o que faltar: uma vez quando o app abre e
+     * de novo quando os idiomas de origem ou de destino mudam.
+     */
     static void autoDownload(Context c, String src, String dst) {
-        if (autoTried || downloading) {
+        if (autoTried || (downloading && !waitingWifi)) {
             return;
         }
         autoTried = true;
@@ -223,14 +239,17 @@ final class DeviceTranslator {
         download(c, "auto".equals(src) ? null : src, dst, true, null);
     }
 
+    /** Baixando na hora (pelo botão): o botão fica escondido até terminar. */
     static boolean isDownloading() {
-        return downloading;
+        return downloading && !waitingWifi;
     }
 
     /** Frase de estado para a página de tradução. */
     static String status(Context c, String src, String dst) {
         if (downloading) {
-            return "baixando os idiomas, isso pode levar alguns minutos";
+            return waitingWifi
+                    ? "baixando os idiomas pelo Wi-Fi; se estiver sem Wi-Fi, use o botão abaixo para baixar agora"
+                    : "baixando os idiomas, isso pode levar alguns minutos";
         }
         String d = code(dst);
         if (d == null) {

@@ -219,6 +219,16 @@ public class TranslationActivity extends Activity {
                         prefs.edit().putString(source ? "translate_src" : "translate_dst", codes.get(which)).apply();
                         refresh();
                         checkSystemTranslator();
+                        if (Prefs.translateOn(prefs)) {
+                            DeviceTranslator.resetAuto(); // idioma novo: baixa o pacote dele pelo Wi-Fi
+                            Translator.prepareDevice(TranslationActivity.this);
+                            txtDevice.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    checkDeviceTranslator();
+                                }
+                            }, 800);
+                        }
                         checkDeviceTranslator();
                         d.dismiss();
                     }
