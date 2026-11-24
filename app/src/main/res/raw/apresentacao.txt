@@ -39,6 +39,7 @@ TELA PRINCIPAL, NA ORDEM DA VARREDURA
 
 11. Tradução de voz TTS: abre uma página com estas opções.
 - Tradução automática: chave para ligar e desligar. Com ela ligada, o que o leitor de tela falar em outro idioma é traduzido antes de ser falado.
+- Usar também a tradução pela internet: chave ligada por padrão. Desligada, o aplicativo traduz só sem internet, com o dicionário do aplicativo, as traduções guardadas e o tradutor no aparelho, e nada é enviado para a internet.
 - Idioma de origem: o padrão é Automático, que reconhece o idioma sozinho.
 - Idioma de destino: o padrão é o idioma do aparelho.
 - Como a tradução é feita: primeiro, o aplicativo consulta o seu próprio dicionário de tradução, com cerca de 1.400 palavras e frases comuns de aplicativos, como Configurações, Cancelar e Adicionar ao carrinho, do inglês para o português. Essas saem na hora, sem internet. Depois, o tradutor no aparelho, do Google, que traduz no próprio celular, sem internet e sem limite, depois de baixar uma vez o pacote do inglês e do português, cerca de 30 MB cada. Com a tradução ligada, o download começa sozinho no Wi-Fi, ou na hora pelo botão Baixar o tradutor no aparelho. Depois, nos aparelhos que oferecem o tradutor do próprio Android, ele é usado primeiro, sem internet e sem limite. Nos outros, a tradução é feita pela internet, pelo tradutor do Google. Se o Google limitar as consultas por um tempo, são usados os servidores públicos Lingva e o tradutor reserva MyMemory, sem pausa. Textos que já estão no idioma de destino não são enviados.

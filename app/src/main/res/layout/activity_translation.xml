@@ -15,6 +15,11 @@
             style="@style/Row"
             android:text="@string/translate_switch" />
 
+        <Switch
+            android:id="@+id/switch_online"
+            style="@style/Row"
+            android:text="@string/translate_online_switch" />
+
         <Button
             android:id="@+id/btn_source"
             style="@style/Row" />

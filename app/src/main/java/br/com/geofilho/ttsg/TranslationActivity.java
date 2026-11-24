@@ -59,6 +59,20 @@ public class TranslationActivity extends Activity {
             }
         });
 
+        Switch online = findViewById(R.id.switch_online);
+        online.setChecked(Prefs.translateOnline(prefs));
+        online.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton b, boolean checked) {
+                prefs.edit().putBoolean("translate_online", checked).apply();
+                if (checked) {
+                    Translator.warm(TranslationActivity.this);
+                } else {
+                    Translator.prepareDevice(TranslationActivity.this); // sem internet, o tradutor no aparelho é essencial
+                }
+            }
+        });
+
         btnEmail = findViewById(R.id.btn_email);
         showEmail();
         btnEmail.setOnClickListener(new View.OnClickListener() {

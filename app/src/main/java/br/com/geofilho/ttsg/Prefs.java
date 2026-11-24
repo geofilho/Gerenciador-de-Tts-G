@@ -132,6 +132,11 @@ final class Prefs {
         return p.getBoolean("translate_on", false);
     }
 
+    /** Usar também os tradutores pela internet (Google, Lingva, MyMemory). Desligado: só sem internet. */
+    static boolean translateOnline(SharedPreferences p) {
+        return p.getBoolean("translate_online", true);
+    }
+
     /** Idioma de origem da tradução: "auto" detecta sozinho. */
     static String translateSource(SharedPreferences p) {
         return p.getString("translate_src", "auto");

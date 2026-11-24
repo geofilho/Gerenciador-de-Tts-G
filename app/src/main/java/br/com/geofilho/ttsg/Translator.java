@@ -470,7 +470,8 @@ final class Translator {
 
     /** Deixa a conexão com o tradutor pronta (sem esperar), para a primeira tradução sair rápido. */
     static void warm(Context c) {
-        if (!Prefs.translateOn(Prefs.get(c)) || System.currentTimeMillis() - lastNetwork < 60000) {
+        if (!Prefs.translateOn(Prefs.get(c)) || !Prefs.translateOnline(Prefs.get(c))
+                || System.currentTimeMillis() - lastNetwork < 60000) {
             return;
         }
         final String dst = Prefs.translateTarget(Prefs.get(c));
@@ -564,6 +565,11 @@ final class Translator {
                     return new String[]{dev, from};
                 }
             }
+        }
+        // Tradução pela internet desligada: fica só com o que funciona sem internet.
+        if (ctx != null && !Prefs.translateOnline(Prefs.get(ctx))) {
+            lastError = "a tradução pela internet está desligada e o tradutor no aparelho não traduziu este texto";
+            return null;
         }
         // O limite de ritmo vale só para o Google: passou dele, vai direto para os tradutores reserva.
         boolean googleAllowed = pace();
