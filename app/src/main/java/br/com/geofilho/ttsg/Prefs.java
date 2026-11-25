@@ -128,28 +128,6 @@ final class Prefs {
         return p.getBoolean("diagnostics_on", false);
     }
 
-    /** Aplicativos em que vale "lembrar o foco ao voltar" (pacotes). Padrão: Telegram. */
-    static java.util.Set<String> focusApps(SharedPreferences p) {
-        java.util.Set<String> out = new java.util.LinkedHashSet<>();
-        for (String s : p.getString("focus_apps", "org.telegram.messenger,org.telegram.messenger.web").split(",")) {
-            if (!s.trim().isEmpty()) {
-                out.add(s.trim());
-            }
-        }
-        return out;
-    }
-
-    static void setFocusApps(SharedPreferences p, java.util.Collection<String> apps) {
-        StringBuilder b = new StringBuilder();
-        for (String a : apps) {
-            if (b.length() > 0) {
-                b.append(',');
-            }
-            b.append(a);
-        }
-        p.edit().putString("focus_apps", b.toString()).apply();
-    }
-
     static boolean translateOn(SharedPreferences p) {
         return p.getBoolean("translate_on", false);
     }
