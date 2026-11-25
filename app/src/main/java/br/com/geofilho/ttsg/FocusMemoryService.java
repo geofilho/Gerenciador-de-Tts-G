@@ -1,68 +1,91 @@
 package br.com.geofilho.ttsg;
 
 import android.accessibilityservice.AccessibilityService;
+import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
+import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
- * "Lembrar o foco ao voltar" (teste): nos aplicativos escolhidos, acompanha o item de lista em que
- * está o foco do leitor de tela. Quando a pessoa entra nele (um grupo, uma pasta) e volta, coloca o
- * foco de novo nesse item, para continuar navegando de onde parou. Guarda um item por nível
- * (pasta dentro de pasta).
- *
- * Fica separado da fala: só recebe eventos dos aplicativos escolhidos (os outros, como apps de
- * banco, nem mandam eventos) e só procura o item na tela enquanto há um item guardado esperando a volta.
+ * "Lembrar o foco ao voltar" (teste), no modelo do SandFly:
+ * - guarda o item de lista que a pessoa abriu: o que tinha o foco quando a tela trocou;
+ * - só devolve o foco nos 2 segundos seguintes a uma troca de tela, e só se a pessoa não mexeu no foco;
+ * - a lista se reorganizando (o Telegram quando chegam mensagens) não é troca de tela: troca de
+ *   tela é a lista sumir, ou todos os itens dela mudarem sem a lista ter sido rolada.
+ * Só recebe eventos dos aplicativos escolhidos.
  */
 public class FocusMemoryService extends AccessibilityService {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
 
-    /** Um item de lista lembrado: nome (início do texto, que não muda), texto completo, lista e aplicativo. */
+    /** Um item de lista: nome (início do texto, que não muda), texto completo, aplicativo, lista e altura. */
     private static final class Entry {
         final String key;
         final String label;
         final String app;
         final AccessibilityNodeInfo list;
-        long at;
-        /** Quando entrou na pilha. */
-        long pushedAt;
+        final int centerY;
+        final long at;
 
-        Entry(String label, String app, AccessibilityNodeInfo list) {
+        Entry(String label, String app, AccessibilityNodeInfo list, int centerY) {
             this.key = key(label);
             this.label = label;
             this.app = app;
             this.list = list;
+            this.centerY = centerY;
             this.at = SystemClock.uptimeMillis();
         }
     }
 
-    /** Item da lista em que o foco está agora. */
-    private Entry current;
-    /**
-     * Itens em que a pessoa entrou, um por nível (pasta dentro de pasta): o de cima é o mais recente.
-     * Ao voltar, o primeiro deles que reaparece na tela recebe o foco.
-     */
-    private final java.util.ArrayDeque<Entry> stack = new java.util.ArrayDeque<>();
-    private static final int MAX_LEVELS = 20;
-    /**
-     * Item que parece ter sumido (o foco foi para outro item e ele não estava na tela). Só conta como
-     * "entrou nele" se continuar sumido um pouco depois: a lista do Telegram se reorganiza sozinha.
-     */
-    private Entry maybeLeft;
-    private long maybeLeftAt;
-    /** Desde quando o item atual não aparece na tela (0 = está aparecendo). */
-    private long currentMissingSince;
+    /** Itens abertos, o mais recente no topo (pasta dentro de pasta: um por nível). */
+    private final ArrayDeque<Entry> opened = new ArrayDeque<>();
+    private static final int MAX_ITEMS = 16;
     private static final long KEEP_MS = 30 * 60 * 1000;
+    /** Depois de uma troca de tela, o foco só volta a um item aberto dentro deste prazo (como no SandFly). */
+    private static final long RESTORE_WINDOW_MS = 2000;
+    /** Foco que muda depois disto, dentro do prazo, foi a pessoa: o serviço desiste. */
+    private static final long AUTO_FOCUS_MS = 1000;
+
+    /** Item da lista em que o foco está agora. */
+    private Entry focusedItem;
+
+    /** Retrato da tela: a lista do foco e os nomes dos itens visíveis nela. */
+    private AccessibilityNodeInfo shotList;
+    private final Set<String> shotKeys = new HashSet<>();
+    private String shotApp = "";
+
+    private long lastScroll;
+
+    // Prazo depois de uma troca de tela
+    private long windowStart = -1;
+    private Entry pushedNow; // item aberto nesta troca de tela
 
     private final Runnable check = new Runnable() {
         @Override
         public void run() {
-            checkReturn();
+            checkScreen();
+        }
+    };
+
+    private final Runnable tryRestore = new Runnable() {
+        @Override
+        public void run() {
+            restoreStep();
+        }
+    };
+
+    private final Runnable poll = new Runnable() {
+        @Override
+        public void run() {
+            pollFocus();
         }
     };
 
@@ -90,30 +113,23 @@ public class FocusMemoryService extends AccessibilityService {
             if (info == null) {
                 return;
             }
-            java.util.Set<String> apps = Prefs.focusApps(Prefs.get(this));
+            Set<String> apps = Prefs.focusApps(Prefs.get(this));
             if (apps.isEmpty()) {
                 apps.add(getPackageName());
             }
             info.packageNames = apps.toArray(new String[0]);
             setServiceInfo(info);
-            forget();
-            detailNotes = 0;
+            opened.clear();
+            focusedItem = null;
+            shotList = null;
+            shotKeys.clear();
+            closeWindow();
             seenApps.clear();
             recognized.clear();
-            focusSeen.clear();
-            pollNoted = false;
+            detailNotes = 0;
             Diagnostics.note(this, "Lembrar o foco: ligado em " + android.text.TextUtils.join(", ", apps) + ".");
         } catch (Exception ignored) {
         }
-    }
-
-    /** Última rolagem da lista: sumir da tela logo depois de rolar não é "entrar no item". */
-    private long lastScroll;
-    private long lastWindowChange;
-
-    /** O item pode ter sumido por rolagem? Só se rolou há pouco e a tela não mudou depois. */
-    private boolean recentlyScrolled() {
-        return SystemClock.uptimeMillis() - lastScroll < 1500 && lastWindowChange < lastScroll;
     }
 
     @Override
@@ -121,123 +137,294 @@ public class FocusMemoryService extends AccessibilityService {
         if (event == null) {
             return;
         }
-        int type = event.getEventType();
         noteFirst(event);
+        int type = event.getEventType();
         if (type == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
-            // Só conta a rolagem da lista do item atual (a conversa que abre também rola).
             AccessibilityNodeInfo src = event.getSource();
-            if (current == null || current.list == null || (src != null && src.equals(current.list))) {
-                lastScroll = SystemClock.uptimeMillis();
+            if (shotList == null || (src != null && src.equals(shotList))) {
+                lastScroll = SystemClock.uptimeMillis(); // a própria lista rolou: itens mudando não é troca de tela
             }
-        } else if (type == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED
-                || type == AccessibilityEvent.TYPE_VIEW_CLICKED) {
-            // O item da lista em que o foco está (ou que foi tocado). Não depende do toque: alguns apps,
-            // como o Telegram, abrem o item sem avisar o toque.
-            AccessibilityNodeInfo src = event.getSource();
-            if (type == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED
-                    && focusSeen.add(String.valueOf(event.getPackageName()))) {
-                Diagnostics.note(this, "Lembrar o foco (detalhe): primeiro aviso de foco de " + event.getPackageName() + ".");
-            }
-            if (listItem(src) == null && type == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED) {
-                noteDetail(src);
-            }
-            remember(src);
+        } else if (type == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED) {
+            onFocus(event.getSource());
         } else {
-            if (type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-                lastWindowChange = SystemClock.uptimeMillis(); // tela ou título novo: navegação, não rolagem
-            }
-            // Alguns aplicativos (como o Telegram) não avisam quando o foco do leitor de tela muda:
-            // quando a tela muda, pergunta onde o foco está (no máximo a cada 0,4 s).
+            // Alguns aplicativos (como o Telegram) nem sempre avisam a mudança de foco: pergunta.
             handler.removeCallbacks(poll);
             handler.postDelayed(poll, 400);
         }
-        if (current == null && stack.isEmpty()) {
-            return; // nada guardado: não faz mais nada
-        }
-        // Espera a tela assentar (o leitor de tela também mexe no foco ao voltar) e confere uma vez.
         handler.removeCallbacks(check);
-        handler.postDelayed(check, stack.isEmpty() ? 700 : 350);
+        handler.postDelayed(check, 300);
     }
 
-    /** O foco está num item de lista: ele passa a ser o atual. Se o atual anterior sumiu, a pessoa entrou nele. */
-    private void remember(AccessibilityNodeInfo source) {
-        AccessibilityNodeInfo item = listItem(source);
+    private void pollFocus() {
+        AccessibilityNodeInfo root = root();
+        if (root == null) {
+            return;
+        }
+        AccessibilityNodeInfo f;
+        try {
+            f = root.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
+        } catch (Exception e) {
+            return;
+        }
+        if (f != null && (focusedItem == null || !f.equals(lastPolled))) {
+            lastPolled = f;
+            onFocus(f);
+        }
+    }
+
+    private AccessibilityNodeInfo lastPolled;
+
+    /** O foco do leitor de tela foi para {@code node}. */
+    private void onFocus(AccessibilityNodeInfo node) {
+        AccessibilityNodeInfo item = listItem(node);
         String label = item != null ? label(item) : null;
-        if (label == null || label.length() < 2) {
-            return; // não é item de lista: um botão, por exemplo
-        }
-        String pkg = source.getPackageName() != null ? source.getPackageName().toString() : "";
-        if (current != null && current.label.equals(label) && current.app.equals(pkg)) {
-            current.at = SystemClock.uptimeMillis();
-            return;
-        }
-        if (current != null && current.app.equals(pkg)) {
-            // Outro item do mesmo aplicativo. Se o atual ainda está na tela, a pessoa só andou pela lista.
-            // Se sumiu sem a lista ter sido rolada, ela entrou nele (num grupo, numa pasta...), mesmo que a
-            // lista seja a mesma (o Meus Arquivos troca os itens da mesma lista ao abrir uma pasta).
-            AccessibilityNodeInfo root = root();
-            if (root != null && find(root, current) == null && !recentlyScrolled()) {
-                maybeLeft = current; // confirma na próxima conferência
-                maybeLeftAt = SystemClock.uptimeMillis();
+        long now = SystemClock.uptimeMillis();
+        if (item == null || label == null || label.length() < 2) {
+            if (node != null && item == null) {
+                noteDetail(node);
             }
+            return; // não é item de lista (um botão, o título...)
         }
-        if (recognized.add(pkg)) {
-            AccessibilityNodeInfo list = item.getParent();
-            Diagnostics.note(this, "Lembrar o foco (detalhe): reconheceu lista em " + pkg + ", item \""
-                    + shortLabel(label) + "\" (" + shortClass(list != null ? list.getClassName() : null) + ").");
+        String app = item.getPackageName() != null ? item.getPackageName().toString() : "";
+        Entry e = new Entry(label, app, item.getParent(), centerY(item));
+        if (windowStart < 0 && shotList != null
+                && (e.list == null || !e.list.equals(shotList) || !shotKeys.contains(e.key))) {
+            // Foco num item de outra lista, ou que não estava na tela: antes de aceitar, confere se a
+            // tela trocou (o aviso de foco da tela nova pode chegar antes da conferência normal).
+            handler.removeCallbacks(check);
+            checkScreen();
         }
-        current = new Entry(label, pkg, item.getParent());
-        currentMissingSince = 0;
+        if (windowStart >= 0 && now - windowStart > AUTO_FOCUS_MS
+                && (focusedItem == null || !focusedItem.key.equals(e.key))) {
+            // A pessoa mexeu no foco depois da troca de tela: o serviço não interfere mais.
+            closeWindow();
+        }
+        if (recognized.add(app)) {
+            Diagnostics.note(this, "Lembrar o foco (detalhe): reconheceu lista em " + app + ", item \""
+                    + shortLabel(label) + "\".");
+        }
+        focusedItem = e;
+        if (windowStart < 0) {
+            takeShot(e.list, app); // retrato da tela atual (fora do prazo, para não confundir com a troca)
+        }
     }
 
-    /** A pessoa entrou no item: guarda na pilha, para voltar o foco a ele. */
-    private void enter(Entry e) {
-        if (!stack.isEmpty() && stack.peek().label.equals(e.label) && stack.peek().app.equals(e.app)) {
+    /** Guarda os nomes dos itens visíveis da lista, para perceber depois se a tela trocou. */
+    private void takeShot(AccessibilityNodeInfo list, String app) {
+        if (list == null) {
             return;
         }
-        Entry top = stack.peek();
-        boolean replaced = false;
-        if (top != null && top.list != null && top.list.equals(e.list) && top.app.equals(e.app)
-                && lastWindowChange <= top.pushedAt) {
-            // Mesma lista e a tela não mudou: não é um nível novo (são mensagens saindo da tela dentro de
-            // um grupo, por exemplo). Troca o de cima, em vez de empilhar.
-            stack.pop();
-            replaced = true;
-        }
-        stack.push(e);
-        e.at = SystemClock.uptimeMillis();
-        e.pushedAt = e.at;
-        if (replaced) {
-            if (current == e) {
-                current = null;
+        shotList = list;
+        shotApp = app;
+        shotKeys.clear();
+        shotKeys.addAll(visibleKeys(list));
+    }
+
+    private static Set<String> visibleKeys(AccessibilityNodeInfo list) {
+        Set<String> keys = new HashSet<>();
+        int n = Math.min(list.getChildCount(), 40);
+        for (int i = 0; i < n; i++) {
+            AccessibilityNodeInfo c = list.getChild(i);
+            if (c != null && c.isVisibleToUser()) {
+                String l = label(c);
+                if (l != null && l.length() >= 2) {
+                    keys.add(key(l));
+                }
             }
-            return; // sem aviso: é só o item de dentro mudando
         }
-        while (stack.size() > MAX_LEVELS) {
-            stack.removeLast();
+        return keys;
+    }
+
+    /**
+     * A tela trocou? Sim se a lista do retrato sumiu, ou se nenhum dos itens dela continua lá sem a
+     * lista ter sido rolada. Itens mudando de lugar (o Telegram reorganizando) não contam.
+     */
+    private void checkScreen() {
+        if (windowStart >= 0 || shotList == null) {
+            return;
         }
-        Diagnostics.note(this, "Lembrar o foco: entrou em \"" + e.key + "\" (" + e.app + "), nível " + stack.size()
-                + "; esperando a volta.");
-        if (!isChatApp(e.app)) {
-            enteredAt = SystemClock.uptimeMillis();
-            handler.removeCallbacks(firstItem);
-            handler.postDelayed(firstItem, 900);
+        boolean present;
+        try {
+            present = shotList.refresh() && shotList.isVisibleToUser();
+        } catch (Exception e) {
+            present = false;
         }
-        if (current == e) {
-            current = null;
+        if (present) {
+            Set<String> now = visibleKeys(shotList);
+            int same = 0;
+            for (String k : now) {
+                if (shotKeys.contains(k)) {
+                    same++;
+                }
+            }
+            boolean scrolled = SystemClock.uptimeMillis() - lastScroll < 1500;
+            if (same > 0 || now.isEmpty() || scrolled) {
+                if (same > 0 || scrolled) {
+                    shotKeys.clear();
+                    shotKeys.addAll(now); // a lista mudou aos poucos: atualiza o retrato
+                }
+                return;
+            }
+        }
+        onScreenChange();
+    }
+
+    /** A tela trocou: o item que tinha o foco foi o aberto; e talvez seja a volta a uma lista anterior. */
+    private void onScreenChange() {
+        long now = SystemClock.uptimeMillis();
+        while (!opened.isEmpty() && now - opened.peekLast().at > KEEP_MS) {
+            opened.removeLast();
+        }
+        pushedNow = null;
+        Entry f = focusedItem;
+        if (f != null && f.app.equals(shotApp)) {
+            Entry top = opened.peek();
+            if (top == null || !(top.key.equals(f.key) && top.app.equals(f.app))) {
+                opened.push(f);
+                while (opened.size() > MAX_ITEMS) {
+                    opened.removeLast();
+                }
+            }
+            pushedNow = opened.peek();
+        }
+        focusedItem = null;
+        shotList = null;
+        shotKeys.clear();
+        windowStart = now;
+        handler.removeCallbacks(tryRestore);
+        handler.postDelayed(tryRestore, 250);
+    }
+
+    /** Dentro do prazo: procura na tela o item aberto mais recente (fora o desta troca) e põe o foco nele. */
+    private void restoreStep() {
+        if (windowStart < 0) {
+            return;
+        }
+        long now = SystemClock.uptimeMillis();
+        AccessibilityNodeInfo root = root();
+        String app = root != null && root.getPackageName() != null ? root.getPackageName().toString() : "";
+        if (root != null) {
+            for (Entry e : opened) {
+                if (e == pushedNow || !e.app.equals(app)) {
+                    continue;
+                }
+                AccessibilityNodeInfo target = find(root, e);
+                if (target != null) {
+                    // Voltou à lista de onde esse item foi aberto: tira ele e os mais novos (níveis mais fundos).
+                    Iterator<Entry> it = opened.iterator();
+                    while (it.hasNext()) {
+                        Entry x = it.next();
+                        it.remove();
+                        if (x == e) {
+                            break;
+                        }
+                    }
+                    restore(target, e);
+                    return;
+                }
+            }
+        }
+        if (now - windowStart < RESTORE_WINDOW_MS) {
+            handler.postDelayed(tryRestore, 250);
+            return;
+        }
+        // Prazo acabou sem voltar a uma lista anterior: foi uma entrada.
+        Entry p = pushedNow;
+        closeWindow();
+        if (p != null) {
+            Diagnostics.note(this, "Lembrar o foco: entrou em \"" + p.key + "\" (" + p.app + "), nível " + opened.size() + ".");
+            if (!isChatApp(p.app)) {
+                focusFirstItem();
+            }
+        }
+        retakeShot();
+    }
+
+    private void restore(AccessibilityNodeInfo target, Entry e) {
+        closeWindow();
+        if (target.isAccessibilityFocused()) {
+            Diagnostics.note(this, "Lembrar o foco: voltou, e o foco já estava em \"" + e.key + "\".");
+        } else {
+            boolean ok = target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
+            Diagnostics.note(this, "Lembrar o foco: voltou; pôs o foco em \"" + e.key + "\""
+                    + (ok ? "." : ", mas o aplicativo não aceitou o foco."));
+            restoring = e;
+            restoredAt = SystemClock.uptimeMillis();
+            handler.removeCallbacks(verify);
+            handler.postDelayed(verify, 800);
+        }
+        retakeShot();
+    }
+
+    private Entry restoring;
+    private long restoredAt;
+
+    private final Runnable verify = new Runnable() {
+        @Override
+        public void run() {
+            verifyOnce();
+        }
+    };
+
+    /** Uma conferência só: se o leitor de tela tirou o foco logo depois, põe de volta uma vez. */
+    private void verifyOnce() {
+        Entry e = restoring;
+        restoring = null;
+        if (e == null) {
+            return;
+        }
+        AccessibilityNodeInfo root = root();
+        if (root == null) {
+            return;
+        }
+        AccessibilityNodeInfo target = find(root, e);
+        if (target == null || target.isAccessibilityFocused()) {
+            return;
+        }
+        AccessibilityNodeInfo f = null;
+        try {
+            f = root.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
+        } catch (Exception ignored) {
+        }
+        AccessibilityNodeInfo fi = f != null ? listItem(f) : null;
+        String fl = fi != null ? label(fi) : null;
+        if (fl != null && key(fl).equals(e.key)) {
+            return;
+        }
+        boolean ok = target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
+        Diagnostics.note(this, "Lembrar o foco: o leitor de tela levou o foco para \""
+                + (fl != null ? shortLabel(fl) : "outro lugar") + "\"; pus de volta em \"" + e.key + "\""
+                + (ok ? "." : ", sem sucesso."));
+    }
+
+    private void closeWindow() {
+        windowStart = -1;
+        pushedNow = null;
+        handler.removeCallbacks(tryRestore);
+    }
+
+    /** Novo retrato depois da troca de tela: a lista do foco, ou a principal da tela. */
+    private void retakeShot() {
+        AccessibilityNodeInfo root = root();
+        if (root == null) {
+            return;
+        }
+        String app = root.getPackageName() != null ? root.getPackageName().toString() : "";
+        AccessibilityNodeInfo f = null;
+        try {
+            f = root.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
+        } catch (Exception ignored) {
+        }
+        AccessibilityNodeInfo item = f != null ? listItem(f) : null;
+        if (item != null && label(item) != null) {
+            focusedItem = new Entry(label(item), app, item.getParent(), centerY(item));
+            takeShot(item.getParent(), app);
+        } else {
+            takeShot(biggestList(root, 0), app);
         }
     }
 
     // ----- ao entrar numa pasta: foco no primeiro item, se o leitor de tela não pôs em nenhum -----
-
-    private long enteredAt;
-
-    private final Runnable firstItem = new Runnable() {
-        @Override
-        public void run() {
-            focusFirstItem();
-        }
-    };
 
     /** Aplicativos de conversa: ao abrir um grupo, o primeiro item seria a mensagem mais antiga. */
     private static boolean isChatApp(String pkg) {
@@ -246,9 +433,6 @@ public class FocusMemoryService extends AccessibilityService {
     }
 
     private void focusFirstItem() {
-        if (SystemClock.uptimeMillis() - enteredAt > 3000) {
-            return;
-        }
         AccessibilityNodeInfo root = root();
         if (root == null) {
             return;
@@ -292,12 +476,6 @@ public class FocusMemoryService extends AccessibilityService {
         return best;
     }
 
-    private void forget() {
-        current = null;
-        stack.clear();
-        handler.removeCallbacks(check);
-    }
-
     private AccessibilityNodeInfo root() {
         try {
             return getRootInActiveWindow();
@@ -306,165 +484,41 @@ public class FocusMemoryService extends AccessibilityService {
         }
     }
 
-    private void checkReturn() {
-        AccessibilityNodeInfo root = root();
-        if (root == null) {
-            return;
-        }
-        long now = SystemClock.uptimeMillis();
-        while (!stack.isEmpty() && now - stack.peekLast().at > KEEP_MS) {
-            stack.removeLast(); // muito antigo: esquece
-        }
-        String pkg = root.getPackageName() != null ? root.getPackageName().toString() : "";
-        // Voltou? O primeiro item da pilha (do mais recente para o mais antigo) que reaparece na tela.
-        int level = 0;
-        for (Entry e : stack) {
-            level++;
-            if (!e.app.equals(pkg)) {
-                continue;
-            }
-            AccessibilityNodeInfo target = find(root, e);
-            if (target != null) {
-                for (int i = 0; i < level; i++) {
-                    stack.pop(); // ele e os níveis mais fundos, que já ficaram para trás
-                }
-                current = e;
-                e.at = now;
-                restore(target, e);
-                return;
-            }
-        }
-        // O item que parecia ter sumido continua sumido: a pessoa entrou nele.
-        if (maybeLeft != null && now - maybeLeftAt >= 400) {
-            Entry m = maybeLeft;
-            maybeLeft = null;
-            if (m.app.equals(pkg) && find(root, m) == null && !recentlyScrolled()) {
-                enter(m);
-            }
-        } else if (maybeLeft != null) {
-            handler.removeCallbacks(check);
-            handler.postDelayed(check, 450);
-        }
-        // O item atual sumiu da tela sem rolagem e sem outro foco: confirma de novo antes de contar.
-        if (current != null && current.app.equals(pkg) && find(root, current) == null && !recentlyScrolled()) {
-            if (currentMissingSince == 0) {
-                currentMissingSince = now;
-                handler.removeCallbacks(check);
-                handler.postDelayed(check, 450);
-            } else if (now - currentMissingSince >= 400) {
-                currentMissingSince = 0;
-                enter(current);
-            }
-        } else {
-            currentMissingSince = 0;
-        }
+    private static int centerY(AccessibilityNodeInfo n) {
+        Rect r = new Rect();
+        n.getBoundsInScreen(r);
+        return r.centerY();
     }
 
-    private void restore(AccessibilityNodeInfo target, Entry e) {
-        restoring = e;
-        maybeLeft = null;
-        currentMissingSince = 0;
-        if (target.isAccessibilityFocused()) {
-            Diagnostics.note(this, "Lembrar o foco: voltou, e o foco já estava em \"" + e.key + "\".");
-        } else {
-            boolean ok = target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
-            Diagnostics.note(this, "Lembrar o foco: voltou; pôs o foco em \"" + e.key + "\""
-                    + (ok ? ", conferindo se ficou." : ", mas o aplicativo não aceitou o foco."));
-        }
-        verifyAttempt = 0;
-        handler.removeCallbacks(verify);
-        handler.postDelayed(verify, 900);
-    }
-
-    // ----- conferência: o leitor de tela pode mudar o foco logo depois -----
-
-    private Entry restoring;
-    private int verifyAttempt;
-
-    private final Runnable verify = new Runnable() {
-        @Override
-        public void run() {
-            verifyFocus();
-        }
-    };
-
-    /** Confere onde o foco ficou; se o leitor de tela o levou para outro lugar, põe de novo uma vez. */
-    private void verifyFocus() {
-        Entry e = restoring;
-        if (e == null) {
-            return;
-        }
-        AccessibilityNodeInfo root = root();
-        if (root == null) {
-            return;
-        }
-        AccessibilityNodeInfo target = find(root, e);
-        AccessibilityNodeInfo focused = null;
-        try {
-            focused = root.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
-        } catch (Exception ignored) {
-        }
-        String where = focused != null && label(focused) != null ? shortLabel(label(focused)) : "nenhum item deste aplicativo";
-        AccessibilityNodeInfo focusedItem = focused != null ? listItem(focused) : null;
-        String focusedLabel = focusedItem != null ? label(focusedItem) : null;
-        boolean sameItem = focusedLabel != null && key(focusedLabel).equals(e.key);
-        if ((target != null && target.isAccessibilityFocused()) || sameItem) {
-            Diagnostics.note(this, "Lembrar o foco: confirmado, o foco ficou em \"" + e.key + "\".");
-            restoring = null;
-            return;
-        }
-        if (target == null) {
-            if (verifyAttempt < 2) {
-                // A lista pode estar se reorganizando (o Telegram muda a ordem quando chegam mensagens).
-                verifyAttempt++;
-                handler.postDelayed(verify, 700);
-                return;
-            }
-            Diagnostics.note(this, "Lembrar o foco: ao conferir, \"" + e.key + "\" não estava mais na tela. Foco em: "
-                    + where + ".");
-            restoring = null;
-            return;
-        }
-        if (verifyAttempt < 2) {
-            verifyAttempt++;
-            current = e; // o leitor de tela tirou o foco do item: volta a ser o atual e tenta de novo
-            e.at = SystemClock.uptimeMillis();
-            boolean ok = target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
-            Diagnostics.note(this, "Lembrar o foco: o foco foi para \"" + where + "\"; pus de novo em \""
-                    + e.key + "\"" + (ok ? "." : ", mas o aplicativo não aceitou."));
-            handler.postDelayed(verify, 900);
-            return;
-        }
-        Diagnostics.note(this, "Lembrar o foco: não ficou em \"" + e.key + "\"; o foco está em \"" + where + "\".");
-        restoring = null;
-    }
-
+    /**
+     * Procura na tela o item: item de lista que começa com o mesmo nome. Com o texto igualzinho, é ele;
+     * entre vários com o mesmo nome, o mais perto da altura em que estava (como no SandFly).
+     */
     private static AccessibilityNodeInfo find(AccessibilityNodeInfo root, Entry e) {
-        return find(root, e.key, e.label);
-    }
-
-    private static AccessibilityNodeInfo find(AccessibilityNodeInfo root, String savedKey, String savedLabel) {
         List<AccessibilityNodeInfo> found;
         try {
-            found = root.findAccessibilityNodeInfosByText(savedKey);
-        } catch (Exception e) {
+            found = root.findAccessibilityNodeInfosByText(e.key);
+        } catch (Exception ex) {
             return null;
         }
         if (found == null) {
             return null;
         }
         AccessibilityNodeInfo best = null;
+        int bestDist = Integer.MAX_VALUE;
         for (AccessibilityNodeInfo n : found) {
             AccessibilityNodeInfo item = listItem(n);
             String l = item != null ? label(item) : null;
-            if (l == null || !l.startsWith(savedKey)) {
+            if (l == null || !key(l).equals(e.key) || !item.isVisibleToUser()) {
                 continue;
             }
-            if (l.equals(savedLabel)) {
-                return item; // igualzinho: é ele
+            if (l.equals(e.label)) {
+                return item;
             }
-            if (best == null) {
-                best = item; // mesmo nome, última mensagem diferente
+            int d = Math.abs(centerY(item) - e.centerY);
+            if (d < bestDist) {
+                bestDist = d;
+                best = item;
             }
         }
         return best;
@@ -505,48 +559,6 @@ public class FocusMemoryService extends AccessibilityService {
         String cls = c != null ? c.toString() : "";
         return cls.endsWith("RecyclerView") || cls.endsWith("ListView") || cls.endsWith("GridView")
                 || cls.endsWith("RecyclerListView");
-    }
-
-    private final java.util.Set<String> focusSeen = new java.util.HashSet<>();
-    private AccessibilityNodeInfo lastPolled;
-    private boolean pollNoted;
-
-    private final Runnable poll = new Runnable() {
-        @Override
-        public void run() {
-            pollFocus();
-        }
-    };
-
-    /** Pergunta ao aplicativo onde está o foco do leitor de tela e guarda, se for item de lista. */
-    private void pollFocus() {
-        AccessibilityNodeInfo root;
-        AccessibilityNodeInfo focused;
-        try {
-            root = getRootInActiveWindow();
-            focused = root != null ? root.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY) : null;
-        } catch (Exception e) {
-            return;
-        }
-        if (focused == null || focused.equals(lastPolled)) {
-            return;
-        }
-        lastPolled = focused;
-        if (!pollNoted) {
-            pollNoted = true;
-            String l = label(focused);
-            Diagnostics.note(this, "Lembrar o foco (detalhe): perguntou o foco a " + focused.getPackageName() + ": \""
-                    + (l != null ? shortLabel(l) : "sem texto") + "\" (" + shortClass(focused.getClassName())
-                    + (listItem(focused) != null ? ", item de lista" : ", não é item de lista") + ").");
-        }
-        if (listItem(focused) == null) {
-            noteDetail(focused);
-        }
-        remember(focused);
-        if (current != null || !stack.isEmpty()) {
-            handler.removeCallbacks(check);
-            handler.postDelayed(check, stack.isEmpty() ? 700 : 350);
-        }
     }
 
     /** Aplicativos dos quais já chegou algum evento / já houve lista reconhecida (desde que o serviço ligou). */
@@ -688,9 +700,9 @@ public class FocusMemoryService extends AccessibilityService {
     @Override
     public void onDestroy() {
         handler.removeCallbacks(check);
+        handler.removeCallbacks(tryRestore);
         handler.removeCallbacks(verify);
         handler.removeCallbacks(poll);
-        handler.removeCallbacks(firstItem);
         if (prefsListener != null) {
             Prefs.get(this).unregisterOnSharedPreferenceChangeListener(prefsListener);
         }
