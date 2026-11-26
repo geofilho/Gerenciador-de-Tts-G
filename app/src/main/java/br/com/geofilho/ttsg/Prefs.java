@@ -128,6 +128,11 @@ final class Prefs {
         return p.getBoolean("diagnostics_on", false);
     }
 
+    /** Ler automaticamente as sugestões do Gboard (precisa do serviço de acessibilidade ligado). */
+    static boolean gboardOn(SharedPreferences p) {
+        return p.getBoolean("gboard_on", true);
+    }
+
     static boolean translateOn(SharedPreferences p) {
         return p.getBoolean("translate_on", false);
     }

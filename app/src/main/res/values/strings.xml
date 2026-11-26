@@ -57,4 +57,7 @@ Se o seu aparelho tiver o tradutor do próprio Android, ele é usado primeiro, s
     <string name="widget_audio_desc">Liga e desliga a saída de áudio do leitor de tela no telefone.</string>
     <string name="widget_translation_desc">Liga e desliga a tradução de voz TTS.</string>
     <string name="actions_label">Ações do Gerenciador de TTS G</string>
+    <string name="gboard_label">Gerenciador de TTS G: ler sugestões do Gboard</string>
+    <string name="gboard_desc">Fala automaticamente a sugestão principal da barra de cima do teclado Gboard quando você pausa a digitação. Observa só o Gboard e nunca lê nada em campos de senha. A chave fica no Gerenciador de TTS G, em Leitura de números, pontuação e emojis.</string>
+    <string name="gboard_switch">Ler automaticamente as sugestões do teclado Gboard</string>
 </resources>

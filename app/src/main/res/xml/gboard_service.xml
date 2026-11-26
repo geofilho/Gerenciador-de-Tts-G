@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Só o teclado Gboard: os outros aplicativos nem mandam eventos para este serviço.
+     isAccessibilityTool: marca oficial de ferramenta de acessibilidade. -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowContentChanged|typeWindowStateChanged|typeViewTextChanged|typeWindowsChanged"
+    android:accessibilityFeedbackType="feedbackSpoken"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows|flagReportViewIds"
+    android:canRetrieveWindowContent="true"
+    android:description="@string/gboard_desc"
+    android:isAccessibilityTool="true"
+    android:notificationTimeout="80"
+    android:packageNames="com.google.android.inputmethod.latin" />

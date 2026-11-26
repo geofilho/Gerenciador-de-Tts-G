@@ -31,6 +31,15 @@
             style="@style/Row"
             android:text="@string/emoji_voice" />
 
+        <Switch
+            android:id="@+id/switch_gboard"
+            style="@style/Row"
+            android:text="@string/gboard_switch" />
+
+        <Button
+            android:id="@+id/btn_gboard_service"
+            style="@style/Row" />
+
         <EditText
             android:id="@+id/edit_test"
             style="@style/Row"
