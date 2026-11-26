@@ -139,6 +139,12 @@ public class GboardService extends AccessibilityService {
             pending = "";
             return;
         }
+        boolean visible = keyboardRoot() != null;
+        boolean justOpened = visible && !keyboardVisible;
+        keyboardVisible = visible;
+        if (!visible) {
+            return;
+        }
         List<AccessibilityNodeInfo> row = suggestionRow();
         StringBuilder sig = new StringBuilder();
         for (AccessibilityNodeInfo n : row) {
@@ -151,7 +157,13 @@ public class GboardService extends AccessibilityService {
         lastRow = now;
         stopSpeaking(); // a barra mudou: a pessoa digitou de novo
         handler.removeCallbacks(say);
-        String main = mainSuggestion(row);
+        if (justOpened) {
+            // Teclado acabou de abrir: a barra ainda não é resultado da digitação (pode ser o que está
+            // na área de transferência, por exemplo). Só fala depois que a pessoa digitar.
+            pending = "";
+            return;
+        }
+        String main = mainSuggestion(row, typedWord());
         if (main.isEmpty()) {
             pending = "";
             lastSpoken = "";
@@ -252,7 +264,7 @@ public class GboardService extends AccessibilityService {
             if (n.getViewIdResourceName() == null              // teclas e botões têm identificador
                     && Math.abs(centerY(n) - barY) <= 40        // na altura da barra de cima
                     && !cls.endsWith("Button")                   // "Edição de texto" e outros botões
-                    && !t.isEmpty() && !isToolbar(t)) {
+                    && !t.isEmpty() && !isToolbar(t) && !isClipboard(n)) {
                 out.add(n);
             }
         }
@@ -280,7 +292,7 @@ public class GboardService extends AccessibilityService {
      */
     private static void otherKeyboardRow(List<AccessibilityNodeInfo> all, List<AccessibilityNodeInfo> out) {
         for (AccessibilityNodeInfo n : all) {
-            if (inSuggestionStrip(n) && n.getText() != null && !isButton(n) && !isToolbar(text(n))) {
+            if (inSuggestionStrip(n) && n.getText() != null && !isButton(n) && !isToolbar(text(n)) && !isClipboard(n)) {
                 out.add(n);
             }
         }
@@ -295,7 +307,7 @@ public class GboardService extends AccessibilityService {
         }
         for (AccessibilityNodeInfo n : all) {
             if (n.getText() != null && n.getText().length() > 0 && Math.abs(centerY(n) - top) <= 40
-                    && !isButton(n) && !isToolbar(text(n))) {
+                    && !isButton(n) && !isToolbar(text(n)) && !isClipboard(n)) {
                 out.add(n);
             }
         }
@@ -321,6 +333,15 @@ public class GboardService extends AccessibilityService {
         return c != null && c.toString().endsWith("Button");
     }
 
+    /** Item da área de transferência na barra (o texto copiado): nunca é falado. */
+    private static boolean isClipboard(AccessibilityNodeInfo n) {
+        CharSequence d = n.getContentDescription();
+        String l = d != null ? d.toString().toLowerCase(Locale.ROOT) : "";
+        String id = n.getViewIdResourceName() != null ? n.getViewIdResourceName().toLowerCase(Locale.ROOT) : "";
+        return l.contains("transferência") || l.contains("transferencia") || l.contains("clipboard")
+                || l.contains("colar") || l.contains("paste") || id.contains("clip");
+    }
+
     /** Botões da barra que não são sugestões, como "Desfazer" (que aparece depois de uma correção). */
     private static boolean isToolbar(String t) {
         String l = t.toLowerCase(Locale.ROOT);
@@ -334,16 +355,60 @@ public class GboardService extends AccessibilityService {
     }
 
     /** A sugestão principal: a marcada como selecionada; senão, a do meio (a que o espaço usa). */
-    private static String mainSuggestion(List<AccessibilityNodeInfo> row) {
+    /**
+     * A sugestão a falar:
+     * - digitando uma palavra: só a marcada como selecionada, que é a que o espaço vai colocar; sem
+     *   nenhuma marcada, o espaço mantém o que foi digitado, então não fala nada;
+     * - depois do espaço (previsão da próxima palavra): a do meio.
+     */
+    private static String mainSuggestion(List<AccessibilityNodeInfo> row, String typed) {
         if (row.isEmpty()) {
             return "";
         }
         for (AccessibilityNodeInfo n : row) {
             if (n.isSelected() || n.isChecked()) {
-                return text(n);
+                String t = text(n);
+                return typed != null && t.equals(typed) ? "" : t; // igual ao digitado: nada a avisar
             }
         }
+        if (typed != null && !typed.isEmpty()) {
+            return ""; // digitando, sem correção: o espaço mantém a palavra digitada
+        }
         return text(row.get(row.size() >= 3 ? row.size() / 2 : 0));
+    }
+
+    private boolean keyboardVisible;
+
+    /**
+     * Palavra que está sendo digitada (as letras logo antes do cursor), "" logo depois de um espaço,
+     * ou null se não der para saber. O texto do campo é lido na hora e não é guardado.
+     */
+    private String typedWord() {
+        try {
+            AccessibilityNodeInfo app = getRootInActiveWindow();
+            AccessibilityNodeInfo input = app != null ? app.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) : null;
+            if (input == null) {
+                return null;
+            }
+            if (android.os.Build.VERSION.SDK_INT >= 26 && input.isShowingHintText()) {
+                return "";
+            }
+            CharSequence t = input.getText();
+            if (t == null) {
+                return "";
+            }
+            int end = input.getTextSelectionEnd();
+            if (end < 0 || end > t.length()) {
+                end = t.length();
+            }
+            int start = end;
+            while (start > 0 && Character.isLetterOrDigit(Character.codePointBefore(t, start))) {
+                start -= Character.charCount(Character.codePointBefore(t, start));
+            }
+            return t.subSequence(start, end).toString();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /** Janela do teclado (precisa da lista de janelas interativas). */
