@@ -360,9 +360,9 @@ public class GboardService extends AccessibilityService {
     /** A sugestão principal: a marcada como selecionada; senão, a do meio (a que o espaço usa). */
     /**
      * A sugestão a falar:
-     * - digitando uma palavra: só a marcada como selecionada, que é a que o espaço vai colocar; sem
-     *   nenhuma marcada, o espaço mantém o que foi digitado, então não fala nada;
-     * - depois do espaço (previsão da próxima palavra): a do meio.
+     * - a marcada como selecionada (a correção que o espaço vai colocar);
+     * - sem nenhuma marcada (digitando ou depois do espaço): a palavra no centro da barra;
+     * - nada, se for igual ao que já foi digitado.
      */
     private static String mainSuggestion(List<AccessibilityNodeInfo> row, String typed, int screenCenter) {
         if (row.isEmpty()) {
@@ -371,13 +371,11 @@ public class GboardService extends AccessibilityService {
         for (AccessibilityNodeInfo n : row) {
             if (n.isSelected() || n.isChecked()) {
                 String t = text(n);
-                return typed != null && t.equals(typed) ? "" : t; // igual ao digitado: nada a avisar
+                return typed != null && t.equalsIgnoreCase(typed) ? "" : t; // igual ao digitado: nada a avisar
             }
         }
-        if (typed != null && !typed.isEmpty()) {
-            return ""; // digitando, sem correção: o espaço mantém a palavra digitada
-        }
-        // Previsão: a palavra no centro da barra (a posição da sugestão principal). Emojis só se não
+        // Sem correção marcada (digitando, como "n" que mostra "não", ou depois do espaço): a palavra no
+        // centro da barra (a posição da sugestão principal). Emojis só se não
         // houver nenhuma palavra.
         List<AccessibilityNodeInfo> words = new ArrayList<>();
         for (AccessibilityNodeInfo n : row) {
@@ -386,7 +384,8 @@ public class GboardService extends AccessibilityService {
             }
         }
         List<AccessibilityNodeInfo> pick = words.isEmpty() ? row : words;
-        return text(nearestToCenter(pick, screenCenter)); // centro da tela: onde fica a sugestão principal
+        String t = text(nearestToCenter(pick, screenCenter)); // centro da tela: onde fica a sugestão principal
+        return typed != null && t.equalsIgnoreCase(typed) ? "" : t; // igual ao digitado: nada a avisar
     }
 
     private static boolean isEmojiSuggestion(String t) {
