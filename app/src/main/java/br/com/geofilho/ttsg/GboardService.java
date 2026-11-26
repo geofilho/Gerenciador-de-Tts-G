@@ -116,6 +116,57 @@ public class GboardService extends AccessibilityService {
         lastRow = "";
         lastSpoken = "";
         rowNotes = 0;
+        dumpNotes = 0;
+        if (!pkg.equals(notedKeyboard)) {
+            notedKeyboard = pkg;
+            Diagnostics.note(this, "Sugestões do Gboard: acompanhando o teclado " + pkg + ".");
+        }
+    }
+
+    private String notedKeyboard = "";
+    private int dumpNotes;
+
+    /**
+     * Teclado que não é o Gboard e nenhuma sugestão reconhecida: registra o que há na parte de cima do
+     * teclado (textos, tipos, identificadores e alturas), para ajustar o reconhecimento.
+     */
+    private void dumpTop(List<AccessibilityNodeInfo> all) {
+        if (dumpNotes >= 3 || all.isEmpty()) {
+            return;
+        }
+        dumpNotes++;
+        int top = Integer.MAX_VALUE;
+        for (AccessibilityNodeInfo n : all) {
+            top = Math.min(top, centerY(n));
+        }
+        StringBuilder b = new StringBuilder("Sugestões do Gboard (detalhe): nada reconhecido em " + keyboardPkg
+                + "; parte de cima do teclado:");
+        int count = 0;
+        for (AccessibilityNodeInfo n : all) {
+            int y = centerY(n);
+            if (y > top + 400 || count >= 25) {
+                continue;
+            }
+            count++;
+            CharSequence c = n.getClassName();
+            String cls = c != null ? c.toString() : "?";
+            String id = n.getViewIdResourceName();
+            Rect r = new Rect();
+            n.getBoundsInScreen(r);
+            b.append(" [\"").append(text(n)).append("\" ").append(cls.substring(cls.lastIndexOf('.') + 1))
+                    .append(" x=").append(r.left).append(" y=").append(y);
+            if (n.getText() != null) {
+                b.append(" texto");
+            }
+            if (n.isSelected()) {
+                b.append(" selecionada");
+            }
+            if (id != null) {
+                b.append(" id=").append(id.substring(id.indexOf('/') + 1));
+            }
+            b.append(']');
+        }
+        Diagnostics.note(this, b.toString());
     }
 
     @Override
@@ -232,6 +283,9 @@ public class GboardService extends AccessibilityService {
         boolean gboard = root.getPackageName() != null && GBOARD.contentEquals(root.getPackageName());
         if (!gboard) {
             otherKeyboardRow(all, out);
+            if (out.isEmpty()) {
+                dumpTop(all);
+            }
             sortByX(out);
             noteRow(out);
             return out;
