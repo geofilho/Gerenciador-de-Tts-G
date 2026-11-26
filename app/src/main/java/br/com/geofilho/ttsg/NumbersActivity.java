@@ -65,6 +65,19 @@ public class NumbersActivity extends Activity {
             }
         });
 
+        android.widget.Switch swGboard = findViewById(R.id.switch_gboard);
+        swGboard.setChecked(Prefs.gboardOn(prefs));
+        swGboard.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(android.widget.CompoundButton b, boolean checked) {
+                prefs.edit().putBoolean("gboard_on", checked).apply();
+                if (checked && !GboardSetupActivity.isEnabled(NumbersActivity.this)) {
+                    // Ligou e o serviço ainda não está ativo: explica e leva às configurações.
+                    startActivity(new android.content.Intent(NumbersActivity.this, GboardSetupActivity.class));
+                }
+            }
+        });
+
         final EditText editTest = findViewById(R.id.edit_test);
         String engine = Prefs.engine(prefs, Prefs.MAIN);
         if (engine.isEmpty()) {
@@ -116,6 +129,9 @@ public class NumbersActivity extends Activity {
         Bundle params = new Bundle();
         params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, Levels.volume(Prefs.volume(prefs, Prefs.MAIN)));
         String t = Dictionary.get(this).apply(text);
+        if (Prefs.dropEmojiWord(prefs)) {
+            t = TextProcessor.dropEmojiWord(t);
+        }
         boolean sep = Prefs.separateNumbers(prefs);
         List<TextProcessor.Segment> segs = TextProcessor.merge(TextProcessor.process(t, Prefs.groupRepeats(prefs),
                 Prefs.numberMode(prefs), sep, Prefs.punctuationMode(prefs)), false, sep);

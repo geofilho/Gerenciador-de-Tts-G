@@ -1,6 +1,6 @@
 {
-  "versionCode": 59,
-  "versionName": "1.58",
+  "versionCode": 90,
+  "versionName": "1.89",
   "apk": "https://raw.githubusercontent.com/geofilho/Gerenciador-de-Tts-G/main/atualizacao/GerenciadorTtsG.apk",
-  "novidades": "- Novas ações para o MacroDroid: Alternar_traducao e Alternar_saida_de_audio. Um atalho só liga a função se estiver desligada e desliga se estiver ligada, com aviso falado.\n- Também na ação Iniciar atalho: Alternar tradução e Alternar saída de áudio.\n- Texto de apresentação atualizado."
+  "novidades": "- Ler automaticamente as sugestões do teclado Gboard: chave nova em Leitura de números, pontuação e emojis, que vem desligada. Ao digitar e pausar, o Gerenciador fala a sugestão da barra de cima do teclado. A correção que a barra de espaço coloca sai com a voz normal; as sugestões que só entram tocando saem com o tom um pouco mais agudo. Testado no Gboard, no Pixelboard e no Teclado Samsung.\n- Ao ligar essa chave, uma tela explica como ativar o serviço na acessibilidade, inclusive como liberar a configuração restrita.\n- Nova chave na página dos emojis: ignorar a palavra Emoji antes dos emojis. Assim, Emoji seguido do emoji sai só como o emoji, com a voz dos emojis.\n- Importar o dicionário tocando no arquivo, por exemplo no Meus Arquivos, e escolhendo Importar no Gerenciador de TTS G.\n- O texto de teste da página de números agora vem com emojis, para testar também a voz dos emojis.\n- A chave da tradução automática se atualiza ao voltar para a página depois de mudar pelo widget, pela barra ou pelo MacroDroid."
 }

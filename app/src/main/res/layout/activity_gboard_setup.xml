@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            style="@style/Row"
+            android:focusable="true"
+            android:text="@string/gboard_setup_text" />
+
+        <Button
+            android:id="@+id/btn_gboard_enable"
+            style="@style/Row" />
+
+        <Button
+            android:id="@+id/btn_gboard_restricted"
+            style="@style/Row"
+            android:text="@string/gboard_restricted" />
+
+        <Button
+            android:id="@+id/btn_gboard_done"
+            style="@style/Row"
+            android:text="@string/gboard_done" />
+    </LinearLayout>
+</ScrollView>

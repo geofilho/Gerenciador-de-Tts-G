@@ -20,7 +20,7 @@
     <string name="group_switch">Ler emojis e símbolos repetidos agrupados, exemplo: coração vermelho 5</string>
     <string name="check_update">Verificar atualização</string>
     <string name="title_numbers">Leitura de números, pontuação e emojis</string>
-    <string name="numbers_test_text">Meu telefone é 11987654321, o valor é R$ 1.250,99 às 12:30 e o e-mail é joao@site.com. Tudo certo?</string>
+    <string name="numbers_test_text">Meu telefone é 11987654321, o valor é R$ 1.250,99 às 12:30 e o e-mail é joao@site.com. Tudo certo? 😀👍👍👍 Até mais! 🎉</string>
     <string name="title_audio">Saída de áudio do leitor de tela</string>
     <string name="keep_on_phone">Manter o áudio do leitor de tela no telefone</string>
     <string name="audio_help_button">Caso tenha problemas, toque aqui para saber o motivo</string>
@@ -55,4 +55,12 @@
     <string name="widget_translation_desc">Liga e desliga a tradução de voz TTS.</string>
     <string name="actions_label">Ações do Gerenciador de TTS G</string>
     <string name="device_download">Baixar o tradutor no aparelho, para traduzir sem internet (inglês e o idioma de destino, cerca de 30 MB cada)</string>
+    <string name="gboard_label">Gerenciador de TTS G: ler sugestões do Gboard</string>
+    <string name="gboard_desc">Fala automaticamente a sugestão principal da barra de cima do teclado Gboard quando você pausa a digitação. Observa só o teclado e nunca lê nada em campos de senha. A chave fica no Gerenciador de TTS G, em Leitura de números, pontuação e emojis.</string>
+    <string name="gboard_switch">Ler automaticamente as sugestões do teclado Gboard</string>
+    <string name="gboard_setup_title">Sugestões do Gboard</string>
+    <string name="gboard_setup_text">Quando você digita no teclado Gboard e pausa um instante, o Gerenciador de TTS G fala a sugestão principal da barra de cima do teclado. Se você voltar a digitar, a fala para na hora. Observa só o teclado e nunca lê nada em campos de senha. Foi testado no Gboard, no Pixelboard e no Teclado Samsung.\n\nPara funcionar, é preciso ativar o serviço Gerenciador de TTS G: ler sugestões do Gboard, na acessibilidade do Android. Como o Gerenciador não vem da Play Store, o Android bloqueia a primeira tentativa. A ordem é esta:\n\n1. Toque em Ativar em acessibilidade e tente ativar o serviço. O Android bloqueia e mostra um aviso.\n\n2. Volte aqui e toque em Liberar configuração restrita: abre as informações do app. Toque no menu de três pontos, no canto de cima, e em Permitir configurações restritas. Esse menu só aparece depois do bloqueio; antes, ele não está lá.\n\n3. Toque de novo em Ativar em acessibilidade e ative o serviço.\n\nPara ver esta tela de novo, desligue e ligue a chave Ler automaticamente as sugestões do teclado Gboard.</string>
+    <string name="gboard_restricted">Liberar configuração restrita, se o Android bloquear</string>
+    <string name="gboard_done">Concluir</string>
+    <string name="emoji_word_switch">Ignorar a palavra Emoji antes dos emojis (por exemplo, Emoji 😔 fala só o emoji)</string>
 </resources>

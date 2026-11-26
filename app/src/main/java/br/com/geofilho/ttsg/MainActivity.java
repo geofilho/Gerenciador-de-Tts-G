@@ -34,6 +34,9 @@ public class MainActivity extends Activity {
                 // O teste passa pelas mesmas regras do motor: dicionário, repetidos, números e pontuação.
                 SharedPreferences p = Prefs.get(MainActivity.this);
                 String t = Dictionary.get(MainActivity.this).apply(editTest.getText().toString());
+                if (Prefs.dropEmojiWord(p)) {
+                    t = TextProcessor.dropEmojiWord(t);
+                }
                 boolean sep = Prefs.separateNumbers(p);
                 return TextProcessor.merge(TextProcessor.process(t, Prefs.groupRepeats(p), Prefs.numberMode(p), sep,
                         Prefs.punctuationMode(p)), false, sep);
@@ -134,6 +137,7 @@ public class MainActivity extends Activity {
         setIntent(intent);
         handleShortcut(intent);
     }
+
 
     /** Menu "Dicionário": Adicionar palavra ou Gerenciar dicionário. */
     private void showDictionaryMenu() {

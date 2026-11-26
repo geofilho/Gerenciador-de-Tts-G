@@ -45,6 +45,15 @@ public class EmojiActivity extends Activity {
                 prefs.edit().putBoolean("group_repeats", checked).apply();
             }
         });
+
+        Switch swWord = findViewById(R.id.switch_emoji_word);
+        swWord.setChecked(Prefs.dropEmojiWord(prefs));
+        swWord.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton b, boolean checked) {
+                prefs.edit().putBoolean("drop_emoji_word", checked).apply();
+            }
+        });
     }
 
     @Override

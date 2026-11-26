@@ -128,6 +128,11 @@ final class Prefs {
         return p.getBoolean("diagnostics_on", false);
     }
 
+    /** Ler automaticamente as sugestões do Gboard (precisa do serviço de acessibilidade ligado). */
+    static boolean gboardOn(SharedPreferences p) {
+        return p.getBoolean("gboard_on", false);
+    }
+
     static boolean translateOn(SharedPreferences p) {
         return p.getBoolean("translate_on", false);
     }
@@ -162,6 +167,11 @@ final class Prefs {
 
     static int numberMode(SharedPreferences p) {
         return p.getInt("number_mode", TextProcessor.NUMBERS_WHOLE);
+    }
+
+    /** Ignorar a palavra "Emoji" antes dos emojis ("Emoji 😔" vira só o emoji). */
+    static boolean dropEmojiWord(SharedPreferences p) {
+        return p.getBoolean("drop_emoji_word", true);
     }
 
     static boolean groupRepeats(SharedPreferences p) {

@@ -38,6 +38,28 @@
             android:exported="false"
             android:label="@string/title_dictionary" />
 
+        <!-- Tocar no arquivo do dicionário no gerenciador de arquivos: "Importar no Gerenciador de TTS G". -->
+        <activity
+            android:name=".DictionaryImportActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="Importar no Gerenciador de TTS G"
+            android:theme="@style/TranslucentTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/json" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".GboardSetupActivity"
+            android:exported="false"
+            android:label="@string/gboard_setup_title" />
+
         <activity
             android:name=".NumbersActivity"
             android:exported="false"
@@ -237,5 +259,19 @@
             android:authorities="br.com.geofilho.ttsg.apk"
             android:exported="false"
             android:grantUriPermissions="true" />
+
+        <!-- Ler automaticamente as sugestões do Gboard (teste). A pessoa ativa nas configurações de acessibilidade. -->
+        <service
+            android:name=".GboardService"
+            android:exported="true"
+            android:label="@string/gboard_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/gboard_service" />
+        </service>
     </application>
 </manifest>

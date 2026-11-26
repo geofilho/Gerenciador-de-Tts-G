@@ -10,8 +10,8 @@ android {
         applicationId 'br.com.geofilho.ttsg'
         minSdk 21
         targetSdk 34
-        versionCode 60
-        versionName '1.59'
+        versionCode 91
+        versionName '1.90'
     }
 
     // Tradutor no aparelho (ML Kit): um APK só de 64 bits e um só de 32 bits (a atualização baixa o

@@ -1,5 +1,11 @@
 # Gerenciador de TTS G
 
+## Autoria e direitos autorais
+
+Este projeto é de autoria de **geofilho** ([github.com/geofilho](https://github.com/geofilho)). Todos os direitos são reservados (veja [LICENSE](LICENSE)).
+
+Você pode usar o projeto como inspiração para criar o seu próprio, com código, nome e identidade diferentes. Copiar, clonar ou republicar este app, mesmo trocando só nomes ou ícones, exige autorização do autor: [abra uma issue](https://github.com/geofilho/Gerenciador-de-Tts-G/issues) para pedir.
+
 ## Baixar
 
 [Baixar o aplicativo (APK, versão mais recente)](https://github.com/geofilho/Gerenciador-de-Tts-G/raw/main/atualizacao/GerenciadorTtsG.apk)
@@ -16,10 +22,15 @@ Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para 
 5. Ouvir a voz
 6. Velocidade, Tonalidade e Volume (0 a 100%, de 1 em 1%; 50% é o normal)
 7. Dicionário (Adicionar palavra; Gerenciar dicionário, com editar, remover,
-   exportar e importar)
+   exportar e importar; também dá para importar tocando no arquivo do
+   dicionário, por exemplo em Meus Arquivos, e escolhendo "Importar no
+   Gerenciador de TTS G")
 8. Leitura de números, pontuação e emojis (números inteiro, um a um ou dois a
    dois; velocidade dos números; pontuação nenhuma, algumas ou todas; voz para
-   emojis; caixa de texto e Ouvir a voz)
+   emojis, com a opção de ignorar a palavra "Emoji" antes dos emojis; ler
+   automaticamente as sugestões do teclado Gboard, testado no Gboard, no
+   Pixelboard e no Teclado Samsung, com tom diferente para as sugestões que
+   só entram tocando; caixa de texto e Ouvir a voz)
 9. Usar como motor de TTS do sistema
 10. Saída de áudio do leitor de tela (manter a fala e, no Android 12+, os sons
     do leitor no telefone quando houver Bluetooth conectado)

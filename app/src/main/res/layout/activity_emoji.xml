@@ -16,5 +16,10 @@
             android:id="@+id/switch_group"
             style="@style/Row"
             android:text="@string/group_switch" />
+
+        <Switch
+            android:id="@+id/switch_emoji_word"
+            style="@style/Row"
+            android:text="@string/emoji_word_switch" />
     </LinearLayout>
 </ScrollView>

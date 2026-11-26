@@ -111,6 +111,7 @@ final class Diagnostics {
                     .append(um != null && um.isUserUnlocked() ? "sim" : "não").append('\n');
         }
         sb.append("Motor de TTS padrão do sistema: ").append(secure(c, "tts_default_synth")).append('\n');
+        sb.append("Teclado em uso: ").append(secure(c, "default_input_method")).append('\n');
         String a11y = secure(c, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
         sb.append("Leitores de tela e serviços de acessibilidade ativos: ")
                 .append(a11y.equals("desconhecido") || a11y.isEmpty() ? "nenhum informado" : a11y.replace(":", ", "))
