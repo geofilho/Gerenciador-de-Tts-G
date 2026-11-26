@@ -20,7 +20,7 @@
     <string name="group_switch">Ler emojis e símbolos repetidos agrupados, exemplo: coração vermelho 5</string>
     <string name="check_update">Verificar atualização</string>
     <string name="title_numbers">Leitura de números, pontuação e emojis</string>
-    <string name="numbers_test_text">Meu telefone é 11987654321, o valor é R$ 1.250,99 às 12:30 e o e-mail é joao@site.com. Tudo certo?</string>
+    <string name="numbers_test_text">Meu telefone é 11987654321, o valor é R$ 1.250,99 às 12:30 e o e-mail é joao@site.com. Tudo certo? 😀👍👍👍 Até mais! 🎉</string>
     <string name="title_audio">Saída de áudio do leitor de tela</string>
     <string name="keep_on_phone">Manter o áudio do leitor de tela no telefone</string>
     <string name="audio_help_button">Caso tenha problemas, toque aqui para saber o motivo</string>

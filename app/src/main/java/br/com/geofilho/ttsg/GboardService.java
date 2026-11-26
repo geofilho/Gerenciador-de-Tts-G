@@ -280,7 +280,13 @@ public class GboardService extends AccessibilityService {
         if (all.isEmpty()) {
             return out;
         }
+        // Jeito do Gboard: o próprio Gboard e teclados feitos a partir dele (como o Pixelboard), que têm a
+        // mesma barra com os botões key_pos_header.
         boolean gboard = root.getPackageName() != null && GBOARD.contentEquals(root.getPackageName());
+        for (int i = 0; !gboard && i < all.size(); i++) {
+            String id = all.get(i).getViewIdResourceName();
+            gboard = id != null && id.contains("key_pos_header");
+        }
         if (!gboard) {
             otherKeyboardRow(all, out);
             if (out.isEmpty()) {
