@@ -26,7 +26,6 @@ public class NumbersActivity extends Activity {
     private SharedPreferences prefs;
     private Button btnNumbers;
     private Button btnPunctuation;
-    private Button btnGboard;
     private TextToSpeech tts;
     private boolean ready;
 
@@ -72,16 +71,10 @@ public class NumbersActivity extends Activity {
             @Override
             public void onCheckedChanged(android.widget.CompoundButton b, boolean checked) {
                 prefs.edit().putBoolean("gboard_on", checked).apply();
-                if (checked && !gboardServiceOn()) {
-                    explainGboard();
+                if (checked && !GboardSetupActivity.isEnabled(NumbersActivity.this)) {
+                    // Ligou e o serviço ainda não está ativo: explica e leva às configurações.
+                    startActivity(new android.content.Intent(NumbersActivity.this, GboardSetupActivity.class));
                 }
-            }
-        });
-        btnGboard = findViewById(R.id.btn_gboard_service);
-        btnGboard.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                explainGboard();
             }
         });
 
@@ -171,60 +164,6 @@ public class NumbersActivity extends Activity {
                     }
                 })
                 .setNegativeButton("Cancelar", null)
-                .show();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (btnGboard != null) {
-            btnGboard.setText(gboardServiceOn()
-                    ? "Serviço das sugestões do Gboard: ativado. Toque para desativar nas configurações"
-                    : "Serviço das sugestões do Gboard: desativado. Toque para ativar nas configurações");
-        }
-    }
-
-    /** O serviço "ler sugestões do Gboard" está ligado nas configurações de acessibilidade? */
-    private boolean gboardServiceOn() {
-        try {
-            String on = android.provider.Settings.Secure.getString(getContentResolver(),
-                    android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-            return on != null && on.contains(getPackageName() + "/") && on.contains("GboardService");
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private void explainGboard() {
-        new AlertDialog.Builder(this)
-                .setTitle("Sugestões do Gboard (teste)")
-                .setMessage("Para ler as sugestões, ative o serviço Gerenciador de TTS G: ler sugestões do Gboard. "
-                        + "Toque em Abrir configurações, depois em Aplicativos instalados, e ative o serviço.\n\n"
-                        + "Se a opção estiver bloqueada (configuração restrita): toque em Informações do app, no "
-                        + "menu de três pontos, no canto de cima, e em Permitir configurações restritas. Depois "
-                        + "volte e ative.\n\n"
-                        + "O serviço observa só o teclado Gboard e nunca lê nada em campos de senha.")
-                .setPositiveButton("Abrir configurações", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface d, int w) {
-                        try {
-                            startActivity(new android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
-                        } catch (Exception ignored) {
-                        }
-                    }
-                })
-                .setNeutralButton("Informações do app", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface d, int w) {
-                        try {
-                            startActivity(new android.content.Intent(
-                                    android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                    android.net.Uri.parse("package:" + getPackageName())));
-                        } catch (Exception ignored) {
-                        }
-                    }
-                })
-                .setNegativeButton("Fechar", null)
                 .show();
     }
 }
