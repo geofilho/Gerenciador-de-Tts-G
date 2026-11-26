@@ -345,7 +345,10 @@ public class GboardService extends AccessibilityService {
     /** Botões da barra que não são sugestões, como "Desfazer" (que aparece depois de uma correção). */
     private static boolean isToolbar(String t) {
         String l = t.toLowerCase(Locale.ROOT);
-        return TOOLBAR.contains(l) || l.startsWith("desfazer") || l.startsWith("undo");
+        return TOOLBAR.contains(l) || l.startsWith("desfazer") || l.startsWith("undo")
+                // Imagens, figurinhas e GIFs sugeridos ("Imagem Não"): não são palavras para falar.
+                || l.startsWith("imagem") || l.startsWith("image") || l.startsWith("gif")
+                || l.startsWith("figurinha") || l.startsWith("adesivo") || l.startsWith("sticker");
     }
 
     private static int centerY(AccessibilityNodeInfo n) {
@@ -374,7 +377,49 @@ public class GboardService extends AccessibilityService {
         if (typed != null && !typed.isEmpty()) {
             return ""; // digitando, sem correção: o espaço mantém a palavra digitada
         }
-        return text(row.get(row.size() >= 3 ? row.size() / 2 : 0));
+        // Previsão: a palavra no centro da barra (a posição da sugestão principal). Emojis só se não
+        // houver nenhuma palavra.
+        List<AccessibilityNodeInfo> words = new ArrayList<>();
+        for (AccessibilityNodeInfo n : row) {
+            if (!isEmojiSuggestion(text(n))) {
+                words.add(n);
+            }
+        }
+        List<AccessibilityNodeInfo> pick = words.isEmpty() ? row : words;
+        return text(nearestToCenter(pick, rowCenterX(row)));
+    }
+
+    private static boolean isEmojiSuggestion(String t) {
+        String l = t.toLowerCase(Locale.ROOT);
+        if (l.startsWith("emoji")) {
+            return true;
+        }
+        int cp = t.isEmpty() ? 0 : t.codePointAt(0);
+        return cp >= 0x1F000 || (cp >= 0x2600 && cp <= 0x27BF) || (cp >= 0x2B00 && cp <= 0x2BFF);
+    }
+
+    /** Centro da barra: o meio entre o primeiro e o último item. */
+    private static int rowCenterX(List<AccessibilityNodeInfo> row) {
+        Rect first = new Rect();
+        Rect last = new Rect();
+        row.get(0).getBoundsInScreen(first);
+        row.get(row.size() - 1).getBoundsInScreen(last);
+        return (first.left + last.right) / 2;
+    }
+
+    private static AccessibilityNodeInfo nearestToCenter(List<AccessibilityNodeInfo> list, int center) {
+        AccessibilityNodeInfo best = list.get(0);
+        int bestDist = Integer.MAX_VALUE;
+        for (AccessibilityNodeInfo n : list) {
+            Rect r = new Rect();
+            n.getBoundsInScreen(r);
+            int d = Math.abs(r.centerX() - center);
+            if (d < bestDist) {
+                bestDist = d;
+                best = n;
+            }
+        }
+        return best;
     }
 
     private boolean keyboardVisible;
