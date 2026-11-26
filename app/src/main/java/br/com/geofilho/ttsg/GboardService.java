@@ -163,7 +163,7 @@ public class GboardService extends AccessibilityService {
             pending = "";
             return;
         }
-        String main = mainSuggestion(row, typedWord());
+        String main = mainSuggestion(row, typedWord(), getResources().getDisplayMetrics().widthPixels / 2);
         if (main.isEmpty()) {
             pending = "";
             lastSpoken = "";
@@ -364,7 +364,7 @@ public class GboardService extends AccessibilityService {
      *   nenhuma marcada, o espaço mantém o que foi digitado, então não fala nada;
      * - depois do espaço (previsão da próxima palavra): a do meio.
      */
-    private static String mainSuggestion(List<AccessibilityNodeInfo> row, String typed) {
+    private static String mainSuggestion(List<AccessibilityNodeInfo> row, String typed, int screenCenter) {
         if (row.isEmpty()) {
             return "";
         }
@@ -386,7 +386,7 @@ public class GboardService extends AccessibilityService {
             }
         }
         List<AccessibilityNodeInfo> pick = words.isEmpty() ? row : words;
-        return text(nearestToCenter(pick, rowCenterX(row)));
+        return text(nearestToCenter(pick, screenCenter)); // centro da tela: onde fica a sugestão principal
     }
 
     private static boolean isEmojiSuggestion(String t) {
@@ -396,15 +396,6 @@ public class GboardService extends AccessibilityService {
         }
         int cp = t.isEmpty() ? 0 : t.codePointAt(0);
         return cp >= 0x1F000 || (cp >= 0x2600 && cp <= 0x27BF) || (cp >= 0x2B00 && cp <= 0x2BFF);
-    }
-
-    /** Centro da barra: o meio entre o primeiro e o último item. */
-    private static int rowCenterX(List<AccessibilityNodeInfo> row) {
-        Rect first = new Rect();
-        Rect last = new Rect();
-        row.get(0).getBoundsInScreen(first);
-        row.get(row.size() - 1).getBoundsInScreen(last);
-        return (first.left + last.right) / 2;
     }
 
     private static AccessibilityNodeInfo nearestToCenter(List<AccessibilityNodeInfo> list, int center) {
