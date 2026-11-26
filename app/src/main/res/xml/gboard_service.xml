@@ -10,3 +10,4 @@
     android:isAccessibilityTool="true"
     android:notificationTimeout="80"
     android:packageNames="com.google.android.inputmethod.latin" />
+<!-- O serviço troca a lista acima pelo teclado em uso, quando liga e quando o teclado muda. -->

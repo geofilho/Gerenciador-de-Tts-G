@@ -40,7 +40,7 @@ public class GboardService extends AccessibilityService {
     private String pending = "";
 
     /** Pausa na digitação antes de falar a sugestão. */
-    private static final long PAUSE_MS = 450;
+    private static final long PAUSE_MS = 250;
 
     /** Ícones da barra do Gboard quando não há sugestões (não são sugestões). */
     private static final Set<String> TOOLBAR = new HashSet<>(Arrays.asList(
@@ -74,9 +74,48 @@ public class GboardService extends AccessibilityService {
                 ready = status == TextToSpeech.SUCCESS;
             }
         }, getPackageName());
+        followKeyboard();
+        keyboardWatch = new android.database.ContentObserver(handler) {
+            @Override
+            public void onChange(boolean selfChange) {
+                followKeyboard();
+            }
+        };
+        try {
+            getContentResolver().registerContentObserver(
+                    android.provider.Settings.Secure.getUriFor("default_input_method"), false, keyboardWatch);
+        } catch (Exception ignored) {
+        }
         notes = 0;
         rowNotes = 0;
         Diagnostics.note(this, "Sugestões do Gboard: serviço ligado.");
+    }
+
+    /** Teclado em uso (o Gboard ou outro). O serviço só recebe eventos dele. */
+    private String keyboardPkg = GBOARD;
+    private android.database.ContentObserver keyboardWatch;
+
+    private void followKeyboard() {
+        String pkg = GBOARD;
+        try {
+            String ime = android.provider.Settings.Secure.getString(getContentResolver(), "default_input_method");
+            if (ime != null && ime.indexOf('/') > 0) {
+                pkg = ime.substring(0, ime.indexOf('/'));
+            }
+        } catch (Exception ignored) {
+        }
+        keyboardPkg = pkg;
+        try {
+            android.accessibilityservice.AccessibilityServiceInfo info = getServiceInfo();
+            if (info != null) {
+                info.packageNames = new String[]{pkg};
+                setServiceInfo(info);
+            }
+        } catch (Exception ignored) {
+        }
+        lastRow = "";
+        lastSpoken = "";
+        rowNotes = 0;
     }
 
     @Override
@@ -85,12 +124,12 @@ public class GboardService extends AccessibilityService {
             return;
         }
         CharSequence p = event.getPackageName();
-        if (p == null || !GBOARD.contentEquals(p)) {
+        if (p == null || !p.toString().equals(keyboardPkg)) {
             return;
         }
         // Junta os avisos de uma mesma tecla e lê a barra uma vez.
         handler.removeCallbacks(look);
-        handler.postDelayed(look, 120);
+        handler.postDelayed(look, 80);
     }
 
     /** Lê a barra de sugestões; se mudou, cala a sugestão anterior e agenda a nova para a pausa. */
@@ -163,6 +202,13 @@ public class GboardService extends AccessibilityService {
         if (all.isEmpty()) {
             return out;
         }
+        boolean gboard = root.getPackageName() != null && GBOARD.contentEquals(root.getPackageName());
+        if (!gboard) {
+            otherKeyboardRow(all, out);
+            sortByX(out);
+            noteRow(out);
+            return out;
+        }
         // Altura da barra: a dos botões da barra de cima; sem eles, a do item sem identificador mais alto.
         int barY = Integer.MIN_VALUE;
         for (AccessibilityNodeInfo n : all) {
@@ -195,7 +241,13 @@ public class GboardService extends AccessibilityService {
                 out.add(n);
             }
         }
-        Collections.sort(out, new Comparator<AccessibilityNodeInfo>() {
+        sortByX(out);
+        noteRow(out);
+        return out;
+    }
+
+    private static void sortByX(List<AccessibilityNodeInfo> list) {
+        Collections.sort(list, new Comparator<AccessibilityNodeInfo>() {
             @Override
             public int compare(AccessibilityNodeInfo a, AccessibilityNodeInfo b) {
                 Rect ra = new Rect();
@@ -205,8 +257,53 @@ public class GboardService extends AccessibilityService {
                 return ra.left - rb.left;
             }
         });
-        noteRow(out);
-        return out;
+    }
+
+    /**
+     * Outros teclados (como os de código aberto): as sugestões ficam numa faixa cujo identificador
+     * fala em sugestão ou candidato; sem isso, os textos (não descrições de teclas) da faixa de cima.
+     */
+    private static void otherKeyboardRow(List<AccessibilityNodeInfo> all, List<AccessibilityNodeInfo> out) {
+        for (AccessibilityNodeInfo n : all) {
+            if (inSuggestionStrip(n) && n.getText() != null && !isButton(n) && !isToolbar(text(n))) {
+                out.add(n);
+            }
+        }
+        if (!out.isEmpty()) {
+            return;
+        }
+        int top = Integer.MAX_VALUE;
+        for (AccessibilityNodeInfo n : all) {
+            if (n.getText() != null && n.getText().length() > 0) {
+                top = Math.min(top, centerY(n));
+            }
+        }
+        for (AccessibilityNodeInfo n : all) {
+            if (n.getText() != null && n.getText().length() > 0 && Math.abs(centerY(n) - top) <= 40
+                    && !isButton(n) && !isToolbar(text(n))) {
+                out.add(n);
+            }
+        }
+    }
+
+    private static boolean inSuggestionStrip(AccessibilityNodeInfo n) {
+        AccessibilityNodeInfo p = n;
+        for (int i = 0; p != null && i < 6; i++) {
+            String id = p.getViewIdResourceName();
+            if (id != null) {
+                String l = id.toLowerCase(Locale.ROOT);
+                if (l.contains("suggest") || l.contains("candidate") || l.contains("strip")) {
+                    return true;
+                }
+            }
+            p = p.getParent();
+        }
+        return false;
+    }
+
+    private static boolean isButton(AccessibilityNodeInfo n) {
+        CharSequence c = n.getClassName();
+        return c != null && c.toString().endsWith("Button");
     }
 
     /** Botões da barra que não são sugestões, como "Desfazer" (que aparece depois de uma correção). */
@@ -240,7 +337,7 @@ public class GboardService extends AccessibilityService {
             for (AccessibilityWindowInfo w : getWindows()) {
                 if (w.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
                     AccessibilityNodeInfo r = w.getRoot();
-                    if (r != null && r.getPackageName() != null && GBOARD.contentEquals(r.getPackageName())) {
+                    if (r != null) {
                         return r;
                     }
                 }
@@ -293,7 +390,7 @@ public class GboardService extends AccessibilityService {
             return;
         }
         rowNotes++;
-        StringBuilder b = new StringBuilder("Sugestões do Gboard (detalhe): barra:");
+        StringBuilder b = new StringBuilder("Sugestões do Gboard (detalhe): barra de " + keyboardPkg + ":");
         for (AccessibilityNodeInfo n : row) {
             b.append(" [").append(text(n));
             if (n.isSelected()) {
@@ -313,6 +410,9 @@ public class GboardService extends AccessibilityService {
     public void onDestroy() {
         handler.removeCallbacks(look);
         handler.removeCallbacks(say);
+        if (keyboardWatch != null) {
+            getContentResolver().unregisterContentObserver(keyboardWatch);
+        }
         if (tts != null) {
             tts.shutdown();
         }
