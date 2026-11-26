@@ -92,7 +92,6 @@ public class GboardService extends AccessibilityService {
         }
         notes = 0;
         rowNotes = 0;
-        Diagnostics.note(this, "Sugestões do Gboard: serviço ligado.");
     }
 
     /** Teclado em uso (o Gboard ou outro). O serviço só recebe eventos dele. */
@@ -121,10 +120,6 @@ public class GboardService extends AccessibilityService {
         lastSpoken = "";
         rowNotes = 0;
         dumpNotes = 0;
-        if (!pkg.equals(notedKeyboard)) {
-            notedKeyboard = pkg;
-            Diagnostics.note(this, "Sugestões do Gboard: acompanhando o teclado " + pkg + ".");
-        }
     }
 
     private String notedKeyboard = "";
@@ -135,42 +130,7 @@ public class GboardService extends AccessibilityService {
      * teclado (textos, tipos, identificadores e alturas), para ajustar o reconhecimento.
      */
     private void dumpTop(List<AccessibilityNodeInfo> all) {
-        if (dumpNotes >= 3 || all.isEmpty()) {
-            return;
-        }
-        dumpNotes++;
-        int top = Integer.MAX_VALUE;
-        for (AccessibilityNodeInfo n : all) {
-            top = Math.min(top, centerY(n));
-        }
-        StringBuilder b = new StringBuilder("Sugestões do Gboard (detalhe): nada reconhecido em " + keyboardPkg
-                + "; parte de cima do teclado:");
-        int count = 0;
-        for (AccessibilityNodeInfo n : all) {
-            int y = centerY(n);
-            if (y > top + 400 || count >= 25) {
-                continue;
-            }
-            count++;
-            CharSequence c = n.getClassName();
-            String cls = c != null ? c.toString() : "?";
-            String id = n.getViewIdResourceName();
-            Rect r = new Rect();
-            n.getBoundsInScreen(r);
-            b.append(" [\"").append(text(n)).append("\" ").append(cls.substring(cls.lastIndexOf('.') + 1))
-                    .append(" x=").append(r.left).append(" y=").append(y);
-            if (n.getText() != null) {
-                b.append(" texto");
-            }
-            if (n.isSelected()) {
-                b.append(" selecionada");
-            }
-            if (id != null) {
-                b.append(" id=").append(id.substring(id.indexOf('/') + 1));
-            }
-            b.append(']');
-        }
-        Diagnostics.note(this, b.toString());
+        // Só usado nos testes.
     }
 
     @Override
@@ -244,11 +204,6 @@ public class GboardService extends AccessibilityService {
         // Correção (o espaço insere): voz normal. Sugestão (só tocando): tom um pouco mais agudo.
         tts.setPitch(pendingCorrection ? 1.0f : SUGGESTION_PITCH);
         tts.speak(s, TextToSpeech.QUEUE_FLUSH, params, "sugestao");
-        if (notes < 10) {
-            notes++;
-            Diagnostics.note(this, "Sugestões do Gboard: falou \"" + s + "\""
-                    + (pendingCorrection ? " (correção, voz normal)." : " (sugestão, tom mais agudo)."));
-        }
     }
 
     /**
@@ -574,19 +529,7 @@ public class GboardService extends AccessibilityService {
 
     /** As primeiras barras lidas vão para o relatório, para ajustar o reconhecimento das sugestões. */
     private void noteRow(List<AccessibilityNodeInfo> row) {
-        if (rowNotes >= 8 || row.isEmpty()) {
-            return;
-        }
-        rowNotes++;
-        StringBuilder b = new StringBuilder("Sugestões do Gboard (detalhe): barra de " + keyboardPkg + ":");
-        for (AccessibilityNodeInfo n : row) {
-            b.append(" [").append(text(n));
-            if (n.isSelected()) {
-                b.append(", selecionada");
-            }
-            b.append(']');
-        }
-        Diagnostics.note(this, b.toString());
+        // Só usado nos testes: o relatório não registra mais as barras lidas.
     }
 
     @Override
