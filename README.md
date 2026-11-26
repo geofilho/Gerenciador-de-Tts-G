@@ -22,7 +22,9 @@ Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para 
 5. Ouvir a voz
 6. Velocidade, Tonalidade e Volume (0 a 100%, de 1 em 1%; 50% é o normal)
 7. Dicionário (Adicionar palavra; Gerenciar dicionário, com editar, remover,
-   exportar e importar)
+   exportar e importar; também dá para importar tocando no arquivo do
+   dicionário, por exemplo em Meus Arquivos, e escolhendo "Importar no
+   Gerenciador de TTS G")
 8. Leitura de números, pontuação e emojis (números inteiro, um a um ou dois a
    dois; velocidade dos números; pontuação nenhuma, algumas ou todas; voz para
    emojis; caixa de texto e Ouvir a voz)
