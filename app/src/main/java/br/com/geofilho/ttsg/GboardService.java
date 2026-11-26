@@ -74,6 +74,7 @@ public class GboardService extends AccessibilityService {
             }
         }, getPackageName());
         notes = 0;
+        rowNotes = 0;
         Diagnostics.note(this, "Sugestões do Gboard: serviço ligado.");
     }
 
@@ -128,7 +129,7 @@ public class GboardService extends AccessibilityService {
         lastSpoken = s;
         Bundle params = new Bundle();
         tts.speak(s, TextToSpeech.QUEUE_FLUSH, params, "sugestao");
-        if (notes < 6) {
+        if (notes < 10) {
             notes++;
             Diagnostics.note(this, "Sugestões do Gboard: falou \"" + s + "\".");
         }
@@ -145,33 +146,51 @@ public class GboardService extends AccessibilityService {
 
     // ----- barra de sugestões -----
 
-    /** As sugestões da barra de cima do Gboard, da esquerda para a direita. */
+    /**
+     * As sugestões da barra de cima do Gboard, da esquerda para a direita. A barra fica na mesma altura
+     * dos botões "Abrir o menu de recursos" e "Usar a digitação por voz" (identificador key_pos_header).
+     * As sugestões não têm identificador; as teclas têm (D01, D02...) e ficam mais abaixo.
+     */
     private List<AccessibilityNodeInfo> suggestionRow() {
         List<AccessibilityNodeInfo> out = new ArrayList<>();
         AccessibilityNodeInfo root = keyboardRoot();
         if (root == null) {
             return out;
         }
-        Rect kb = new Rect();
-        root.getBoundsInScreen(kb);
         List<AccessibilityNodeInfo> all = new ArrayList<>();
         collect(root, all, 0);
-        if (all.isEmpty() || kb.height() <= 0) {
+        if (all.isEmpty()) {
             return out;
         }
-        int top = Integer.MAX_VALUE;
+        // Altura da barra: a dos botões da barra de cima; sem eles, a do item sem identificador mais alto.
+        int barY = Integer.MIN_VALUE;
         for (AccessibilityNodeInfo n : all) {
-            Rect r = new Rect();
-            n.getBoundsInScreen(r);
-            top = Math.min(top, r.top);
+            String id = n.getViewIdResourceName();
+            if (id != null && id.contains("key_pos_header")) {
+                barY = centerY(n);
+                break;
+            }
         }
-        // Faixa de cima: a barra de sugestões (cerca de um oitavo da altura do teclado).
-        int band = top + Math.max(kb.height() / 8, 60);
+        if (barY == Integer.MIN_VALUE) {
+            int top = Integer.MAX_VALUE;
+            for (AccessibilityNodeInfo n : all) {
+                if (n.getViewIdResourceName() == null) {
+                    top = Math.min(top, centerY(n));
+                }
+            }
+            if (top == Integer.MAX_VALUE) {
+                return out;
+            }
+            barY = top;
+        }
         for (AccessibilityNodeInfo n : all) {
-            Rect r = new Rect();
-            n.getBoundsInScreen(r);
             String t = text(n);
-            if (r.centerY() <= band && !t.isEmpty() && !TOOLBAR.contains(t.toLowerCase(Locale.ROOT))) {
+            CharSequence c = n.getClassName();
+            String cls = c != null ? c.toString() : "";
+            if (n.getViewIdResourceName() == null              // teclas e botões têm identificador
+                    && Math.abs(centerY(n) - barY) <= 40        // na altura da barra de cima
+                    && !cls.endsWith("Button")                   // "Edição de texto" e outros botões
+                    && !t.isEmpty() && !TOOLBAR.contains(t.toLowerCase(Locale.ROOT))) {
                 out.add(n);
             }
         }
@@ -185,8 +204,14 @@ public class GboardService extends AccessibilityService {
                 return ra.left - rb.left;
             }
         });
-        noteRow(out, kb);
+        noteRow(out);
         return out;
+    }
+
+    private static int centerY(AccessibilityNodeInfo n) {
+        Rect r = new Rect();
+        n.getBoundsInScreen(r);
+        return r.centerY();
     }
 
     /** A sugestão principal: a marcada como selecionada; senão, a do meio (a que o espaço usa). */
@@ -256,24 +281,16 @@ public class GboardService extends AccessibilityService {
     private int rowNotes;
 
     /** As primeiras barras lidas vão para o relatório, para ajustar o reconhecimento das sugestões. */
-    private void noteRow(List<AccessibilityNodeInfo> row, Rect kb) {
-        if (rowNotes >= 4 || row.isEmpty()) {
+    private void noteRow(List<AccessibilityNodeInfo> row) {
+        if (rowNotes >= 8 || row.isEmpty()) {
             return;
         }
         rowNotes++;
-        StringBuilder b = new StringBuilder("Sugestões do Gboard (detalhe): barra lida (teclado ")
-                .append(kb.height()).append(" de altura):");
+        StringBuilder b = new StringBuilder("Sugestões do Gboard (detalhe): barra:");
         for (AccessibilityNodeInfo n : row) {
-            Rect r = new Rect();
-            n.getBoundsInScreen(r);
-            String cls = n.getClassName() != null ? n.getClassName().toString() : "?";
-            b.append(" [\"").append(text(n)).append("\" ").append(cls.substring(cls.lastIndexOf('.') + 1))
-                    .append(" x=").append(r.left).append(" y=").append(r.centerY());
+            b.append(" [").append(text(n));
             if (n.isSelected()) {
-                b.append(" selecionada");
-            }
-            if (n.getViewIdResourceName() != null) {
-                b.append(" id=").append(n.getViewIdResourceName().replace(GBOARD + ":id/", ""));
+                b.append(", selecionada");
             }
             b.append(']');
         }
