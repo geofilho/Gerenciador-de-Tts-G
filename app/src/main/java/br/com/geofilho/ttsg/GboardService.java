@@ -162,7 +162,7 @@ public class GboardService extends AccessibilityService {
     }
 
     private void sayPending() {
-        String s = pending;
+        String s = withoutEmojiWord(pending);
         if (s.isEmpty() || s.equals(lastSpoken) || !ready || tts == null) {
             return;
         }
@@ -173,6 +173,21 @@ public class GboardService extends AccessibilityService {
             notes++;
             Diagnostics.note(this, "Sugestões do Gboard: falou \"" + s + "\".");
         }
+    }
+
+    /**
+     * Sugestão de emoji: o Gboard descreve como "Emoji 😔". Fala só o emoji, que o Gerenciador lê com a
+     * voz dos emojis, como no resto do aplicativo.
+     */
+    static String withoutEmojiWord(String s) {
+        String t = s.trim();
+        String l = t.toLowerCase(Locale.ROOT);
+        for (String w : new String[]{"emoji ", "emoji: ", "emoji, "}) {
+            if (l.startsWith(w) && t.length() > w.length()) {
+                return t.substring(w.length()).trim();
+            }
+        }
+        return t;
     }
 
     private void stopSpeaking() {
