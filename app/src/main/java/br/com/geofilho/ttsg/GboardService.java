@@ -38,6 +38,10 @@ public class GboardService extends AccessibilityService {
     /** Sugestão principal já falada (não repete a mesma). */
     private String lastSpoken = "";
     private String pending = "";
+    /** A sugestão a falar é a correção marcada (o espaço insere)? */
+    private boolean pendingCorrection;
+    /** Tom das sugestões que só entram tocando (complementos e previsões); a correção usa o tom normal. */
+    private static final float SUGGESTION_PITCH = 1.3f;
 
     /** Pausa na digitação antes de falar a sugestão. */
     private static final long PAUSE_MS = 250;
@@ -221,6 +225,12 @@ public class GboardService extends AccessibilityService {
             return;
         }
         pending = main;
+        pendingCorrection = false;
+        for (AccessibilityNodeInfo n : row) {
+            if ((n.isSelected() || n.isChecked()) && text(n).equals(main)) {
+                pendingCorrection = true; // a correção marcada: é o que o espaço vai colocar
+            }
+        }
         handler.postDelayed(say, PAUSE_MS);
     }
 
@@ -231,10 +241,13 @@ public class GboardService extends AccessibilityService {
         }
         lastSpoken = s;
         Bundle params = new Bundle();
+        // Correção (o espaço insere): voz normal. Sugestão (só tocando): tom um pouco mais agudo.
+        tts.setPitch(pendingCorrection ? 1.0f : SUGGESTION_PITCH);
         tts.speak(s, TextToSpeech.QUEUE_FLUSH, params, "sugestao");
         if (notes < 10) {
             notes++;
-            Diagnostics.note(this, "Sugestões do Gboard: falou \"" + s + "\".");
+            Diagnostics.note(this, "Sugestões do Gboard: falou \"" + s + "\""
+                    + (pendingCorrection ? " (correção, voz normal)." : " (sugestão, tom mais agudo)."));
         }
     }
 
