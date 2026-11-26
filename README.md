@@ -27,7 +27,10 @@ Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para 
    Gerenciador de TTS G")
 8. Leitura de números, pontuação e emojis (números inteiro, um a um ou dois a
    dois; velocidade dos números; pontuação nenhuma, algumas ou todas; voz para
-   emojis; caixa de texto e Ouvir a voz)
+   emojis, com a opção de ignorar a palavra "Emoji" antes dos emojis; ler
+   automaticamente as sugestões do teclado Gboard, testado no Gboard, no
+   Pixelboard e no Teclado Samsung, com tom diferente para as sugestões que
+   só entram tocando; caixa de texto e Ouvir a voz)
 9. Usar como motor de TTS do sistema
 10. Saída de áudio do leitor de tela (manter a fala e, no Android 12+, os sons
     do leitor no telefone quando houver Bluetooth conectado)
