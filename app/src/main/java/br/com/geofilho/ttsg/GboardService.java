@@ -47,7 +47,8 @@ public class GboardService extends AccessibilityService {
             "emoji", "emojis", "gif", "adesivos", "figurinhas", "configurações", "tradutor", "traduzir",
             "microfone", "ditado por voz", "digitação por voz", "mais opções", "abrir menu de recursos",
             "área de transferência", "tema", "modo de uma mão", "pesquisar", "teclado flutuante",
-            "voltar", "fechar", "settings", "translate", "voice typing", "clipboard", "more"));
+            "voltar", "fechar", "settings", "translate", "voice typing", "clipboard", "more",
+            "desfazer", "undo"));
 
     private final Runnable look = new Runnable() {
         @Override
@@ -190,7 +191,7 @@ public class GboardService extends AccessibilityService {
             if (n.getViewIdResourceName() == null              // teclas e botões têm identificador
                     && Math.abs(centerY(n) - barY) <= 40        // na altura da barra de cima
                     && !cls.endsWith("Button")                   // "Edição de texto" e outros botões
-                    && !t.isEmpty() && !TOOLBAR.contains(t.toLowerCase(Locale.ROOT))) {
+                    && !t.isEmpty() && !isToolbar(t)) {
                 out.add(n);
             }
         }
@@ -206,6 +207,12 @@ public class GboardService extends AccessibilityService {
         });
         noteRow(out);
         return out;
+    }
+
+    /** Botões da barra que não são sugestões, como "Desfazer" (que aparece depois de uma correção). */
+    private static boolean isToolbar(String t) {
+        String l = t.toLowerCase(Locale.ROOT);
+        return TOOLBAR.contains(l) || l.startsWith("desfazer") || l.startsWith("undo");
     }
 
     private static int centerY(AccessibilityNodeInfo n) {
