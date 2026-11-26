@@ -129,6 +129,9 @@ public class NumbersActivity extends Activity {
         Bundle params = new Bundle();
         params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, Levels.volume(Prefs.volume(prefs, Prefs.MAIN)));
         String t = Dictionary.get(this).apply(text);
+        if (Prefs.dropEmojiWord(prefs)) {
+            t = TextProcessor.dropEmojiWord(t);
+        }
         boolean sep = Prefs.separateNumbers(prefs);
         List<TextProcessor.Segment> segs = TextProcessor.merge(TextProcessor.process(t, Prefs.groupRepeats(prefs),
                 Prefs.numberMode(prefs), sep, Prefs.punctuationMode(prefs)), false, sep);

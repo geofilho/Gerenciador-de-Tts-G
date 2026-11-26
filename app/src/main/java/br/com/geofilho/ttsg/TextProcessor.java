@@ -419,6 +419,40 @@ final class TextProcessor {
         return cp >= 0x1F1E6 && cp <= 0x1F1FF;
     }
 
+    private static final java.util.regex.Pattern EMOJI_WORD =
+            java.util.regex.Pattern.compile("(?iu)\\bemojis?[:,]?\\s+");
+
+    /**
+     * Tira a palavra "Emoji" quando ela vem logo antes de um emoji ("Emoji 😔", como o teclado e o
+     * leitor de tela descrevem): fica só o emoji, falado com a voz dos emojis.
+     */
+    static String dropEmojiWord(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        java.util.regex.Matcher m = EMOJI_WORD.matcher(text);
+        StringBuilder out = null;
+        int last = 0;
+        while (m.find()) {
+            int after = m.end();
+            if (after < text.length()) {
+                int cp = text.codePointAt(after);
+                if (isEmojiBase(cp) || isRegional(cp)) {
+                    if (out == null) {
+                        out = new StringBuilder(text.length());
+                    }
+                    out.append(text, last, m.start());
+                    last = after;
+                }
+            }
+        }
+        if (out == null) {
+            return text;
+        }
+        out.append(text, last, text.length());
+        return out.toString();
+    }
+
     private static boolean isEmojiBase(int cp) {
         return (cp >= 0x1F000 && cp <= 0x1FAFF)
                 || (cp >= 0x2600 && cp <= 0x27BF)

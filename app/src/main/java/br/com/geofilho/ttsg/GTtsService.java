@@ -275,6 +275,9 @@ public class GTtsService extends TextToSpeechService {
             return;
         }
         text = Dictionary.get(this).apply(text);
+        if (Prefs.dropEmojiWord(p)) {
+            text = TextProcessor.dropEmojiWord(text);
+        }
         boolean separateNumbers = Prefs.separateNumbers(p);
         List<TextProcessor.Segment> segments = TextProcessor.process(text, Prefs.groupRepeats(p),
                 Prefs.numberMode(p), separateNumbers, Prefs.punctuationMode(p));
