@@ -294,7 +294,7 @@
             android:exported="false"
             android:grantUriPermissions="true" />
 
-        <!-- Ler automaticamente as sugestões do Gboard (teste). A pessoa ativa nas configurações de acessibilidade. -->
+        <!-- Sugestões do teclado e botões sem etiqueta. A pessoa ativa nas configurações de acessibilidade. -->
         <service
             android:name=".GboardService"
             android:exported="true"
