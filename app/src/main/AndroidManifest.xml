@@ -111,6 +111,11 @@
             android:label="Dar nome ao botão"
             android:targetActivity=".NameButtonActivity" />
         <activity
+            android:name=".BackupActivity"
+            android:exported="false"
+            android:label="@string/backup"
+            android:theme="@style/TranslucentTheme" />
+        <activity
             android:name=".AboutActivity"
             android:exported="false"
             android:label="@string/about" />

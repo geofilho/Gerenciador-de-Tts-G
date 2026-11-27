@@ -38,6 +38,11 @@
             android:text="@string/title_translation" />
 
         <Button
+            android:id="@+id/btn_backup"
+            style="@style/Row"
+            android:text="@string/backup_button" />
+
+        <Button
             android:id="@+id/btn_about"
             style="@style/Row"
             android:text="@string/about" />
