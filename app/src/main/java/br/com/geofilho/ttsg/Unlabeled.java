@@ -249,7 +249,9 @@ final class Unlabeled {
                     + "|exibindo itens? \\d+( a \\d+)? de \\d+");
 
     private static boolean isBare(String text) {
-        if (text.length() > 120) {
+        // Falas sem conteúdo são curtas ("Botão. Toque duas vezes para ativar"): textos longos nem
+        // passam pela comparação, que roda a cada fala.
+        if (text.length() > 70) {
             return false;
         }
         String rest = BARE_WORDS.matcher(text).replaceAll(" ");
@@ -466,15 +468,9 @@ final class Unlabeled {
                 CharSequence pc = parent.getClassName();
                 String pcs = pc == null ? "?" : pc.toString().substring(pc.toString().lastIndexOf('.') + 1);
                 int count = parent.getChildCount();
-                int index = -1;
-                for (int i = 0; i < count && i < 30; i++) {
-                    AccessibilityNodeInfo ch = parent.getChild(i);
-                    if (n.equals(ch)) {
-                        index = i;
-                        break;
-                    }
-                }
-                sb.append(pcs).append(':').append(count).append(':').append(index);
+                // A posição exata entre os vizinhos não é procurada (custaria uma consulta por vizinho a
+                // cada foco); o lugar na tela já separa os botões do mesmo grupo.
+                sb.append(pcs).append(':').append(count).append(":-");
                 AccessibilityNodeInfo grand = parent.getParent();
                 if (grand != null) {
                     sb.append(':').append(grand.getChildCount());
@@ -493,7 +489,22 @@ final class Unlabeled {
         String[] a = split(stored);
         String[] b = split(now);
         boolean activity = a[0].isEmpty() || b[0].isEmpty() || a[0].equals(b[0]);
-        return activity && a[1].equals(b[1]);
+        return activity && sameNeighborhood(a[1], b[1]);
+    }
+
+    /** Compara a vizinhança sem a posição entre os vizinhos (nomes da 2.13 a 2.16 guardavam a posição). */
+    private static boolean sameNeighborhood(String x, String y) {
+        String[] p = x.split(":");
+        String[] q = y.split(":");
+        if (p.length != q.length) {
+            return x.equals(y);
+        }
+        for (int i = 0; i < p.length; i++) {
+            if (i != 2 && !p[i].equals(q[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static String[] split(String key) {
