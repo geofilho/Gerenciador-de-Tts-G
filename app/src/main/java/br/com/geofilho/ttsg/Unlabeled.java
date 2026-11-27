@@ -222,6 +222,9 @@ final class Unlabeled {
             "\\b[A-Za-z0-9]{12,}\\.(jpe?g|png|webp|gif|avif|heic)(_[0-9x]+)?(\\.[a-z]+)*\\b",
             Pattern.CASE_INSENSITIVE);
 
+    /** Depois do código vem a extensão de arquivo, com ou sem " (2)" antes: ".json", " (2).json". */
+    private static final Pattern FILE_END = Pattern.compile("\\s?(\\(\\d+\\))?\\.[A-Za-z0-9]{2,5}\\b");
+
     private static final Pattern EDITING = Pattern.compile("(?iu)caixa de edi[çc][ãa]o|editando|edit box|editing");
 
     private static final Pattern RESOURCE_ID = Pattern.compile("(?<![\\d.,])(21\\d{8})(?![\\d,])");
@@ -249,8 +252,7 @@ final class Unlabeled {
         boolean changed = false;
         while (m.find()) {
             // Nome de arquivo ("gerenciador_tts_g_backup.json"): fica como está.
-            if (m.end() + 1 < text.length() && text.charAt(m.end()) == '.'
-                    && Character.isLetter(text.charAt(m.end() + 1))) {
+            if (FILE_END.matcher(text.substring(m.end())).lookingAt()) {
                 m.appendReplacement(sb, Matcher.quoteReplacement(m.group()));
                 continue;
             }

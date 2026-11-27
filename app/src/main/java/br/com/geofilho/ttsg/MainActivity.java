@@ -72,7 +72,7 @@ public class MainActivity extends Activity {
         findViewById(R.id.btn_backup).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, BackupActivity.class));
+                BackupUi.menu(MainActivity.this);
             }
         });
 
@@ -175,5 +175,11 @@ public class MainActivity extends Activity {
                 startActivity(new Intent(Settings.ACTION_SETTINGS));
             }
         }
+    }
+
+    @Override
+    protected void onActivityResult(int code, int result, Intent data) {
+        super.onActivityResult(code, result, data);
+        BackupUi.onResult(this, code, result, data);
     }
 }
