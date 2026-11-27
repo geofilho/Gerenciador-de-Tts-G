@@ -75,7 +75,26 @@ Se o seu aparelho tiver o tradutor do próprio Android, ele é usado primeiro, s
     <string name="unlabeled_page">Botões sem etiqueta</string>
     <string name="name_button_how">Como dar nome ao botão</string>
     <string name="name_button_last">Nomear o último botão sem nome</string>
-    <string name="name_button_help">Quando o leitor de tela fala Sem marcador ou só Botão, e o Gerenciador não acha o nome sozinho, você mesmo pode dar o nome, uma vez só:\n\n1. No aplicativo, pare o leitor de tela no botão sem nome.\n\n2. Puxe as configurações rápidas e toque em Dar nome ao botão. Antes, adicione esse botão nas configurações rápidas. Ou use um atalho de acessibilidade do aparelho: em Configurações, Acessibilidade, escolha o Gerenciador de TTS G no botão de acessibilidade ou no atalho das teclas de volume. Na Samsung, também dá para usar o botão lateral junto com a tecla de diminuir volume, em Acessibilidade, Configurações avançadas. Depois é só usar esse atalho com o leitor de tela parado no botão. Ou crie no MacroDroid a ação Iniciar atividade de aplicativo, com o Gerenciador de TTS G e a entrada Dar_nome_ao_botao.\n\n3. Escreva o nome e toque em Guardar.\n\nDepois disso, sempre que o foco cair nesse botão, no mesmo lugar e do mesmo tamanho nesse aplicativo, o Gerenciador fala o nome que você deu. Funciona melhor em botões que ficam sempre no mesmo lugar. Os nomes ficam em Botões que você nomeou, separados por aplicativo.</string>
+    <string name="name_button_help">Quando o leitor de tela fala Sem marcador ou só Botão, e o Gerenciador não acha o nome sozinho, você mesmo pode dar o nome, uma vez só. Pare o leitor de tela no botão sem nome e abra a janela Dar nome ao botão por uma das opções abaixo. Na janela, escreva o nome e toque em Guardar. Depois disso, sempre que o foco cair nesse botão, no mesmo lugar e do mesmo tamanho nesse aplicativo, o Gerenciador fala o nome que você deu. Funciona melhor em botões que ficam sempre no mesmo lugar.
+
+Opções para abrir a janela rapidamente, sem sair do aplicativo:
+
+Opção 1, botão nas configurações rápidas (a barra que se abre puxando a tela de cima para baixo):
+Para adicionar: com o leitor de tela, deslize dois dedos de cima para baixo para abrir a barra toda. Toque em Editar (na Samsung, fica no botão Mais opções, os três pontos, ou no lápis). Na lista de botões disponíveis, procure Dar nome ao botão e adicione: use a ação Adicionar do leitor de tela ou toque duas vezes e segure e arraste para a barra. Toque em Concluído.
+Para usar: parado no botão sem nome, abra a barra e toque em Dar nome ao botão.
+
+Opção 2, atalho de acessibilidade do aparelho:
+Para configurar: em Configurações, Acessibilidade, procure o Gerenciador de TTS G: sugestões do teclado e botões sem etiqueta e ligue o atalho dele. Pode ser o botão de acessibilidade ou o atalho das teclas de volume. Na Samsung, também dá em Acessibilidade, Configurações avançadas, Botão lateral e tecla Diminuir volume, escolhendo o Gerenciador.
+Para usar: parado no botão sem nome, use o atalho escolhido. Se outro aplicativo, como o TalkBack, estiver no mesmo atalho, o Android pergunta qual usar.
+
+Opção 3, MacroDroid:
+Para configurar: crie uma macro com a ação Iniciar atividade de aplicativo, escolha o Gerenciador de TTS G e a entrada Dar_nome_ao_botao. Escolha o gatilho que preferir, por exemplo um botão flutuante ou um gesto de sacudir o aparelho.
+Para usar: parado no botão sem nome, dispare a macro.
+
+Opção 4, por aqui mesmo:
+Se você acabou de passar por um botão sem nome num aplicativo e voltou ao Gerenciador, use o botão Nomear o último botão sem nome, no fim desta explicação. Ele só aparece quando há um botão sem nome guardado.
+
+Os nomes ficam em Botões que você nomeou, separados por aplicativo, onde dá para editar ou apagar.</string>
     <string name="name_button_list">Botões que você nomeou</string>
     <string name="named_empty">Você ainda não deu nome a nenhum botão. Num aplicativo, pare o leitor de tela no botão sem nome e use Dar nome ao botão, nas configurações rápidas ou no MacroDroid.</string>
     <string name="named_app_empty">Nenhum botão nomeado neste aplicativo.</string>
