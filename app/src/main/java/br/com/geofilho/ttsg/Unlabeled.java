@@ -356,7 +356,13 @@ final class Unlabeled {
         CharSequence clsSeq = n.getClassName();
         String cls = clsSeq == null ? "?" : clsSeq.toString().substring(clsSeq.toString().lastIndexOf('.') + 1);
         Rect r = boundsDp(c, n);
-        String screen = screenKey(appName, n);
+        AccessibilityNodeInfo parent = null;
+        try {
+            parent = n.getParent();
+        } catch (Exception ignored) {
+        }
+        String screen = screenKey(appName, parent);
+        String rel = relKey(c, r, parent);
         String where = where(c, r);
         // Lembra o elemento, para a pessoa poder dar um nome a ele (tela "Dar nome ao botão").
         if (isRegularApp(c, appName)) {
@@ -365,12 +371,13 @@ final class Unlabeled {
                 targetCls = cls;
                 targetRect = r;
                 targetScreen = screen;
+                targetRel = rel;
                 targetWhere = where;
                 targetType = type;
             }
         }
         // 1. Nome que a própria pessoa deu.
-        String own = ownName(c, appName, cls, r, screen);
+        String own = ownName(c, appName, cls, r, screen, rel);
         if (own != null) {
             found(c, own, type, "nome que você deu", id, appName, cls, where);
             return;
@@ -445,6 +452,57 @@ final class Unlabeled {
     private static String targetWhere = "";
     private static String targetType = "";
     private static String targetScreen = "";
+    private static String targetRel = "";
+
+    /**
+     * Lugar do botão dentro do grupo em que ele está (por exemplo, o carrinho no canto de cada cartão de
+     * produto): tamanho do botão, largura do grupo e distâncias até as bordas do grupo. Botões iguais
+     * repetidos numa lista têm o mesmo lugar dentro do seu cartão. Vazio se o grupo for a tela toda.
+     */
+    private static String relKey(Context c, Rect r, AccessibilityNodeInfo parent) {
+        if (parent == null) {
+            return "";
+        }
+        try {
+            Rect p = boundsDp(c, parent);
+            android.util.DisplayMetrics m = c.getResources().getDisplayMetrics();
+            float sw = m.widthPixels / m.density;
+            float sh = m.heightPixels / m.density;
+            if (p.width() >= sw * 0.9f && p.height() >= sh * 0.5f) {
+                return ""; // grupo do tamanho da tela: não é um cartão de lista
+            }
+            return "R=" + r.width() + "," + r.height() + "," + p.width() + "," + (r.left - p.left) + ","
+                    + (p.right - r.right) + "," + (r.top - p.top) + "," + (p.bottom - r.bottom);
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /** Mesmo lugar dentro de um cartão igual (folga de 6dp; altura do cartão pode variar). */
+    private static boolean sameRel(String a, String b) {
+        if (a.isEmpty() || b.isEmpty()) {
+            return false;
+        }
+        String[] x = a.substring(2).split(",");
+        String[] y = b.substring(2).split(",");
+        if (x.length != 7 || y.length != 7) {
+            return false;
+        }
+        try {
+            int[] p = new int[7];
+            int[] q = new int[7];
+            for (int i = 0; i < 7; i++) {
+                p[i] = Integer.parseInt(x[i]);
+                q[i] = Integer.parseInt(y[i]);
+            }
+            boolean size = Math.abs(p[0] - q[0]) <= 4 && Math.abs(p[1] - q[1]) <= 4 && Math.abs(p[2] - q[2]) <= 8;
+            boolean across = Math.abs(p[3] - q[3]) <= 6 || Math.abs(p[4] - q[4]) <= 6;
+            boolean down = Math.abs(p[5] - q[5]) <= 6 || Math.abs(p[6] - q[6]) <= 6;
+            return size && across && down;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
 
     /** Tela atual (atividade) de cada aplicativo, vinda dos avisos de troca de janela. */
     private static final Map<String, String> SCREENS = new HashMap<>();
@@ -475,10 +533,9 @@ final class Unlabeled {
      * grupo em que ele está, quantos elementos há nele e a posição do botão). Botões no mesmo lugar em
      * telas diferentes costumam ter vizinhanças diferentes.
      */
-    private static String screenKey(String pkg, AccessibilityNodeInfo n) {
+    private static String screenKey(String pkg, AccessibilityNodeInfo parent) {
         StringBuilder sb = new StringBuilder("A=").append(screenOf(pkg)).append(";S=");
         try {
-            AccessibilityNodeInfo parent = n.getParent();
             if (parent != null) {
                 CharSequence pc = parent.getClassName();
                 String pcs = pc == null ? "?" : pc.toString().substring(pc.toString().lastIndexOf('.') + 1);
@@ -551,13 +608,15 @@ final class Unlabeled {
         String cls;
         Rect r;
         String screen;
+        String rel;
         synchronized (LOCK) {
             pkg = targetPkg;
             cls = targetCls;
             r = targetRect;
             screen = targetScreen;
+            rel = targetRel;
         }
-        return r == null ? null : ownName(c, pkg, cls, r, screen);
+        return r == null ? null : ownName(c, pkg, cls, r, screen, rel);
     }
 
     /** Dá um nome ao último elemento sem nome (vazio apaga). */
@@ -566,11 +625,13 @@ final class Unlabeled {
         String cls;
         Rect r;
         String screen;
+        String rel;
         synchronized (LOCK) {
             pkg = targetPkg;
             cls = targetCls;
             r = targetRect;
             screen = targetScreen;
+            rel = targetRel;
         }
         if (r == null) {
             return;
@@ -579,12 +640,12 @@ final class Unlabeled {
         android.content.SharedPreferences.Editor e = p.edit();
         boolean erase = name == null || name.trim().isEmpty();
         // Trocar: só o nome desta tela. Apagar: o nome que está valendo aqui (mesmo um antigo, sem tela).
-        String old = ownKey(c, pkg, cls, r, screen, !erase);
+        String old = ownKey(c, pkg, cls, r, screen, erase ? rel : "", !erase);
         if (old != null) {
             e.remove(old);
         }
         if (name != null && !name.trim().isEmpty()) {
-            e.putString(pkg + "|" + cls + "|" + r.left + "," + r.top + "," + r.right + "," + r.bottom + "|" + screen,
+            e.putString(pkg + "|" + cls + "|" + r.left + "," + r.top + "," + r.right + "," + r.bottom + "|" + screen + "|" + rel,
                     name.trim());
         }
         e.apply();
@@ -639,8 +700,8 @@ final class Unlabeled {
         return Prefs.storage(c).getSharedPreferences("nomes_dos_botoes", Context.MODE_PRIVATE);
     }
 
-    private static String ownName(Context c, String pkg, String cls, Rect r, String screen) {
-        String k = ownKey(c, pkg, cls, r, screen, false);
+    private static String ownName(Context c, String pkg, String cls, Rect r, String screen, String rel) {
+        String k = ownKey(c, pkg, cls, r, screen, rel, false);
         return k == null ? null : names(c).getString(k, null);
     }
 
@@ -649,19 +710,28 @@ final class Unlabeled {
      * {@code onlyThisScreen}: só nomes guardados com esta mesma tela (para trocar o nome sem apagar o
      * de outra tela). Sem ele, um nome desta tela vale mais que um nome antigo, sem tela guardada.
      */
-    private static String ownKey(Context c, String pkg, String cls, Rect r, String screen, boolean onlyThisScreen) {
+    private static String ownKey(Context c, String pkg, String cls, Rect r, String screen, String rel,
+                                 boolean onlyThisScreen) {
         if (r == null || pkg.isEmpty()) {
             return null;
         }
         String prefix = pkg + "|" + cls + "|";
         String best = null;
+        String sibling = null;
         int bestDiff = Integer.MAX_VALUE;
         for (String k : names(c).getAll().keySet()) {
             if (!k.startsWith(prefix)) {
                 continue;
             }
-            String[] rest = k.substring(prefix.length()).split("\\|", 2);
+            String[] rest = k.substring(prefix.length()).split("\\|", -1);
             String stored = rest.length > 1 ? rest[1] : "";
+            String storedRel = rest.length > 2 ? rest[2] : "";
+            // Mesmo botão repetido em outro cartão da lista (o carrinho de cada produto).
+            if (!onlyThisScreen && sameRel(storedRel, rel) && sameActivity(stored, screen)) {
+                if (sibling == null) {
+                    sibling = k;
+                }
+            }
             if (!sameScreen(stored, screen)) {
                 continue; // mesmo lugar, mas em outra tela
             }
@@ -691,7 +761,13 @@ final class Unlabeled {
             } catch (NumberFormatException ignored) {
             }
         }
-        return best;
+        return best != null ? best : sibling;
+    }
+
+    private static boolean sameActivity(String stored, String now) {
+        String a = split(stored == null ? "" : stored)[0];
+        String b = split(now == null ? "" : now)[0];
+        return a.isEmpty() || b.isEmpty() || a.equals(b);
     }
 
     private static Rect boundsDp(Context c, AccessibilityNodeInfo n) {
