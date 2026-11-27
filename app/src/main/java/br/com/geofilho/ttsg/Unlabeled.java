@@ -42,7 +42,7 @@ final class Unlabeled {
 
     /** Últimos achados, para o diagnóstico. */
     private static final ArrayDeque<String> FOUND = new ArrayDeque<>();
-    private static final int MAX_FOUND = 12;
+    private static final int MAX_FOUND = 25;
 
     /** "sem etiqueta" e variações que o leitor de tela fala. */
     private static final Pattern PHRASE = Pattern.compile(
@@ -54,8 +54,13 @@ final class Unlabeled {
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 
     /** Chamado pelo serviço assim que o foco muda, antes de procurar o nome. */
+    /** Focos recebidos pelo serviço desde que o processo começou (diagnóstico). */
+    private static int focusCount;
+    private static String lastFocusApp = "";
+
     static void focusStarted() {
         synchronized (LOCK) {
+            focusCount++;
             focusAt = System.currentTimeMillis();
             done = false;
             name = null;
@@ -114,7 +119,12 @@ final class Unlabeled {
                 }
             }
             if (!done || System.currentTimeMillis() - focusAt > 2000) {
-                return text; // foco antigo: não arrisca falar o nome de outro botão
+                // Foco antigo ou procura sem terminar: não arrisca falar o nome de outro botão.
+                remember(c, "\"" + text + "\": não trocado, "
+                        + (focusAt == 0 ? "o serviço ainda não recebeu nenhum foco"
+                        : !done ? "a procura do nome não terminou a tempo"
+                        : "o último foco foi há " + (System.currentTimeMillis() - focusAt) + " ms"));
+                return text;
             }
             found = name;
             type = kind;
@@ -124,10 +134,11 @@ final class Unlabeled {
             noName = unnamed;
         }
         if (!noName) {
+            remember(c, "\"" + text + "\" em " + app + ": não trocado, o elemento focado tem texto ou descrição");
             return text;
         }
         if (found == null || found.isEmpty()) {
-            remember("em " + app + ": nada encontrado"
+            remember(c, "\"" + text + "\" em " + app + ": nada encontrado"
                     + (id.isEmpty() ? ", sem código" : ", código " + id) + (type.isEmpty() ? "" : ", tipo " + type));
             return text;
         }
@@ -146,30 +157,66 @@ final class Unlabeled {
             sb.append(", ").append(tail);
         }
         String out = sb.toString().replaceAll(",\\s*,", ",").trim();
-        remember("em " + app + ": \"" + found + "\" (" + from + ")" + (type.isEmpty() ? "" : ", tipo " + type));
+        remember(c, "\"" + text + "\" em " + app + ": trocado por \"" + found + "\" (" + from + ")" + (type.isEmpty() ? "" : ", tipo " + type));
         return out;
     }
 
-    private static void remember(String msg) {
+    /** Guarda o achado na memória e em arquivo (não se perde se o Android fechar o Gerenciador). */
+    private static void remember(Context c, String msg) {
         synchronized (FOUND) {
+            load(c);
             if (!FOUND.isEmpty() && FOUND.peekFirst().endsWith(msg)) {
                 return;
             }
-            String time = new java.text.SimpleDateFormat("HH:mm:ss", Locale.ROOT).format(new java.util.Date());
-            FOUND.addFirst(time + " " + msg);
+            String time = new java.text.SimpleDateFormat("dd/MM HH:mm:ss", Locale.ROOT).format(new java.util.Date());
+            FOUND.addFirst(time + " " + msg.replace('\n', ' '));
             while (FOUND.size() > MAX_FOUND) {
                 FOUND.removeLast();
+            }
+            StringBuilder sb = new StringBuilder();
+            for (String s : FOUND) {
+                sb.append(s).append('\n');
+            }
+            try {
+                store(c).edit().putString("achados", sb.toString()).apply();
+            } catch (Exception ignored) {
             }
         }
     }
 
-    /** Texto para o relatório de diagnóstico. */
-    static String report() {
-        synchronized (FOUND) {
-            if (FOUND.isEmpty()) {
-                return "nenhum ainda\n";
+    private static boolean loaded;
+
+    private static android.content.SharedPreferences store(Context c) {
+        return Prefs.storage(c).getSharedPreferences("sem_etiqueta", Context.MODE_PRIVATE);
+    }
+
+    private static void load(Context c) {
+        if (loaded) {
+            return;
+        }
+        loaded = true;
+        try {
+            String all = store(c).getString("achados", "");
+            for (String line : all.split("\n")) {
+                if (!line.isEmpty() && FOUND.size() < MAX_FOUND) {
+                    FOUND.addLast(line);
+                }
             }
+        } catch (Exception ignored) {
+        }
+    }
+
+    /** Texto para o relatório de diagnóstico. */
+    static String report(Context c) {
+        synchronized (FOUND) {
+            load(c);
             StringBuilder sb = new StringBuilder();
+            sb.append("Focos do leitor de tela recebidos pelo serviço desde que o Gerenciador abriu: ")
+                    .append(focusCount).append(lastFocusApp.isEmpty() ? "" : ", o último em " + lastFocusApp)
+                    .append('\n');
+            if (FOUND.isEmpty()) {
+                return sb.append("Nenhum elemento sem nome encontrado ainda.\n").toString();
+            }
             for (String s : FOUND) {
                 sb.append("- ").append(s).append('\n');
             }
@@ -182,6 +229,9 @@ final class Unlabeled {
     /** Procura o nome do elemento focado e grava o resultado para o motor. */
     static void inspect(Context c, AccessibilityNodeInfo n, CharSequence app) {
         String appName = app != null ? app.toString() : "";
+        synchronized (LOCK) {
+            lastFocusApp = appName;
+        }
         if (n == null) {
             focusDone(false, null, "", "", "", appName);
             return;
@@ -195,14 +245,22 @@ final class Unlabeled {
         String inner = innerTexts(n);
         if (inner != null) {
             focusDone(true, inner, type, "veio de dentro", id, appName);
+            remember(c, "foco sem nome em " + appName + ": achou \"" + inner + "\" (veio de dentro)"
+                    + (type.isEmpty() ? "" : ", tipo " + type));
             return;
         }
         String fromCode = fromCode(c, id);
         if (fromCode != null) {
             focusDone(true, fromCode, type, "veio do código " + shortId(id), id, appName);
+            remember(c, "foco sem nome em " + appName + ": achou \"" + fromCode + "\" (veio do código "
+                    + shortId(id) + ")" + (type.isEmpty() ? "" : ", tipo " + type));
             return;
         }
         focusDone(true, null, type, "", id, appName);
+        CharSequence cls = n.getClassName();
+        remember(c, "foco sem nome em " + appName + ": nada encontrado, "
+                + (id == null ? "sem código" : "código " + shortId(id)) + ", classe "
+                + (cls == null ? "?" : cls.toString().substring(cls.toString().lastIndexOf('.') + 1)));
     }
 
     private static boolean empty(CharSequence s) {

@@ -114,7 +114,7 @@ final class Diagnostics {
         sb.append("Teclado em uso: ").append(secure(c, "default_input_method")).append('\n');
         sb.append("Botões sem etiqueta (falar o nome escondido): ")
                 .append(Prefs.unlabeledOn(Prefs.get(c)) ? "ligado" : "desligado").append('\n')
-                .append("Nomes encontrados:\n").append(Unlabeled.report());
+                .append(Unlabeled.report(c));
         String a11y = secure(c, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
         sb.append("Leitores de tela e serviços de acessibilidade ativos: ")
                 .append(a11y.equals("desconhecido") || a11y.isEmpty() ? "nenhum informado" : a11y.replace(":", ", "))
