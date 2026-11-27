@@ -159,31 +159,18 @@ final class Unlabeled {
             remember(c, "fala depois do foco sem nome em " + app + ": \"" + text + "\", não trocado (nada encontrado)");
             return text;
         }
-        String out;
-        if (phrase) {
-            String head = text.substring(0, m.start()).trim();
-            String tail = text.substring(m.end()).trim();
-            StringBuilder sb = new StringBuilder();
-            if (!ROLE.matcher(text).find() && !type.isEmpty()) {
-                sb.append(type).append(", ");
-            }
-            if (!head.isEmpty()) {
-                sb.append(head).append(head.endsWith(",") ? " " : ", ");
-            }
-            sb.append(found);
-            if (!tail.isEmpty()) {
-                sb.append(", ").append(tail);
-            }
-            out = sb.toString();
-        } else {
-            // Sem "sem etiqueta": põe o nome logo depois do tipo ("Botão" vira "Botão, enviar").
-            Matcher r = ROLE.matcher(text);
-            if (r.find()) {
-                out = text.substring(0, r.end()) + ", " + found + text.substring(r.end());
-            } else {
-                out = (type.isEmpty() ? "" : type + ", ") + found + ", " + text.trim();
-            }
+        // O nome vem primeiro e o tipo depois, como o leitor de tela faz com os botões que têm nome
+        // ("Pesquisar, Botão").
+        String rest = phrase ? (text.substring(0, m.start()) + " " + text.substring(m.end())).trim() : text.trim();
+        rest = rest.replaceAll("^[,.\\s]+", "").trim();
+        StringBuilder sb = new StringBuilder(found);
+        if (!ROLE.matcher(rest).find() && !type.isEmpty()) {
+            sb.append(", ").append(type);
         }
+        if (!rest.isEmpty()) {
+            sb.append(", ").append(rest);
+        }
+        String out = sb.toString();
         out = out.replaceAll(",\\s*,", ",").replaceAll(",\\s*\\.", ".").trim();
         remember(c, "fala em " + app + ": \"" + text + "\" trocada por \"" + out + "\" (" + from + ")");
         return out;
