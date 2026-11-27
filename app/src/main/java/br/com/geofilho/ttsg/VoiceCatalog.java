@@ -150,6 +150,41 @@ final class VoiceCatalog {
         }, delayMs);
     }
 
+    /**
+     * Quando o motor abre: só refaz a lista se algum motor foi instalado, removido ou atualizado desde a
+     * última vez (ou se a lista tem mais de 7 dias). Assim não abre todos os motores a cada religada,
+     * disputando o aparelho com o leitor de tela.
+     */
+    static void refreshIfEnginesChanged(Context c, long delayMs) {
+        try {
+            long at = updatedAt(c);
+            String now = enginesSignature(c);
+            String was = store(c).getString("motores", "");
+            if (count(c) > 0 && now.equals(was) && System.currentTimeMillis() - at < 7L * 24 * 3600 * 1000) {
+                return;
+            }
+        } catch (Exception ignored) {
+        }
+        refreshLater(c, delayMs);
+    }
+
+    /** Motores instalados e suas versões, numa linha só. */
+    private static String enginesSignature(Context c) {
+        StringBuilder sb = new StringBuilder();
+        PackageManager pm = c.getPackageManager();
+        for (ResolveInfo r : EngineClient.installedEngines(c)) {
+            String pkg = r.serviceInfo.packageName;
+            long v = 0;
+            try {
+                android.content.pm.PackageInfo pi = pm.getPackageInfo(pkg, 0);
+                v = android.os.Build.VERSION.SDK_INT >= 28 ? pi.getLongVersionCode() : pi.versionCode;
+            } catch (Exception ignored) {
+            }
+            sb.append(pkg).append(':').append(v).append(';');
+        }
+        return sb.toString();
+    }
+
     /** Pergunta a cada motor instalado (menos o próprio Gerenciador) quais vozes ele tem. */
     private static void refresh(Context c) {
         PackageManager pm = c.getPackageManager();
@@ -201,7 +236,8 @@ final class VoiceCatalog {
         } catch (Exception ignored) {
         }
         long now = System.currentTimeMillis();
-        store(c).edit().putString("vozes", a.toString()).putLong("atualizado", now).apply();
+        store(c).edit().putString("vozes", a.toString()).putLong("atualizado", now)
+                .putString("motores", enginesSignature(c)).apply();
         updatedAt = now;
         publish(m);
     }
