@@ -222,6 +222,12 @@ final class Unlabeled {
             String name = fromCode(c, m.group());
             if (name == null) {
                 name = ""; // código só de estrutura (tangram_view_container): não fala nada
+            } else {
+                // O resto da fala já diz o mesmo ("tab_bar_button_me. Eu"): não repete.
+                String others = (text.substring(0, m.start()) + " " + text.substring(m.end())).toLowerCase(Locale.ROOT);
+                if (others.contains(name.toLowerCase(Locale.ROOT))) {
+                    name = "";
+                }
             }
             m.appendReplacement(sb, Matcher.quoteReplacement(name));
             changed = true;
@@ -791,7 +797,7 @@ final class Unlabeled {
             "btn", "button", "bt", "ic", "icon", "iv", "img", "image", "imageview", "imgbtn", "ib", "tv", "txt",
             "text", "textview", "view", "layout", "container", "wrapper", "holder", "root", "content", "frame",
             "id", "tangram", "item", "cell", "cover", "bg", "background", "fl", "ll", "rl", "cl", "lay", "lyt",
-            "vg", "group", "square", "module", "dd", "hotspot", "skinny", "collection", "tangram", "widget", "action", "iconfont", "svg", "lottie", "anim", "the", "of", "to", "a", "an",
+            "vg", "group", "bar", "square", "module", "dd", "hotspot", "skinny", "collection", "tangram", "widget", "action", "iconfont", "svg", "lottie", "anim", "the", "of", "to", "a", "an",
             "and", "for", "on", "in", "my", "new", "main", "custom", "default", "common", "base", "rn", "android"));
 
     /** Palavras comuns em códigos de botões. */
@@ -906,8 +912,9 @@ final class Unlabeled {
         if (whole != null) {
             return whole; // frase conhecida inteira ("product card" = produto)
         }
-        if (words.size() > 1 && (words.get(0).equals("home") || words.get(0).equals("product"))) {
-            words.remove(0); // "home_..." e "buttonProduct..." na Shopee: só dizem a tela
+        while (words.size() > 1 && (words.get(0).equals("home") || words.get(0).equals("product")
+                || words.get(0).equals("tab"))) {
+            words.remove(0); // "home_...", "buttonProduct..." e "tab_bar_...": só dizem onde o botão está
         }
         if (words.isEmpty()) {
             return null;
