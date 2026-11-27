@@ -111,6 +111,12 @@ final class Diagnostics {
                     .append(um != null && um.isUserUnlocked() ? "sim" : "não").append('\n');
         }
         sb.append("Motor de TTS padrão do sistema: ").append(secure(c, "tts_default_synth")).append('\n');
+        long vu = VoiceCatalog.updatedAt(c);
+        sb.append("Vozes de outros motores oferecidas aos aplicativos (Ariadne GPS e outros): ")
+                .append(VoiceCatalog.count(c))
+                .append(vu == 0 ? ", lista ainda não montada" : ", lista atualizada em "
+                        + new java.text.SimpleDateFormat("dd/MM HH:mm", Locale.ROOT).format(new java.util.Date(vu)))
+                .append('\n');
         sb.append("Teclado em uso: ").append(secure(c, "default_input_method")).append('\n');
         sb.append("Botões sem etiqueta (falar o nome escondido): ")
                 .append(Prefs.unlabeledOn(Prefs.get(c)) ? "ligado" : "desligado").append('\n')

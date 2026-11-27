@@ -50,6 +50,18 @@ public class GTtsService extends TextToSpeechService {
         }
     };
 
+    /** Motor da voz que um aplicativo pediu (uma das vozes dos outros motores). */
+    private EngineClient pickedEngine;
+    private String lastPickedNote = "";
+
+    /** Motor instalado, removido ou atualizado: refaz a lista de vozes oferecidas aos aplicativos. */
+    private final BroadcastReceiver packagesReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            VoiceCatalog.refreshLater(GTtsService.this, 3000);
+        }
+    };
+
     /** Motor reserva: usado quando o motor escolhido falha ou ainda não pode rodar. */
     private EngineClient fallbackEngine;
     private String fallbackPkg = "";
@@ -127,9 +139,22 @@ public class GTtsService extends TextToSpeechService {
         }
         Translator.warm(this);
         mainEngine = new EngineClient(this, "principal");
+        pickedEngine = new EngineClient(this, "voz pedida");
         emojiEngine = new EngineClient(this, "emoji");
         fallbackEngine = new EngineClient(this, "reserva");
         warmUp();
+        // Lista de vozes dos outros motores: atualiza em segundo plano e quando um motor muda.
+        VoiceCatalog.refreshLater(this, 4000);
+        try {
+            IntentFilter f = new IntentFilter();
+            f.addAction(Intent.ACTION_PACKAGE_ADDED);
+            f.addAction(Intent.ACTION_PACKAGE_REMOVED);
+            f.addAction(Intent.ACTION_PACKAGE_REPLACED);
+            f.addAction(Intent.ACTION_PACKAGE_CHANGED);
+            f.addDataScheme("package");
+            registerReceiver(packagesReceiver, f);
+        } catch (Exception ignored) {
+        }
         if (Build.VERSION.SDK_INT >= 24) {
             try {
                 registerReceiver(unlockReceiver, new IntentFilter(Intent.ACTION_USER_UNLOCKED));
@@ -187,6 +212,11 @@ public class GTtsService extends TextToSpeechService {
         mainEngine.shutdown();
         emojiEngine.shutdown();
         fallbackEngine.shutdown();
+        pickedEngine.shutdown();
+        try {
+            unregisterReceiver(packagesReceiver);
+        } catch (Exception ignored) {
+        }
         super.onDestroy();
     }
 
@@ -213,16 +243,25 @@ public class GTtsService extends TextToSpeechService {
         return TextToSpeech.LANG_COUNTRY_AVAILABLE;
     }
 
+    /**
+     * A voz padrão do Gerenciador (primeira da lista) e as vozes dos outros motores instalados, para os
+     * aplicativos que deixam escolher a voz (Ariadne GPS e outros). A lista vem guardada, sem esperar.
+     */
     @Override
     public List<Voice> onGetVoices() {
         List<Voice> list = new ArrayList<>();
         list.add(new Voice(VOICE_NAME, configuredLocale(), Voice.QUALITY_HIGH, Voice.LATENCY_NORMAL,
                 false, Collections.<String>emptySet()));
+        list.addAll(VoiceCatalog.voices(this));
+        if (VoiceCatalog.count(this) == 0) {
+            VoiceCatalog.refreshLater(this, 0); // primeira vez: monta a lista para a próxima consulta
+        }
         return list;
     }
 
     @Override
     public int onIsValidVoiceName(String voiceName) {
+        // A voz padrão, as dos outros motores e, por segurança, qualquer outra (vai para a voz padrão).
         return TextToSpeech.SUCCESS;
     }
 
@@ -253,6 +292,7 @@ public class GTtsService extends TextToSpeechService {
         mainEngine.stop();
         emojiEngine.stop();
         fallbackEngine.stop();
+        pickedEngine.stop();
     }
 
     @Override
@@ -303,10 +343,31 @@ public class GTtsService extends TextToSpeechService {
         // Junta o que vai para a mesma voz e velocidade (sem voz de emojis, eles vão na principal).
         segments = TextProcessor.merge(segments, useEmojiEngine, separateNumbers);
 
+        // Voz pedida pelo aplicativo (uma das vozes dos outros motores): fala com aquele motor e aquela
+        // voz, com tudo o que o Gerenciador faz. Sem voz pedida (TalkBack e outros), segue como sempre.
+        VoiceCatalog.Entry picked = VoiceCatalog.find(this, request.getVoiceName());
+        if (picked != null) {
+            boolean ok = pickedEngine.ensure(picked.pkg, stopFlag);
+            String note = "um aplicativo pediu a voz " + picked.voice + " do motor " + picked.pkg
+                    + (ok ? ": o motor respondeu." : ": o motor não respondeu; foi usada a voz padrão do Gerenciador.");
+            if (!note.equals(lastPickedNote)) {
+                lastPickedNote = note;
+                Diagnostics.note(this, note);
+            }
+            if (stopped) {
+                return;
+            }
+            if (ok) {
+                mainPkg = picked.pkg;
+            } else {
+                picked = null;
+            }
+        }
+
         // Motor principal; se ele falhar ou ainda não puder rodar, usa o motor reserva.
-        EngineClient mainUse = mainEngine;
-        String mainVoice = Prefs.voice(p, Prefs.MAIN);
-        if (!mainEngine.ensure(mainPkg, stopFlag)) {
+        EngineClient mainUse = picked != null ? pickedEngine : mainEngine;
+        String mainVoice = picked != null ? picked.voice : Prefs.voice(p, Prefs.MAIN);
+        if (picked == null && !mainEngine.ensure(mainPkg, stopFlag)) {
             if (stopped) {
                 return;
             }
