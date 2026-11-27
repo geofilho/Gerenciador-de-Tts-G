@@ -78,6 +78,13 @@ public class NumbersActivity extends Activity {
             }
         });
 
+        findViewById(R.id.btn_translation).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new android.content.Intent(NumbersActivity.this, TranslationActivity.class));
+            }
+        });
+
         findViewById(R.id.btn_unlabeled).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

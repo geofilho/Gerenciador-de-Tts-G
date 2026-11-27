@@ -69,13 +69,6 @@ public class MainActivity extends Activity {
             }
         });
 
-        findViewById(R.id.btn_translation).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, TranslationActivity.class));
-            }
-        });
-
         findViewById(R.id.btn_backup).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

@@ -41,6 +41,11 @@
             style="@style/Row"
             android:text="@string/unlabeled_page" />
 
+        <Button
+            android:id="@+id/btn_translation"
+            style="@style/Row"
+            android:text="@string/title_translation" />
+
         <EditText
             android:id="@+id/edit_test"
             style="@style/Row"
