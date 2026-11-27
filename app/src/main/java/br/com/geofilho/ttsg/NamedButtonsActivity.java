@@ -139,6 +139,23 @@ public class NamedButtonsActivity extends Activity {
                             .putExtra(EXTRA_PKG, p));
                 }
             });
+            b.setAccessibilityDelegate(new View.AccessibilityDelegate() {
+                @Override
+                public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfo info) {
+                    super.onInitializeAccessibilityNodeInfo(host, info);
+                    info.addAction(new AccessibilityNodeInfo.AccessibilityAction(R.id.action_delete_app,
+                            getString(R.string.named_delete_app)));
+                }
+
+                @Override
+                public boolean performAccessibilityAction(View host, int action, Bundle args) {
+                    if (action == R.id.action_delete_app) {
+                        deleteApp(p, labels.get(p), counts.get(p));
+                        return true;
+                    }
+                    return super.performAccessibilityAction(host, action, args);
+                }
+            });
             list.addView(b);
         }
     }
@@ -191,6 +208,26 @@ public class NamedButtonsActivity extends Activity {
                         }
                         Unlabeled.renameKey(NamedButtonsActivity.this, e[0], name);
                         Toggles.say(NamedButtonsActivity.this, "Nome guardado: " + name + ".");
+                        fill();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    /** Apaga todos os nomes dados nos botões de um aplicativo (pede confirmação). */
+    private void deleteApp(final String p, final String label, int n) {
+        new AlertDialog.Builder(this)
+                .setMessage("Apagar " + (n == 1 ? "o nome do botão" : "os nomes dos " + n + " botões") + " do " + label + "?")
+                .setPositiveButton(R.string.named_delete, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface d, int w) {
+                        for (String[] e : Unlabeled.listNames(NamedButtonsActivity.this)) {
+                            if (e[1].equals(p)) {
+                                Unlabeled.renameKey(NamedButtonsActivity.this, e[0], "");
+                            }
+                        }
+                        Toggles.say(NamedButtonsActivity.this, "Nomes do " + label + " apagados.");
                         fill();
                     }
                 })

@@ -101,6 +101,35 @@ public class GboardService extends AccessibilityService {
             }
         };
         Prefs.get(this).registerOnSharedPreferenceChangeListener(prefsWatch);
+        listenShortcut();
+    }
+
+    /**
+     * Atalho de acessibilidade do Android (botão de acessibilidade, gesto de deslizar três dedos para
+     * cima com o TalkBack, ou teclas de volume): se a pessoa escolher o Gerenciador nele, abre a
+     * janela "Dar nome ao botão" para o último botão sem nome. Não usa gestos do TalkBack.
+     */
+    private void listenShortcut() {
+        if (android.os.Build.VERSION.SDK_INT < 26) {
+            return;
+        }
+        try {
+            getAccessibilityButtonController().registerAccessibilityButtonCallback(
+                    new android.accessibilityservice.AccessibilityButtonController.AccessibilityButtonCallback() {
+                        @Override
+                        public void onClicked(android.accessibilityservice.AccessibilityButtonController c) {
+                            android.content.Intent i = new android.content.Intent(GboardService.this,
+                                    NameButtonActivity.class);
+                            i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                                    | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            try {
+                                startActivity(i);
+                            } catch (Exception ignored) {
+                            }
+                        }
+                    });
+        } catch (Exception ignored) {
+        }
     }
 
     /** Liga ou desliga a escuta de todos os aplicativos quando a chave dos botões sem etiqueta muda. */
