@@ -43,7 +43,7 @@
             android:name=".DictionaryImportActivity"
             android:excludeFromRecents="true"
             android:exported="true"
-            android:label="Abrir no Gerenciador de TTS G"
+            android:label="Importar no Gerenciador de TTS G"
             android:theme="@style/TranslucentTheme">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
