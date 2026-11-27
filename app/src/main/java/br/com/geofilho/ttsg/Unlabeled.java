@@ -101,6 +101,20 @@ final class Unlabeled {
         }
         // Descrição que é código ("home_square_icon_live"): o leitor de tela fala o código; troca por nome legível.
         String readable = readableCodes(c, text);
+        // Número interno do Android no lugar do nome ("2131428709. Botão"): é o código do elemento, não
+        // um número de verdade. Só sai quando, sem ele, a fala fica só com o tipo do botão.
+        Matcher rid = RESOURCE_ID.matcher(readable);
+        if (rid.find()) {
+            try {
+                long v = Long.parseLong(rid.group(1));
+                String without = (readable.substring(0, rid.start()) + " " + readable.substring(rid.end()))
+                        .replaceAll("^[\\s.,]+", "").trim();
+                if (v >= 2130706432L && v <= 2147483647L && isBare(without)) {
+                    readable = without;
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
         if (!readable.equals(text)) {
             remember(c, "código falado: \"" + text + "\" trocado por \"" + readable + "\"");
             text = readable;
@@ -207,6 +221,8 @@ final class Unlabeled {
     private static final Pattern IMAGE_FILE = Pattern.compile(
             "\\b[A-Za-z0-9]{12,}\\.(jpe?g|png|webp|gif|avif|heic)(_[0-9x]+)?(\\.[a-z]+)*\\b",
             Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern RESOURCE_ID = Pattern.compile("(?<![\\d.,])(21\\d{8})(?![\\d,])");
 
     private static final Pattern SPOKEN_CODE = Pattern.compile("\\b[a-z][a-z0-9]*(_[a-z0-9]+)+\\b");
 
