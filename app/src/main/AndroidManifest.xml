@@ -43,7 +43,7 @@
             android:name=".DictionaryImportActivity"
             android:excludeFromRecents="true"
             android:exported="true"
-            android:label="Importar no Gerenciador de TTS G"
+            android:label="Abrir no Gerenciador de TTS G"
             android:theme="@style/TranslucentTheme">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -110,6 +110,10 @@
             android:exported="true"
             android:label="Dar nome ao botão"
             android:targetActivity=".NameButtonActivity" />
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:label="@string/about" />
         <activity
             android:name=".UnlabeledActivity"
             android:exported="false"

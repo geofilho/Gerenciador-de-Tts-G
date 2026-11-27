@@ -161,6 +161,22 @@ final class Dictionary {
         return read.size();
     }
 
+    /** Dicionário inteiro em JSON (para o backup). */
+    synchronized JSONObject exportJson() throws JSONException {
+        return toJson();
+    }
+
+    /** Troca o dicionário inteiro pelo do backup. */
+    synchronized void replaceAll(String json) throws JSONException {
+        List<Entry> read = new ArrayList<>();
+        parseInto(json, read);
+        entries.clear();
+        for (Entry e : read) {
+            putNoSave(e.word, e.replacement);
+        }
+        saveAndRebuild();
+    }
+
     // ----- interno -----
 
     private void saveAndRebuild() {

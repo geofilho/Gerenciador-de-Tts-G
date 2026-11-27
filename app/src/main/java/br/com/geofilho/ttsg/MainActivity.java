@@ -20,7 +20,6 @@ public class MainActivity extends Activity {
 
     private VoiceSection voice;
     private Button btnSystem;
-    private Updater updater;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,35 +76,21 @@ public class MainActivity extends Activity {
             }
         });
 
-        findViewById(R.id.btn_diagnostics).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btn_about).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, DiagnosticsActivity.class));
+                startActivity(new Intent(MainActivity.this, AboutActivity.class));
             }
         });
 
         handleShortcut(getIntent());
         removeDeviceTranslatorFiles();
 
-        updater = new Updater(this);
-        Button btnUpdate = findViewById(R.id.btn_update);
-        try {
-            String v = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-            btnUpdate.setText(getString(R.string.check_update) + ", versão instalada " + v);
-        } catch (Exception ignored) {
-        }
-        btnUpdate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                updater.check();
-            }
-        });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        updater.onResume();
         String def = null;
         try {
             def = Settings.Secure.getString(getContentResolver(), "tts_default_synth");

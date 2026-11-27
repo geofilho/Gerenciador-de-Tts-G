@@ -102,4 +102,10 @@ Os nomes ficam em Botões que você nomeou, separados por aplicativo, onde dá p
     <string name="named_delete_app">Apagar todos os nomes deste aplicativo</string>
     <string name="named_edit">Editar nome</string>
     <string name="named_delete">Apagar nome</string>
+    <string name="about">Sobre</string>
+    <string name="backup">Backup</string>
+    <string name="backup_button">Backup: fazer backup e restaurar backup das configurações, do dicionário e dos botões nomeados</string>
+    <string name="backup_restore_confirm">As configurações, o dicionário e os nomes dos botões atuais serão substituídos pelos do backup. Continuar?</string>
+    <string name="backup_restored">Backup restaurado. As configurações, o dicionário e os nomes dos botões foram substituídos.</string>
+    <string name="backup_restore_failed">Não foi possível restaurar. Confira se o arquivo é um backup do Gerenciador de TTS G.</string>
 </resources>
