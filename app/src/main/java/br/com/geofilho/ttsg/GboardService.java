@@ -95,7 +95,7 @@ public class GboardService extends AccessibilityService {
         prefsWatch = new android.content.SharedPreferences.OnSharedPreferenceChangeListener() {
             @Override
             public void onSharedPreferenceChanged(android.content.SharedPreferences sp, String key) {
-                if ("unlabeled_on".equals(key)) {
+                if ("unlabeled_on".equals(key) || "gboard_on".equals(key)) {
                     followKeyboard();
                 }
             }
@@ -152,8 +152,19 @@ public class GboardService extends AccessibilityService {
         try {
             android.accessibilityservice.AccessibilityServiceInfo info = getServiceInfo();
             if (info != null) {
+                android.content.SharedPreferences p = Prefs.get(this);
+                boolean unlabeled = Prefs.unlabeledOn(p);
+                boolean keyboard = Prefs.gboardOn(p);
                 // Com a função dos botões sem etiqueta ligada, recebe o foco de todos os aplicativos.
-                info.packageNames = Prefs.unlabeledOn(Prefs.get(this)) ? null : new String[]{pkg};
+                info.packageNames = unlabeled ? null : new String[]{pkg};
+                // Só os botões sem etiqueta: pede ao Android só os avisos de foco, não as mudanças de tela
+                // de todos os aplicativos (menos trabalho para o aparelho e para o leitor de tela).
+                info.eventTypes = unlabeled && !keyboard ? AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED
+                        : AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED | AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+                        | AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED | AccessibilityEvent.TYPE_WINDOWS_CHANGED
+                        | AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
+                // Foco sem atraso (o motor espera por ele); as mudanças do teclado continuam agrupadas.
+                info.notificationTimeout = unlabeled && !keyboard ? 0 : 80;
                 setServiceInfo(info);
             }
         } catch (Exception ignored) {

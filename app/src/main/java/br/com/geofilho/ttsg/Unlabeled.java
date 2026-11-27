@@ -113,9 +113,12 @@ final class Unlabeled {
         synchronized (LOCK) {
             long start = System.currentTimeMillis();
             if (bare) {
-                // A fala pode chegar antes do aviso de foco: espera um pouco por um foco novo.
+                // A fala pode chegar antes do aviso de foco: espera um pouco por um foco novo. Só "Botão",
+                // "Ativado" e parecidos sem foco recente quase sempre são outra fala (uma chave que mudou):
+                // espera bem pouco, para não atrasar o leitor de tela.
+                long limit = !phrase && start - focusAt > 1500 ? 80 : 400;
                 while (start - focusAt > 1500 || !done) {
-                    long left = 400 - (System.currentTimeMillis() - start);
+                    long left = limit - (System.currentTimeMillis() - start);
                     if (left <= 0) {
                         break;
                     }
@@ -231,6 +234,9 @@ final class Unlabeled {
 
     /** Guarda o achado na memória e em arquivo (não se perde se o Android fechar o Gerenciador). */
     private static void remember(Context c, String msg) {
+        if (!Prefs.diagnosticsOn(Prefs.get(c))) {
+            return; // sem o diagnóstico ligado, não gasta tempo anotando
+        }
         synchronized (FOUND) {
             load(c);
             if (!FOUND.isEmpty() && FOUND.peekFirst().endsWith(msg)) {
