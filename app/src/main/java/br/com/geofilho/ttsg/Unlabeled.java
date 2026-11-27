@@ -105,7 +105,10 @@ final class Unlabeled {
         Matcher m = PHRASE.matcher(text);
         boolean phrase = m.find();
         // Fala sem conteúdo próprio: só "sem etiqueta", tipo ("Botão", "Imagem"), estado ou dica de toque.
-        boolean bare = phrase || isBare(text);
+        // Fala sem conteúdo próprio: só "Sem marcador", o tipo ("Botão"), o estado ou a dica de toque.
+        // Se o leitor de tela já falou conteúdo (por exemplo, textos de dentro com "Sem marcador" de
+        // imagens no meio), não mexe, para não repetir tudo.
+        boolean bare = isBare(PHRASE.matcher(text).replaceAll(" "));
         String found;
         String type;
         String from;
@@ -865,7 +868,8 @@ final class Unlabeled {
                 "clear search", "limpar pesquisa", "search clear", "limpar pesquisa", "voice search", "pesquisa por voz",
                 "show balance", "mostrar saldo", "hide balance", "ocultar saldo", "balance visibility", "mostrar ou ocultar saldo",
                 "eye balance", "mostrar ou ocultar saldo", "close dialog", "fechar", "dialog close", "fechar",
-                "play pause", "reproduzir ou pausar", "sign in", "entrar", "product card", "produto", "live card", "ao vivo", "sign out", "sair", "log in", "entrar"
+                "play pause", "reproduzir ou pausar", "sign in", "entrar", "chat now", "conversar agora", "buy now", "comprar agora",
+                "add cart", "adicionar ao carrinho", "add to cart", "adicionar ao carrinho", "product card", "produto", "live card", "ao vivo", "sign out", "sair", "log in", "entrar"
         };
         for (int i = 0; i + 1 < p.length; i += 2) {
             PHRASES.put(p[i], p[i + 1]);
@@ -898,8 +902,12 @@ final class Unlabeled {
             }
             words.add(t);
         }
-        if (words.size() > 1 && words.get(0).equals("home")) {
-            words.remove(0); // "home_..." na Shopee é só o nome da tela inicial
+        String whole = PHRASES.get(join(words));
+        if (whole != null) {
+            return whole; // frase conhecida inteira ("product card" = produto)
+        }
+        if (words.size() > 1 && (words.get(0).equals("home") || words.get(0).equals("product"))) {
+            words.remove(0); // "home_..." e "buttonProduct..." na Shopee: só dizem a tela
         }
         if (words.isEmpty()) {
             return null;
