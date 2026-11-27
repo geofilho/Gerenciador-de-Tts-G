@@ -26,7 +26,7 @@ TELA PRINCIPAL, NA ORDEM DA VARREDURA
 - Adicionar palavra: abre os campos da palavra e da substituição. Aceita qualquer palavra ou frase, até com símbolos e pontuação. Exemplos: "vc" vira "você" e ":-)" vira "sorriso". Não diferencia letras maiúsculas de minúsculas.
 - Gerenciar dicionário: abre a lista de palavras. Tocando numa palavra, aparecem as opções Editar e Remover. No fim da página ficam os botões para exportar e importar o dicionário, e assim dá para trocar dicionários entre amigos. Também dá para importar tocando no arquivo do dicionário, por exemplo no Meus Arquivos, e escolhendo "Importar no Gerenciador de TTS G".
 
-8. Leitura de números, pontuação e emojis: abre uma página com estas opções.
+8. Personalização de leitura: abre uma página com estas opções.
 - Leitura de números: número inteiro, um a um ou dois a dois. Exemplo com 2026: inteiro fala "dois mil e vinte e seis", um a um fala "2 0 2 6" e dois a dois fala "20 26".
 - Velocidade dos números: barra de 0 a 100% para os números serem falados numa velocidade diferente do resto do texto.
 - Leitura de pontuação: nenhuma, algumas ou todas. O padrão é nenhuma. Em "algumas", são falados os símbolos menos comuns, como arroba, cerquilha, cifrão, por cento e parênteses. Em "todas", é falada toda a pontuação, inclusive ponto, vírgula e interrogação. A pontuação que faz parte de um número, como em "1.250,99" ou "12:30", continua sendo lida como número.

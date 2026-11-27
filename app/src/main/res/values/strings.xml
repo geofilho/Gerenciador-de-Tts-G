@@ -19,7 +19,7 @@
     <string name="dictionary_empty">O dicionário está vazio.</string>
     <string name="group_switch">Ler emojis e símbolos repetidos agrupados, exemplo: coração vermelho 5</string>
     <string name="check_update">Verificar atualização</string>
-    <string name="title_numbers">Leitura de números, pontuação e emojis</string>
+    <string name="title_numbers">Personalização de leitura</string>
     <string name="numbers_test_text">Meu telefone é 11987654321, o valor é R$ 1.250,99 às 12:30 e o e-mail é joao@site.com. Tudo certo? 😀👍👍👍 Até mais! 🎉</string>
     <string name="title_audio">Saída de áudio do leitor de tela</string>
     <string name="keep_on_phone">Manter o áudio do leitor de tela no telefone</string>
@@ -58,7 +58,7 @@ Se o seu aparelho tiver o tradutor do próprio Android, ele é usado primeiro, s
     <string name="widget_translation_desc">Liga e desliga a tradução de voz TTS.</string>
     <string name="actions_label">Ações do Gerenciador de TTS G</string>
     <string name="gboard_label">Gerenciador de TTS G: sugestões do teclado e botões sem etiqueta</string>
-    <string name="gboard_desc">Faz duas coisas, cada uma com sua chave no Gerenciador de TTS G, em Leitura de números, pontuação e emojis. Sugestões do teclado: fala a sugestão principal da barra de cima do teclado quando você pausa a digitação; nunca lê nada em campos de senha. Botões sem etiqueta: quando o leitor de tela fala sem etiqueta, procura o nome escondido do botão (nos textos de dentro dele ou no código interno) e fala esse nome no lugar. As duas chaves vêm desligadas.</string>
+    <string name="gboard_desc">Faz duas coisas, cada uma com sua chave no Gerenciador de TTS G, em Personalização de leitura. Sugestões do teclado: fala a sugestão principal da barra de cima do teclado quando você pausa a digitação; nunca lê nada em campos de senha. Botões sem etiqueta: quando o leitor de tela fala sem etiqueta, procura o nome escondido do botão (nos textos de dentro dele ou no código interno) e fala esse nome no lugar. As duas chaves vêm desligadas.</string>
     <string name="gboard_switch">Ler automaticamente as sugestões do teclado Gboard</string>
     <string name="unlabeled_switch">Falar o nome escondido dos botões sem etiqueta</string>
     <string name="gboard_setup_title">Sugestões do teclado e botões sem etiqueta</string>
@@ -71,7 +71,7 @@ Se o seu aparelho tiver o tradutor do próprio Android, ele é usado primeiro, s
     <string name="name_button_save">Guardar</string>
     <string name="name_button_delete">Apagar nome</string>
     <string name="name_button_none">Nenhum botão sem nome ainda. Num aplicativo, pare o leitor de tela no botão sem nome e abra esta janela pelas configurações rápidas, no botão Dar nome ao botão.</string>
-    <string name="name_button_off">Ligue antes a chave Falar o nome escondido dos botões sem etiqueta, em Leitura de números, pontuação e emojis, na página Botões sem etiqueta.</string>
+    <string name="name_button_off">Ligue antes a chave Falar o nome escondido dos botões sem etiqueta, em Personalização de leitura, na página Botões sem etiqueta.</string>
     <string name="unlabeled_page">Botões sem etiqueta</string>
     <string name="name_button_how">Como dar nome ao botão</string>
     <string name="name_button_now">Dar nome ao botão sem nome do %1$s</string>

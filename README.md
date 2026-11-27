@@ -25,7 +25,7 @@ Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para 
    exportar e importar; também dá para importar tocando no arquivo do
    dicionário, por exemplo em Meus Arquivos, e escolhendo "Importar no
    Gerenciador de TTS G")
-8. Leitura de números, pontuação e emojis (números inteiro, um a um ou dois a
+8. Personalização de leitura (números inteiro, um a um ou dois a
    dois; velocidade dos números; pontuação nenhuma, algumas ou todas; voz para
    emojis, com a opção de ignorar a palavra "Emoji" antes dos emojis; ler
    automaticamente as sugestões do teclado Gboard, testado no Gboard, no

@@ -15,7 +15,7 @@ import android.widget.Toast;
 import java.util.List;
 import java.util.Set;
 
-/** Página "Leitura de números, pontuação e emojis". */
+/** Página "Personalização de leitura". */
 public class NumbersActivity extends Activity {
 
     /** Na mesma ordem das constantes NUMBERS_* do TextProcessor. */
