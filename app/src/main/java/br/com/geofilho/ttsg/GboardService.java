@@ -164,8 +164,8 @@ public class GboardService extends AccessibilityService {
                         : AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED | AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
                         | AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED | AccessibilityEvent.TYPE_WINDOWS_CHANGED
                         | AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
-                // Foco sem atraso (o motor espera por ele); as mudanças do teclado continuam agrupadas.
-                info.notificationTimeout = unlabeled && !keyboard ? 0 : 80;
+                // Foco sem atraso (o motor espera por ele). O teclado já agrupa as próprias mudanças.
+                info.notificationTimeout = unlabeled ? 0 : 80;
                 setServiceInfo(info);
             }
         } catch (Exception ignored) {

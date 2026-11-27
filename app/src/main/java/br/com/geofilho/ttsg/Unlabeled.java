@@ -62,6 +62,7 @@ final class Unlabeled {
     static void focusStarted() {
         synchronized (LOCK) {
             focusCount++;
+            LOCK.notifyAll(); // acorda a fala que espera por um foco novo
             focusAt = System.currentTimeMillis();
             done = false;
             name = null;
@@ -117,7 +118,23 @@ final class Unlabeled {
                 // "Ativado" e parecidos sem foco recente quase sempre são outra fala (uma chave que mudou):
                 // espera bem pouco, para não atrasar o leitor de tela.
                 long limit = !phrase && start - focusAt > 1500 ? 80 : 400;
-                while (start - focusAt > 1500 || !done) {
+                // O último foco já tem um tempo: esta fala pode ser de um botão novo cujo aviso de foco
+                // ainda não chegou. Espera um instante por ele, para não falar o nome do botão anterior.
+                long seen = focusAt;
+                if (start - seen > 250) {
+                    while (focusAt == seen) {
+                        long left = Math.min(limit, 150) - (System.currentTimeMillis() - start);
+                        if (left <= 0) {
+                            break;
+                        }
+                        try {
+                            LOCK.wait(left);
+                        } catch (InterruptedException e) {
+                            break;
+                        }
+                    }
+                }
+                while (System.currentTimeMillis() - focusAt > 1500 || !done) {
                     long left = limit - (System.currentTimeMillis() - start);
                     if (left <= 0) {
                         break;
@@ -163,7 +180,8 @@ final class Unlabeled {
         // ("Pesquisar, Botão").
         String rest = phrase ? (text.substring(0, m.start()) + " " + text.substring(m.end())).trim() : text.trim();
         rest = rest.replaceAll("^[,.\\s]+", "").trim();
-        StringBuilder sb = new StringBuilder(found);
+        // Sem ponto ou vírgula no fim do nome ("Buscar produto." vira "Buscar produto").
+        StringBuilder sb = new StringBuilder(found.replaceAll("[\\s.,;:]+$", ""));
         if (!ROLE.matcher(rest).find() && !type.isEmpty()) {
             sb.append(", ").append(type);
         }
