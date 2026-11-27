@@ -53,6 +53,7 @@ public class NameButtonActivity extends Activity {
                     public void onClick(DialogInterface d, int w) {
                         String name = edit.getText().toString().trim();
                         Unlabeled.nameTarget(NameButtonActivity.this, name);
+                        Unlabeled.forgetTarget();
                         Toggles.say(NameButtonActivity.this, name.isEmpty() ? "Nome apagado." : "Nome guardado: " + name + ".");
                         finish();
                     }
@@ -64,6 +65,7 @@ public class NameButtonActivity extends Activity {
                 @Override
                 public void onClick(DialogInterface d, int w) {
                     Unlabeled.nameTarget(NameButtonActivity.this, "");
+                    Unlabeled.forgetTarget();
                     Toggles.say(NameButtonActivity.this, "Nome apagado.");
                     finish();
                 }

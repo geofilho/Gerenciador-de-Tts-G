@@ -443,6 +443,13 @@ final class Unlabeled {
         e.apply();
     }
 
+    /** Esquece o último botão sem nome (depois de nomear, o botão da página volta a mostrar a explicação). */
+    static void forgetTarget() {
+        synchronized (LOCK) {
+            targetRect = null;
+        }
+    }
+
     static int namedCount(Context c) {
         return names(c).getAll().size();
     }

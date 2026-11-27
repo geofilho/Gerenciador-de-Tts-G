@@ -2,7 +2,6 @@ package br.com.geofilho.ttsg;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -32,7 +31,12 @@ public class UnlabeledActivity extends Activity {
         findViewById(R.id.btn_name_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                explain();
+                // Já parou num botão sem nome e voltou aqui: abre direto a janela de dar nome.
+                if (Unlabeled.target() != null) {
+                    startActivity(new Intent(UnlabeledActivity.this, NameButtonActivity.class));
+                } else {
+                    explain();
+                }
             }
         });
         findViewById(R.id.btn_named_list).setOnClickListener(new View.OnClickListener() {
@@ -43,21 +47,30 @@ public class UnlabeledActivity extends Activity {
         });
     }
 
-    /** Explica como dar nome; se já houver um botão sem nome guardado, oferece nomear agora. */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // O texto do botão diz o que ele vai fazer agora.
+        android.widget.Button b = findViewById(R.id.btn_name_button);
+        String[] t = Unlabeled.target();
+        if (t == null) {
+            b.setText(R.string.name_button_how);
+        } else {
+            String app = t[0];
+            try {
+                app = getPackageManager().getApplicationLabel(getPackageManager().getApplicationInfo(t[0], 0)).toString();
+            } catch (Exception ignored) {
+            }
+            b.setText(getString(R.string.name_button_now, app));
+        }
+    }
+
+    /** Explica como dar nome a um botão. */
     private void explain() {
-        AlertDialog.Builder b = new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this)
                 .setTitle(R.string.name_button_how)
                 .setMessage(R.string.name_button_help)
-                .setPositiveButton(R.string.gboard_done, null);
-        String[] t = Unlabeled.target();
-        if (t != null) {
-            b.setNeutralButton(R.string.name_button_last, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface d, int w) {
-                    startActivity(new Intent(UnlabeledActivity.this, NameButtonActivity.class));
-                }
-            });
-        }
-        b.show();
+                .setPositiveButton(R.string.gboard_done, null)
+                .show();
     }
 }

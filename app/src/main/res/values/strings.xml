@@ -74,6 +74,7 @@ Se o seu aparelho tiver o tradutor do próprio Android, ele é usado primeiro, s
     <string name="name_button_off">Ligue antes a chave Falar o nome escondido dos botões sem etiqueta, em Leitura de números, pontuação e emojis, na página Botões sem etiqueta.</string>
     <string name="unlabeled_page">Botões sem etiqueta</string>
     <string name="name_button_how">Como dar nome ao botão</string>
+    <string name="name_button_now">Dar nome ao botão sem nome do %1$s</string>
     <string name="name_button_last">Nomear o último botão sem nome</string>
     <string name="name_button_help">Quando o leitor de tela fala Sem marcador ou só Botão, e o Gerenciador não acha o nome sozinho, você mesmo pode dar o nome, uma vez só. Pare o leitor de tela no botão sem nome e abra a janela Dar nome ao botão por uma das opções abaixo. Na janela, escreva o nome e toque em Guardar. Depois disso, sempre que o foco cair nesse botão, no mesmo lugar e do mesmo tamanho nesse aplicativo, o Gerenciador fala o nome que você deu. Funciona melhor em botões que ficam sempre no mesmo lugar.
 
@@ -92,7 +93,7 @@ Para configurar: crie uma macro com a ação Iniciar atividade de aplicativo, es
 Para usar: parado no botão sem nome, dispare a macro.
 
 Opção 4, por aqui mesmo:
-Se você acabou de passar por um botão sem nome num aplicativo e voltou ao Gerenciador, use o botão Nomear o último botão sem nome, no fim desta explicação. Ele só aparece quando há um botão sem nome guardado.
+Pare o leitor de tela no botão sem nome, volte ao Gerenciador e abra a página Botões sem etiqueta. O primeiro botão da página passa a se chamar Dar nome ao botão sem nome, com o nome do aplicativo, e abre direto a janela de dar nome. Depois de guardar, ele volta a mostrar esta explicação.
 
 Os nomes ficam em Botões que você nomeou, separados por aplicativo, onde dá para editar ou apagar.\n\nPor que esta opção existe:\nAlguns aplicativos criam botões sem nenhum texto, sem descrição e sem código interno. O leitor de tela não tem o que falar e diz só Sem marcador ou Botão. Primeiro, o Gerenciador tenta descobrir o nome sozinho: procura textos dentro do botão, dicas escondidas e o código interno do aplicativo (por exemplo, btn_send vira enviar). Quando o botão não tem nada disso, não existe de onde tirar o nome. Até a etiqueta personalizada do TalkBack falha nesses botões, porque ela depende do código interno, que eles não têm.\n\nComo funciona:\nSem código, o único jeito de reconhecer o botão é pelo lugar dele na tela. O Gerenciador guarda o aplicativo, o tipo do botão, a posição e o tamanho. Quando o foco cai num botão do mesmo tipo, no mesmo lugar e do mesmo tamanho nesse aplicativo, ele fala o nome que você deu no lugar de Sem marcador.\n\nAtenção:\nComo esses botões não têm código, o reconhecimento depende da posição. Se o aplicativo for atualizado e mudar a tela, ou se o botão mudar de lugar ou de tamanho, o nome deixa de ser falado, e é preciso dar o nome de novo. Em listas que rolam, o lugar muda o tempo todo, então o nome pode não pegar. O nome antigo continua em Botões que você nomeou e pode ser apagado lá.</string>
     <string name="name_button_list">Botões que você nomeou</string>
