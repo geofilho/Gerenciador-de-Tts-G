@@ -105,8 +105,8 @@ public class GboardService extends AccessibilityService {
     }
 
     /**
-     * Atalho de acessibilidade do Android (botão de acessibilidade, gesto de deslizar três dedos para
-     * cima com o TalkBack, ou teclas de volume): se a pessoa escolher o Gerenciador nele, abre a
+     * Atalho de acessibilidade do aparelho (botão de acessibilidade, teclas de volume ou, na Samsung,
+     * botão lateral com diminuir volume): se a pessoa escolher o Gerenciador nele, abre a
      * janela "Dar nome ao botão" para o último botão sem nome. Não usa gestos do TalkBack.
      */
     private void listenShortcut() {
