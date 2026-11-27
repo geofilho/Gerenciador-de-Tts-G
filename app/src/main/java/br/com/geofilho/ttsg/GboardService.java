@@ -159,7 +159,8 @@ public class GboardService extends AccessibilityService {
                 info.packageNames = unlabeled ? null : new String[]{pkg};
                 // Só os botões sem etiqueta: pede ao Android só os avisos de foco, não as mudanças de tela
                 // de todos os aplicativos (menos trabalho para o aparelho e para o leitor de tela).
-                info.eventTypes = unlabeled && !keyboard ? AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED
+                info.eventTypes = unlabeled && !keyboard
+                        ? AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED | AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
                         : AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED | AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
                         | AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED | AccessibilityEvent.TYPE_WINDOWS_CHANGED
                         | AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
@@ -192,6 +193,12 @@ public class GboardService extends AccessibilityService {
             return;
         }
         android.content.SharedPreferences prefs = Prefs.get(this);
+        if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && Prefs.unlabeledOn(prefs)) {
+            CharSequence app = event.getPackageName();
+            if (app != null) {
+                Unlabeled.screenChanged(app.toString(), event.getClassName()); // tela do aplicativo
+            }
+        }
         if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED) {
             if (Prefs.unlabeledOn(prefs)) {
                 CharSequence app = event.getPackageName();

@@ -176,10 +176,21 @@ final class Unlabeled {
         return out;
     }
 
+    private static final Pattern IMAGE_FILE = Pattern.compile(
+            "\\b[A-Za-z0-9]{12,}\\.(jpe?g|png|webp|gif|avif|heic)(_[0-9x]+)?(\\.[a-z]+)*\\b",
+            Pattern.CASE_INSENSITIVE);
+
     private static final Pattern SPOKEN_CODE = Pattern.compile("\\b[a-z][a-z0-9]*(_[a-z0-9]+)+\\b");
 
     /** Troca cada código no texto ("dd_module_product_card_1") pelo nome legível ("produto"). */
     static String readableCodes(Context c, String text) {
+        // Nome de arquivo de imagem ("Sc61026d...a9du.jpg_350x350. graphic"): fala só "imagem".
+        if (text.indexOf('.') >= 0) {
+            Matcher f = IMAGE_FILE.matcher(text);
+            if (f.find()) {
+                text = f.replaceAll("imagem").replaceAll("(?i)imagem[.,]?\\s*graphic", "imagem").trim();
+            }
+        }
         if (text.indexOf('_') < 0) {
             return text;
         }
@@ -309,6 +320,7 @@ final class Unlabeled {
         CharSequence clsSeq = n.getClassName();
         String cls = clsSeq == null ? "?" : clsSeq.toString().substring(clsSeq.toString().lastIndexOf('.') + 1);
         Rect r = boundsDp(c, n);
+        String screen = screenKey(appName, n);
         String where = where(c, r);
         // Lembra o elemento, para a pessoa poder dar um nome a ele (tela "Dar nome ao botão").
         if (isRegularApp(c, appName)) {
@@ -316,12 +328,13 @@ final class Unlabeled {
                 targetPkg = appName;
                 targetCls = cls;
                 targetRect = r;
+                targetScreen = screen;
                 targetWhere = where;
                 targetType = type;
             }
         }
         // 1. Nome que a própria pessoa deu.
-        String own = ownName(c, appName, cls, r);
+        String own = ownName(c, appName, cls, r, screen);
         if (own != null) {
             found(c, own, type, "nome que você deu", id, appName, cls, where);
             return;
@@ -387,6 +400,87 @@ final class Unlabeled {
     private static Rect targetRect;
     private static String targetWhere = "";
     private static String targetType = "";
+    private static String targetScreen = "";
+
+    /** Tela atual (atividade) de cada aplicativo, vinda dos avisos de troca de janela. */
+    private static final Map<String, String> SCREENS = new HashMap<>();
+
+    /** Chamado pelo serviço quando um aplicativo troca de tela. */
+    static void screenChanged(String pkg, CharSequence className) {
+        if (pkg == null || className == null) {
+            return;
+        }
+        String k = className.toString();
+        if (!k.contains("Activity")) {
+            return; // janelinhas e menus: continua na mesma tela
+        }
+        synchronized (SCREENS) {
+            SCREENS.put(pkg, k.substring(k.lastIndexOf('.') + 1));
+        }
+    }
+
+    private static String screenOf(String pkg) {
+        synchronized (SCREENS) {
+            String s = SCREENS.get(pkg);
+            return s == null ? "" : s;
+        }
+    }
+
+    /**
+     * Identificação da tela onde o botão está: a tela do aplicativo e a vizinhança do botão (tipo do
+     * grupo em que ele está, quantos elementos há nele e a posição do botão). Botões no mesmo lugar em
+     * telas diferentes costumam ter vizinhanças diferentes.
+     */
+    private static String screenKey(String pkg, AccessibilityNodeInfo n) {
+        StringBuilder sb = new StringBuilder("A=").append(screenOf(pkg)).append(";S=");
+        try {
+            AccessibilityNodeInfo parent = n.getParent();
+            if (parent != null) {
+                CharSequence pc = parent.getClassName();
+                String pcs = pc == null ? "?" : pc.toString().substring(pc.toString().lastIndexOf('.') + 1);
+                int count = parent.getChildCount();
+                int index = -1;
+                for (int i = 0; i < count && i < 30; i++) {
+                    AccessibilityNodeInfo ch = parent.getChild(i);
+                    if (n.equals(ch)) {
+                        index = i;
+                        break;
+                    }
+                }
+                sb.append(pcs).append(':').append(count).append(':').append(index);
+                AccessibilityNodeInfo grand = parent.getParent();
+                if (grand != null) {
+                    sb.append(':').append(grand.getChildCount());
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return sb.toString().replace('|', '/');
+    }
+
+    /** Mesma tela? Nomes antigos, sem tela guardada, valem em qualquer tela. */
+    private static boolean sameScreen(String stored, String now) {
+        if (stored == null || stored.isEmpty() || now == null || now.isEmpty()) {
+            return true;
+        }
+        String[] a = split(stored);
+        String[] b = split(now);
+        boolean activity = a[0].isEmpty() || b[0].isEmpty() || a[0].equals(b[0]);
+        return activity && a[1].equals(b[1]);
+    }
+
+    private static String[] split(String key) {
+        String act = "";
+        String sig = "";
+        for (String part : key.split(";")) {
+            if (part.startsWith("A=")) {
+                act = part.substring(2);
+            } else if (part.startsWith("S=")) {
+                sig = part.substring(2);
+            }
+        }
+        return new String[]{act, sig};
+    }
 
     /** Último elemento sem nome focado num aplicativo comum: {aplicativo, classe, lugar, tipo}; null se nenhum. */
     static String[] target() {
@@ -403,12 +497,14 @@ final class Unlabeled {
         String pkg;
         String cls;
         Rect r;
+        String screen;
         synchronized (LOCK) {
             pkg = targetPkg;
             cls = targetCls;
             r = targetRect;
+            screen = targetScreen;
         }
-        return r == null ? null : ownName(c, pkg, cls, r);
+        return r == null ? null : ownName(c, pkg, cls, r, screen);
     }
 
     /** Dá um nome ao último elemento sem nome (vazio apaga). */
@@ -416,22 +512,27 @@ final class Unlabeled {
         String pkg;
         String cls;
         Rect r;
+        String screen;
         synchronized (LOCK) {
             pkg = targetPkg;
             cls = targetCls;
             r = targetRect;
+            screen = targetScreen;
         }
         if (r == null) {
             return;
         }
         android.content.SharedPreferences p = names(c);
         android.content.SharedPreferences.Editor e = p.edit();
-        String old = ownKey(c, pkg, cls, r);
+        boolean erase = name == null || name.trim().isEmpty();
+        // Trocar: só o nome desta tela. Apagar: o nome que está valendo aqui (mesmo um antigo, sem tela).
+        String old = ownKey(c, pkg, cls, r, screen, !erase);
         if (old != null) {
             e.remove(old);
         }
         if (name != null && !name.trim().isEmpty()) {
-            e.putString(pkg + "|" + cls + "|" + r.left + "," + r.top + "," + r.right + "," + r.bottom, name.trim());
+            e.putString(pkg + "|" + cls + "|" + r.left + "," + r.top + "," + r.right + "," + r.bottom + "|" + screen,
+                    name.trim());
         }
         e.apply();
     }
@@ -453,7 +554,7 @@ final class Unlabeled {
         for (Map.Entry<String, ?> e : names(c).getAll().entrySet()) {
             String k = e.getKey();
             String[] parts = k.split("\\|");
-            if (parts.length != 3 || !(e.getValue() instanceof String)) {
+            if (parts.length < 3 || !(e.getValue() instanceof String)) {
                 continue;
             }
             String place = "";
@@ -464,6 +565,9 @@ final class Unlabeled {
                             Integer.parseInt(v[2]), Integer.parseInt(v[3])));
                 } catch (NumberFormatException ignored) {
                 }
+            }
+            if (parts.length < 4) {
+                place = place + (place.isEmpty() ? "" : ", ") + "vale em qualquer tela";
             }
             out.add(new String[]{k, parts[0], (String) e.getValue(), place});
         }
@@ -482,13 +586,17 @@ final class Unlabeled {
         return Prefs.storage(c).getSharedPreferences("nomes_dos_botoes", Context.MODE_PRIVATE);
     }
 
-    private static String ownName(Context c, String pkg, String cls, Rect r) {
-        String k = ownKey(c, pkg, cls, r);
+    private static String ownName(Context c, String pkg, String cls, Rect r, String screen) {
+        String k = ownKey(c, pkg, cls, r, screen, false);
         return k == null ? null : names(c).getString(k, null);
     }
 
     /** Chave do nome guardado para um elemento parecido: mesmo aplicativo e tipo, mesmo lugar e tamanho (folga de 24dp). */
-    private static String ownKey(Context c, String pkg, String cls, Rect r) {
+    /**
+     * {@code onlyThisScreen}: só nomes guardados com esta mesma tela (para trocar o nome sem apagar o
+     * de outra tela). Sem ele, um nome desta tela vale mais que um nome antigo, sem tela guardada.
+     */
+    private static String ownKey(Context c, String pkg, String cls, Rect r, String screen, boolean onlyThisScreen) {
         if (r == null || pkg.isEmpty()) {
             return null;
         }
@@ -499,7 +607,16 @@ final class Unlabeled {
             if (!k.startsWith(prefix)) {
                 continue;
             }
-            String[] v = k.substring(prefix.length()).split(",");
+            String[] rest = k.substring(prefix.length()).split("\\|", 2);
+            String stored = rest.length > 1 ? rest[1] : "";
+            if (!sameScreen(stored, screen)) {
+                continue; // mesmo lugar, mas em outra tela
+            }
+            boolean legacy = stored.isEmpty();
+            if (legacy && onlyThisScreen) {
+                continue;
+            }
+            String[] v = rest[0].split(",");
             if (v.length != 4) {
                 continue;
             }
@@ -512,8 +629,10 @@ final class Unlabeled {
                 int dy = Math.abs((t + b) / 2 - r.centerY());
                 int dw = Math.abs((rt - l) - r.width());
                 int dh = Math.abs((b - t) - r.height());
-                if (dx <= 24 && dy <= 24 && dw <= 24 && dh <= 24 && dx + dy + dw + dh < bestDiff) {
-                    bestDiff = dx + dy + dw + dh;
+                // Nome antigo (sem tela) só ganha se não houver um desta tela.
+                int diff = dx + dy + dw + dh + (legacy ? 1000 : 0);
+                if (dx <= 24 && dy <= 24 && dw <= 24 && dh <= 24 && diff < bestDiff) {
+                    bestDiff = diff;
                     best = k;
                 }
             } catch (NumberFormatException ignored) {
@@ -545,8 +664,17 @@ final class Unlabeled {
                 && !pkg.contains("pixelboard");
     }
 
+    /** Sem texto de verdade (vazio, só espaços ou caracteres invisíveis). */
     private static boolean empty(CharSequence s) {
-        return s == null || s.toString().trim().isEmpty();
+        if (s == null) {
+            return true;
+        }
+        for (int i = 0; i < s.length(); i++) {
+            if (Character.isLetterOrDigit(s.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static String type(AccessibilityNodeInfo n) {
