@@ -91,74 +91,110 @@ final class Unlabeled {
      * nome, troca pelo nome encontrado. Espera um instante se a procura ainda não terminou.
      */
     static String replace(Context c, String text) {
-        if (text == null || text.length() > 300) {
+        if (text == null || text.trim().isEmpty() || text.length() > 200) {
             return text;
         }
         Matcher m = PHRASE.matcher(text);
-        if (!m.find()) {
-            return text;
-        }
+        boolean phrase = m.find();
+        // Fala sem conteúdo próprio: só "sem etiqueta", tipo ("Botão", "Imagem"), estado ou dica de toque.
+        boolean bare = phrase || isBare(text);
         String found;
         String type;
         String from;
-        String id;
         String app;
         boolean noName;
         synchronized (LOCK) {
             long start = System.currentTimeMillis();
-            // A fala pode chegar antes do aviso de foco: espera um pouco por um foco novo.
-            while (start - focusAt > 1500 || !done) {
-                long left = 400 - (System.currentTimeMillis() - start);
-                if (left <= 0) {
-                    break;
-                }
-                try {
-                    LOCK.wait(left);
-                } catch (InterruptedException e) {
-                    break;
+            if (bare) {
+                // A fala pode chegar antes do aviso de foco: espera um pouco por um foco novo.
+                while (start - focusAt > 1500 || !done) {
+                    long left = 400 - (System.currentTimeMillis() - start);
+                    if (left <= 0) {
+                        break;
+                    }
+                    try {
+                        LOCK.wait(left);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
                 }
             }
-            if (!done || System.currentTimeMillis() - focusAt > 2000) {
-                // Foco antigo ou procura sem terminar: não arrisca falar o nome de outro botão.
-                remember(c, "\"" + text + "\": não trocado, "
-                        + (focusAt == 0 ? "o serviço ainda não recebeu nenhum foco"
-                        : !done ? "a procura do nome não terminou a tempo"
-                        : "o último foco foi há " + (System.currentTimeMillis() - focusAt) + " ms"));
+            boolean fresh = done && System.currentTimeMillis() - focusAt <= 1500;
+            if (!fresh) {
+                if (bare) {
+                    remember(c, "\"" + text + "\": não trocado, "
+                            + (focusAt == 0 ? "o serviço ainda não recebeu nenhum foco"
+                            : !done ? "a procura do nome não terminou a tempo"
+                            : "o último foco foi há " + (System.currentTimeMillis() - focusAt) + " ms"));
+                }
                 return text;
             }
             found = name;
             type = kind;
             from = source;
-            id = code;
             app = pkg;
             noName = unnamed;
         }
         if (!noName) {
-            remember(c, "\"" + text + "\" em " + app + ": não trocado, o elemento focado tem texto ou descrição");
+            if (phrase) {
+                remember(c, "\"" + text + "\" em " + app + ": não trocado, o elemento focado tem texto ou descrição");
+            }
+            return text;
+        }
+        if (!bare) {
+            // O leitor de tela já falou algum conteúdo (por exemplo, os textos de dentro): não mexe.
+            remember(c, "fala depois do foco sem nome em " + app + ": \"" + text + "\", não trocado (já tem conteúdo)");
             return text;
         }
         if (found == null || found.isEmpty()) {
-            remember(c, "\"" + text + "\" em " + app + ": nada encontrado"
-                    + (id.isEmpty() ? ", sem código" : ", código " + id) + (type.isEmpty() ? "" : ", tipo " + type));
+            remember(c, "fala depois do foco sem nome em " + app + ": \"" + text + "\", não trocado (nada encontrado)");
             return text;
         }
-        String head = text.substring(0, m.start()).trim();
-        String tail = text.substring(m.end()).trim();
-        StringBuilder sb = new StringBuilder();
-        boolean hasRole = ROLE.matcher(text).find();
-        if (!hasRole && !type.isEmpty()) {
-            sb.append(type).append(", ");
+        String out;
+        if (phrase) {
+            String head = text.substring(0, m.start()).trim();
+            String tail = text.substring(m.end()).trim();
+            StringBuilder sb = new StringBuilder();
+            if (!ROLE.matcher(text).find() && !type.isEmpty()) {
+                sb.append(type).append(", ");
+            }
+            if (!head.isEmpty()) {
+                sb.append(head).append(head.endsWith(",") ? " " : ", ");
+            }
+            sb.append(found);
+            if (!tail.isEmpty()) {
+                sb.append(", ").append(tail);
+            }
+            out = sb.toString();
+        } else {
+            // Sem "sem etiqueta": põe o nome logo depois do tipo ("Botão" vira "Botão, enviar").
+            Matcher r = ROLE.matcher(text);
+            if (r.find()) {
+                out = text.substring(0, r.end()) + ", " + found + text.substring(r.end());
+            } else {
+                out = (type.isEmpty() ? "" : type + ", ") + found + ", " + text.trim();
+            }
         }
-        if (!head.isEmpty()) {
-            sb.append(head).append(head.endsWith(",") ? " " : ", ");
-        }
-        sb.append(found);
-        if (!tail.isEmpty()) {
-            sb.append(", ").append(tail);
-        }
-        String out = sb.toString().replaceAll(",\\s*,", ",").trim();
-        remember(c, "\"" + text + "\" em " + app + ": trocado por \"" + found + "\" (" + from + ")" + (type.isEmpty() ? "" : ", tipo " + type));
+        out = out.replaceAll(",\\s*,", ",").replaceAll(",\\s*\\.", ".").trim();
+        remember(c, "fala em " + app + ": \"" + text + "\" trocada por \"" + out + "\" (" + from + ")");
         return out;
+    }
+
+    /** Palavras que o leitor de tela fala sozinhas num elemento sem nome. */
+    private static final Pattern BARE_WORDS = Pattern.compile(
+            "(?iu)toque duas vezes( e (mantenha|segure)( pressionado)?)? para \\p{L}+( \\p{L}+)?"
+                    + "|double[- ]tap to \\p{L}+|bot[ãa]o|imagem|link|guia|chave|interruptor|caixa de sele[çc][ãa]o"
+                    + "|campo|ativad[oa]|desativad[oa]|selecionad[oa]|n[ãa]o selecionad[oa]|marcad[oa]|desmarcad[oa]"
+                    + "|button|image|em lista|fora da lista|carregando|barra de progresso|rolagem|role com dois dedos"
+                    + "|exibindo itens? \\d+( a \\d+)? de \\d+");
+
+    private static boolean isBare(String text) {
+        if (text.length() > 120) {
+            return false;
+        }
+        String rest = BARE_WORDS.matcher(text).replaceAll(" ");
+        rest = rest.replaceAll("[\\p{Punct}\\s\\d…]+", "");
+        return rest.isEmpty();
     }
 
     /** Guarda o achado na memória e em arquivo (não se perde se o Android fechar o Gerenciador). */
@@ -242,6 +278,7 @@ final class Unlabeled {
         }
         String type = type(n);
         String id = n.getViewIdResourceName();
+        innerCode = null;
         String inner = innerTexts(n);
         if (inner != null) {
             focusDone(true, inner, type, "veio de dentro", id, appName);
@@ -254,6 +291,13 @@ final class Unlabeled {
             focusDone(true, fromCode, type, "veio do código " + shortId(id), id, appName);
             remember(c, "foco sem nome em " + appName + ": achou \"" + fromCode + "\" (veio do código "
                     + shortId(id) + ")" + (type.isEmpty() ? "" : ", tipo " + type));
+            return;
+        }
+        String fromInner = fromCode(c, innerCode);
+        if (fromInner != null) {
+            focusDone(true, fromInner, type, "veio do código de dentro " + innerCode, id, appName);
+            remember(c, "foco sem nome em " + appName + ": achou \"" + fromInner + "\" (veio do código de dentro "
+                    + innerCode + ")" + (type.isEmpty() ? "" : ", tipo " + type));
             return;
         }
         focusDone(true, null, type, "", id, appName);
@@ -307,6 +351,12 @@ final class Unlabeled {
             if (t.isEmpty()) {
                 t = clean(n.getText());
             }
+            if (CODE_LIKE.matcher(t).matches()) {
+                if (innerCode == null) {
+                    innerCode = t;
+                }
+                t = ""; // "skinny_banner_collection_view": é código, não texto (o código do elemento é tentado depois)
+            }
             if (!t.isEmpty() && !texts.contains(t)) {
                 texts.add(t);
                 length += t.length();
@@ -332,6 +382,11 @@ final class Unlabeled {
         return out.length() > 150 ? out.substring(0, 150) : out;
     }
 
+    /** Primeiro texto de dentro que era código (usado se nada melhor aparecer). Só a linha principal usa. */
+    private static String innerCode;
+
+    private static final Pattern CODE_LIKE = Pattern.compile("[a-z0-9]+(_[a-z0-9]+)+");
+
     private static String clean(CharSequence s) {
         return s == null ? "" : s.toString().replace('\n', ' ').trim();
     }
@@ -349,7 +404,7 @@ final class Unlabeled {
             "btn", "button", "bt", "ic", "icon", "iv", "img", "image", "imageview", "imgbtn", "ib", "tv", "txt",
             "text", "textview", "view", "layout", "container", "wrapper", "holder", "root", "content", "frame",
             "id", "tangram", "item", "cell", "cover", "bg", "background", "fl", "ll", "rl", "cl", "lay", "lyt",
-            "vg", "group", "widget", "action", "iconfont", "svg", "lottie", "anim", "the", "of", "to", "a", "an",
+            "vg", "group", "hotspot", "skinny", "collection", "tangram", "widget", "action", "iconfont", "svg", "lottie", "anim", "the", "of", "to", "a", "an",
             "and", "for", "on", "in", "my", "new", "main", "custom", "default", "common", "base", "rn", "android"));
 
     /** Palavras comuns em códigos de botões. */
