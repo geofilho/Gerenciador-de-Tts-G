@@ -20,7 +20,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * "Ler automaticamente as sugestões do Gboard" (teste): observa só o teclado Gboard. Quando a
+ * "Ler automaticamente as sugestões do Gboard": observa só o teclado Gboard. Quando a
  * sugestão principal da barra de cima muda e a digitação pausa um instante, o Gerenciador fala a
  * sugestão. Se a pessoa volta a digitar, a fala da sugestão é interrompida na hora, para não
  * atrasar o eco do TalkBack. Nunca fala nada em campos de senha.

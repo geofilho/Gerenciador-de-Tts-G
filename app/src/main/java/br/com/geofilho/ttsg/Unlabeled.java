@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * "Falar o nome escondido dos botões sem etiqueta" (teste). O serviço de acessibilidade vê qual
+ * "Falar o nome escondido dos botões sem etiqueta". O serviço de acessibilidade vê qual
  * elemento recebeu o foco do leitor de tela; se ele não tem texto nem descrição, procura um nome
  * nos textos de dentro dele e, se não houver, no código interno do elemento (btn_send vira
  * "enviar"). Quando o leitor de tela manda falar "sem etiqueta" logo depois, o motor troca por
