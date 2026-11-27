@@ -36,6 +36,17 @@ public class BackupActivity extends Activity {
     };
     /** Esperando o seletor de arquivos ou outra janela: não fecha ainda. */
     private boolean waiting;
+    /** Compartilhando: esta tela fica aberta até voltar (fechar antes tira a permissão de ler o arquivo). */
+    private boolean sharing;
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        if (sharing) {
+            sharing = false;
+            finish();
+        }
+    }
 
     // ----- backup -----
 
@@ -109,6 +120,12 @@ public class BackupActivity extends Activity {
                     throw new java.io.IOException();
                 }
                 int[] n = Backup.write(this, os);
+                try {
+                    getContentResolver().takePersistableUriPermission(uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                } catch (Exception ignored) {
+                    // Nem todo seletor permite guardar a permissão; o compartilhamento logo em seguida funciona.
+                }
                 askShare(uri, n);
             } catch (Exception e) {
                 message("Não foi possível salvar o backup.");
@@ -155,13 +172,18 @@ public class BackupActivity extends Activity {
                         send.putExtra(Intent.EXTRA_STREAM, uri);
                         send.putExtra(Intent.EXTRA_SUBJECT, "Backup do Gerenciador de TTS G");
                         send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        // O aplicativo escolhido só consegue ler o arquivo com a permissão passada junto.
+                        send.setClipData(android.content.ClipData.newRawUri("", uri));
+                        Intent chooser = Intent.createChooser(send, "Compartilhar backup");
+                        chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         try {
-                            startActivity(Intent.createChooser(send, "Compartilhar backup"));
+                            startActivity(chooser);
+                            sharing = true; // fecha quando voltar do compartilhamento
                         } catch (Exception e) {
                             Toast.makeText(BackupActivity.this, "Nenhum aplicativo para compartilhar.",
                                     Toast.LENGTH_LONG).show();
+                            finish();
                         }
-                        finish();
                     }
                 })
                 .setNegativeButton("Não", null)

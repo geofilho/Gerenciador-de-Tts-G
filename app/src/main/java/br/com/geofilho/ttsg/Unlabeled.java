@@ -222,6 +222,8 @@ final class Unlabeled {
             "\\b[A-Za-z0-9]{12,}\\.(jpe?g|png|webp|gif|avif|heic)(_[0-9x]+)?(\\.[a-z]+)*\\b",
             Pattern.CASE_INSENSITIVE);
 
+    private static final Pattern EDITING = Pattern.compile("(?iu)caixa de edi[çc][ãa]o|editando|edit box|editing");
+
     private static final Pattern RESOURCE_ID = Pattern.compile("(?<![\\d.,])(21\\d{8})(?![\\d,])");
 
     private static final Pattern SPOKEN_CODE = Pattern.compile("\\b[a-z][a-z0-9]*(_[a-z0-9]+)+\\b");
@@ -238,10 +240,20 @@ final class Unlabeled {
         if (text.indexOf('_') < 0) {
             return text;
         }
+        // Campo de texto em edição: a pessoa precisa ouvir exatamente o que está escrito.
+        if (EDITING.matcher(text).find()) {
+            return text;
+        }
         Matcher m = SPOKEN_CODE.matcher(text);
         StringBuffer sb = new StringBuffer();
         boolean changed = false;
         while (m.find()) {
+            // Nome de arquivo ("gerenciador_tts_g_backup.json"): fica como está.
+            if (m.end() + 1 < text.length() && text.charAt(m.end()) == '.'
+                    && Character.isLetter(text.charAt(m.end() + 1))) {
+                m.appendReplacement(sb, Matcher.quoteReplacement(m.group()));
+                continue;
+            }
             String name = fromCode(c, m.group());
             if (name == null) {
                 name = ""; // código só de estrutura (tangram_view_container): não fala nada
