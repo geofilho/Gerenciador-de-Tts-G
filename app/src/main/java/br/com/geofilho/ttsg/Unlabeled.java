@@ -448,8 +448,35 @@ final class Unlabeled {
         return names(c).getAll().size();
     }
 
-    static void clearNames(Context c) {
-        names(c).edit().clear().apply();
+    /** Nomes dados, cada um {chave, aplicativo, nome, lugar}. */
+    static List<String[]> listNames(Context c) {
+        List<String[]> out = new ArrayList<>();
+        for (Map.Entry<String, ?> e : names(c).getAll().entrySet()) {
+            String k = e.getKey();
+            String[] parts = k.split("\\|");
+            if (parts.length != 3 || !(e.getValue() instanceof String)) {
+                continue;
+            }
+            String place = "";
+            String[] v = parts[2].split(",");
+            if (v.length == 4) {
+                try {
+                    place = where(c, new Rect(Integer.parseInt(v[0]), Integer.parseInt(v[1]),
+                            Integer.parseInt(v[2]), Integer.parseInt(v[3])));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            out.add(new String[]{k, parts[0], (String) e.getValue(), place});
+        }
+        return out;
+    }
+
+    static void renameKey(Context c, String key, String name) {
+        if (name == null || name.trim().isEmpty()) {
+            names(c).edit().remove(key).apply();
+        } else {
+            names(c).edit().putString(key, name.trim()).apply();
+        }
     }
 
     private static android.content.SharedPreferences names(Context c) {

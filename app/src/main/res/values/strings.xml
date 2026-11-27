@@ -73,5 +73,8 @@ Se o seu aparelho tiver o tradutor do próprio Android, ele é usado primeiro, s
     <string name="name_button_none">Nenhum botão sem nome ainda. Num aplicativo, pare o leitor de tela no botão sem nome e abra esta janela pelas configurações rápidas, no botão Dar nome ao botão.</string>
     <string name="name_button_off">Ligue antes a chave Falar o nome escondido dos botões sem etiqueta, em Leitura de números, pontuação e emojis.</string>
     <string name="name_button_open">Dar nome ao último botão sem nome</string>
-    <string name="name_button_clear">Apagar todos os nomes que você deu aos botões</string>
+    <string name="name_button_list">Botões que você nomeou</string>
+    <string name="named_empty">Você ainda não deu nome a nenhum botão. Num aplicativo, pare o leitor de tela no botão sem nome e use Dar nome ao botão, nas configurações rápidas ou no MacroDroid.</string>
+    <string name="named_edit">Editar nome</string>
+    <string name="named_delete">Apagar nome</string>
 </resources>

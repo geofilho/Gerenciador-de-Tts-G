@@ -47,9 +47,9 @@
             android:text="@string/name_button_open" />
 
         <Button
-            android:id="@+id/btn_clear_names"
+            android:id="@+id/btn_named_list"
             style="@style/Row"
-            android:text="@string/name_button_clear" />
+            android:text="@string/name_button_list" />
 
         <EditText
             android:id="@+id/edit_test"

@@ -104,6 +104,16 @@
             android:label="@string/name_button_title"
             android:taskAffinity=""
             android:theme="@style/TranslucentTheme" />
+        <!-- Entrada com nome claro para "Iniciar atividade de aplicativo" do MacroDroid. -->
+        <activity-alias
+            android:name=".Dar_nome_ao_botao"
+            android:exported="true"
+            android:label="Dar nome ao botão"
+            android:targetActivity=".NameButtonActivity" />
+        <activity
+            android:name=".NamedButtonsActivity"
+            android:exported="false"
+            android:label="@string/name_button_list" />
 
         <!-- Widgets da tela inicial: Dicionário, Saída de áudio e Tradução. -->
         <receiver
