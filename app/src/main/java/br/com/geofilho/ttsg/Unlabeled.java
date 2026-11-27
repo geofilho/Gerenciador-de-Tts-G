@@ -290,7 +290,7 @@ final class Unlabeled {
             return false;
         }
         String rest = BARE_WORDS.matcher(text).replaceAll(" ");
-        rest = rest.replaceAll("[\\p{Punct}\\s\\d…]+", "");
+        rest = rest.replaceAll("[\\p{Punct}\\s…]+", ""); // números ficam: são conteúdo
         return rest.isEmpty();
     }
 

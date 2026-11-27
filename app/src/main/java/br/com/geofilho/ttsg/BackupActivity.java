@@ -58,7 +58,13 @@ public class BackupActivity extends Activity {
                     public void onClick(DialogInterface d, int which) {
                         waiting = true;
                         if (which == 0) {
-                            makeBackup();
+                            // Depois que o menu fechar, para a janela "Backup salvo" não fechar junto.
+                            getWindow().getDecorView().post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    makeBackup();
+                                }
+                            });
                         } else {
                             pickRestore();
                         }
@@ -69,8 +75,43 @@ public class BackupActivity extends Activity {
                 .show();
     }
 
-    /** Abre o seletor de arquivos do Android, começando em Downloads, com o nome já preenchido. */
+    /**
+     * Android 10 ou mais novo: salva direto na pasta Download, sem seletor de arquivos e sem teclado.
+     * Mais antigos: abre o seletor de arquivos em Downloads, com o nome já preenchido.
+     */
     private void makeBackup() {
+        if (Build.VERSION.SDK_INT >= 29) {
+            String name = "gerenciador_tts_g_backup_"
+                    + new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm", java.util.Locale.ROOT).format(new java.util.Date())
+                    + ".json";
+            Uri uri = null;
+            try {
+                android.content.ContentValues v = new android.content.ContentValues();
+                v.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, name);
+                v.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/json");
+                v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS);
+                uri = getContentResolver().insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+                if (uri == null) {
+                    throw new java.io.IOException();
+                }
+                java.io.OutputStream os = getContentResolver().openOutputStream(uri, "wt");
+                if (os == null) {
+                    throw new java.io.IOException();
+                }
+                int[] n = Backup.write(this, os);
+                waiting = false;
+                askShare(uri, n, "Salvo na pasta Download com o nome " + name + ". ");
+            } catch (Exception e) {
+                if (uri != null) {
+                    try {
+                        getContentResolver().delete(uri, null, null);
+                    } catch (Exception ignored) {
+                    }
+                }
+                message("Não foi possível salvar o backup.");
+            }
+            return;
+        }
         Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         i.addCategory(Intent.CATEGORY_OPENABLE);
         i.setType("application/json");
@@ -126,7 +167,7 @@ public class BackupActivity extends Activity {
                 } catch (Exception ignored) {
                     // Nem todo seletor permite guardar a permissão; o compartilhamento logo em seguida funciona.
                 }
-                askShare(uri, n);
+                askShare(uri, n, "");
             } catch (Exception e) {
                 message("Não foi possível salvar o backup.");
             }
@@ -157,10 +198,10 @@ public class BackupActivity extends Activity {
     }
 
     /** Depois de salvar: diz o que foi salvo e pergunta se quer compartilhar o arquivo. */
-    private void askShare(final Uri uri, int[] n) {
+    private void askShare(final Uri uri, int[] n, String where) {
         new AlertDialog.Builder(this)
                 .setTitle("Backup salvo")
-                .setMessage("Configurações, " + n[0] + (n[0] == 1 ? " palavra" : " palavras") + " do dicionário e "
+                .setMessage(where + "Configurações, " + n[0] + (n[0] == 1 ? " palavra" : " palavras") + " do dicionário e "
                         + n[1] + (n[1] == 1 ? " botão nomeado" : " botões nomeados")
                         + ". Deseja compartilhar o arquivo de backup?")
                 .setPositiveButton("Sim", new DialogInterface.OnClickListener() {
