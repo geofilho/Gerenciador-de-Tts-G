@@ -75,7 +75,7 @@ Se o seu aparelho tiver o tradutor do próprio Android, ele é usado primeiro, s
     <string name="silence_thin_switch">Calar o Sem marcador das faixas vazias</string>
     <string name="silence_thin_help">O que esta chave faz: alguns aplicativos e widgets têm linhas finas, sem nada escrito, que só separam um item do outro, como a linha entre os compromissos no widget da Agenda. O leitor de tela para nelas e fala Sem marcador. Com a chave ligada, o Gerenciador cala essa fala.
 
-Como funciona: só fica calado o elemento que tem tudo isto ao mesmo tempo: menos de 10 dp de altura ou de largura (uma faixa bem fina), não pode ser tocado, não tem nada escrito dentro e não tem código interno. Botões, imagens e tudo que tem nome continuam sendo falados.
+Como funciona: só fica calado o elemento que tem tudo isto ao mesmo tempo: menos de 10 dp de altura ou de largura (uma faixa bem fina, fina demais para ser um botão de verdade), não tem nada escrito dentro e não tem código interno. Botões, imagens e tudo que tem nome continuam sendo falados.
 
 Atenção: o leitor de tela continua parando na faixa; você só não ouve nada e desliza de novo para o próximo item. A chave vem desligada e precisa da chave Falar o nome escondido dos botões sem etiqueta ligada.</string>
     <string name="unlabeled_page">Botões sem etiqueta</string>

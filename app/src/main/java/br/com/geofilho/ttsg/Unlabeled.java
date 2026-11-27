@@ -398,8 +398,9 @@ final class Unlabeled {
             return;
         }
         // Faixa vazia (linha que separa itens, por exemplo no widget da Agenda): fica calada, se a pessoa quiser.
-        if (Prefs.silenceThin(Prefs.get(c)) && (r.width() < 10 || r.height() < 10) && !n.isClickable()
-                && !n.isLongClickable() && id == null) {
+        // Não confere se é tocável: os widgets da tela inicial são todos "tocar e segurar" (para mover), e uma
+        // faixa tão fina não serve de botão de verdade.
+        if (Prefs.silenceThin(Prefs.get(c)) && (r.width() < 10 || r.height() < 10) && id == null) {
             focusDone(true, SILENT, type, "faixa vazia", id, appName);
             remember(c, "foco sem nome em " + appName + ": faixa vazia, fica calada, classe " + cls + ", " + where);
             return;
