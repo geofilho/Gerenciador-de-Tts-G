@@ -1,6 +1,7 @@
 package br.com.geofilho.ttsg;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.view.accessibility.AccessibilityNodeInfo;
 
 import java.util.ArrayDeque;
@@ -310,33 +311,212 @@ final class Unlabeled {
         }
         String type = type(n);
         String id = n.getViewIdResourceName();
+        if (id == null && android.os.Build.VERSION.SDK_INT >= 33) {
+            id = n.getUniqueId(); // identificador opcional do Android 13+, quando o aplicativo preenche
+        }
+        CharSequence clsSeq = n.getClassName();
+        String cls = clsSeq == null ? "?" : clsSeq.toString().substring(clsSeq.toString().lastIndexOf('.') + 1);
+        Rect r = boundsDp(c, n);
+        String where = where(c, r);
+        // Lembra o elemento, para a pessoa poder dar um nome a ele (tela "Dar nome ao botão").
+        if (isRegularApp(c, appName)) {
+            synchronized (LOCK) {
+                targetPkg = appName;
+                targetCls = cls;
+                targetRect = r;
+                targetWhere = where;
+                targetType = type;
+            }
+        }
+        // 1. Nome que a própria pessoa deu.
+        String own = ownName(c, appName, cls, r);
+        if (own != null) {
+            found(c, own, type, "nome que você deu", id, appName, cls, where);
+            return;
+        }
+        // 2. Dica, balão de ajuda e nomes de ações escondidos no próprio elemento.
+        String hidden = hiddenText(n);
+        if (hidden != null) {
+            found(c, hidden, type, "veio de uma dica escondida", id, appName, cls, where);
+            return;
+        }
         innerCode = null;
         String inner = innerTexts(n);
         if (inner != null) {
-            focusDone(true, inner, type, "veio de dentro", id, appName);
-            remember(c, "foco sem nome em " + appName + ": achou \"" + inner + "\" (veio de dentro)"
-                    + (type.isEmpty() ? "" : ", tipo " + type));
+            found(c, inner, type, "veio de dentro", id, appName, cls, where);
             return;
         }
         String fromCode = fromCode(c, id);
         if (fromCode != null) {
-            focusDone(true, fromCode, type, "veio do código " + shortId(id), id, appName);
-            remember(c, "foco sem nome em " + appName + ": achou \"" + fromCode + "\" (veio do código "
-                    + shortId(id) + ")" + (type.isEmpty() ? "" : ", tipo " + type));
+            found(c, fromCode, type, "veio do código " + shortId(id), id, appName, cls, where);
             return;
         }
         String fromInner = fromCode(c, innerCode);
         if (fromInner != null) {
-            focusDone(true, fromInner, type, "veio do código de dentro " + innerCode, id, appName);
-            remember(c, "foco sem nome em " + appName + ": achou \"" + fromInner + "\" (veio do código de dentro "
-                    + innerCode + ")" + (type.isEmpty() ? "" : ", tipo " + type));
+            found(c, fromInner, type, "veio do código de dentro " + innerCode, id, appName, cls, where);
             return;
         }
         focusDone(true, null, type, "", id, appName);
-        CharSequence cls = n.getClassName();
         remember(c, "foco sem nome em " + appName + ": nada encontrado, "
-                + (id == null ? "sem código" : "código " + shortId(id)) + ", classe "
-                + (cls == null ? "?" : cls.toString().substring(cls.toString().lastIndexOf('.') + 1)));
+                + (id == null ? "sem código" : "código " + shortId(id)) + ", classe " + cls + ", " + where);
+    }
+
+    private static void found(Context c, String name, String type, String from, String id, String app,
+                              String cls, String where) {
+        focusDone(true, name, type, from, id, app);
+        remember(c, "foco sem nome em " + app + ": achou \"" + name + "\" (" + from + "), classe " + cls
+                + ", " + where);
+    }
+
+    /** Textos que o leitor de tela às vezes não fala: dica, balão de ajuda, nome das ações. */
+    private static String hiddenText(AccessibilityNodeInfo n) {
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= 28 && !empty(n.getTooltipText())) {
+                return clean(n.getTooltipText());
+            }
+            if (android.os.Build.VERSION.SDK_INT >= 26 && !empty(n.getHintText())) {
+                return clean(n.getHintText());
+            }
+            for (AccessibilityNodeInfo.AccessibilityAction a : n.getActionList()) {
+                CharSequence l = a.getLabel();
+                if (!empty(l) && l.length() <= 60) {
+                    return clean(l);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    // ---------- Nomes que a pessoa dá aos botões ----------
+
+    private static String targetPkg = "";
+    private static String targetCls = "";
+    private static Rect targetRect;
+    private static String targetWhere = "";
+    private static String targetType = "";
+
+    /** Último elemento sem nome focado num aplicativo comum: {aplicativo, classe, lugar, tipo}; null se nenhum. */
+    static String[] target() {
+        synchronized (LOCK) {
+            if (targetRect == null) {
+                return null;
+            }
+            return new String[]{targetPkg, targetCls, targetWhere, targetType};
+        }
+    }
+
+    /** Nome já dado ao último elemento, ou null. */
+    static String targetName(Context c) {
+        String pkg;
+        String cls;
+        Rect r;
+        synchronized (LOCK) {
+            pkg = targetPkg;
+            cls = targetCls;
+            r = targetRect;
+        }
+        return r == null ? null : ownName(c, pkg, cls, r);
+    }
+
+    /** Dá um nome ao último elemento sem nome (vazio apaga). */
+    static void nameTarget(Context c, String name) {
+        String pkg;
+        String cls;
+        Rect r;
+        synchronized (LOCK) {
+            pkg = targetPkg;
+            cls = targetCls;
+            r = targetRect;
+        }
+        if (r == null) {
+            return;
+        }
+        android.content.SharedPreferences p = names(c);
+        android.content.SharedPreferences.Editor e = p.edit();
+        String old = ownKey(c, pkg, cls, r);
+        if (old != null) {
+            e.remove(old);
+        }
+        if (name != null && !name.trim().isEmpty()) {
+            e.putString(pkg + "|" + cls + "|" + r.left + "," + r.top + "," + r.right + "," + r.bottom, name.trim());
+        }
+        e.apply();
+    }
+
+    static int namedCount(Context c) {
+        return names(c).getAll().size();
+    }
+
+    static void clearNames(Context c) {
+        names(c).edit().clear().apply();
+    }
+
+    private static android.content.SharedPreferences names(Context c) {
+        return Prefs.storage(c).getSharedPreferences("nomes_dos_botoes", Context.MODE_PRIVATE);
+    }
+
+    private static String ownName(Context c, String pkg, String cls, Rect r) {
+        String k = ownKey(c, pkg, cls, r);
+        return k == null ? null : names(c).getString(k, null);
+    }
+
+    /** Chave do nome guardado para um elemento parecido: mesmo aplicativo e tipo, mesmo lugar e tamanho (folga de 24dp). */
+    private static String ownKey(Context c, String pkg, String cls, Rect r) {
+        if (r == null || pkg.isEmpty()) {
+            return null;
+        }
+        String prefix = pkg + "|" + cls + "|";
+        String best = null;
+        int bestDiff = Integer.MAX_VALUE;
+        for (String k : names(c).getAll().keySet()) {
+            if (!k.startsWith(prefix)) {
+                continue;
+            }
+            String[] v = k.substring(prefix.length()).split(",");
+            if (v.length != 4) {
+                continue;
+            }
+            try {
+                int l = Integer.parseInt(v[0]);
+                int t = Integer.parseInt(v[1]);
+                int rt = Integer.parseInt(v[2]);
+                int b = Integer.parseInt(v[3]);
+                int dx = Math.abs((l + rt) / 2 - r.centerX());
+                int dy = Math.abs((t + b) / 2 - r.centerY());
+                int dw = Math.abs((rt - l) - r.width());
+                int dh = Math.abs((b - t) - r.height());
+                if (dx <= 24 && dy <= 24 && dw <= 24 && dh <= 24 && dx + dy + dw + dh < bestDiff) {
+                    bestDiff = dx + dy + dw + dh;
+                    best = k;
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return best;
+    }
+
+    private static Rect boundsDp(Context c, AccessibilityNodeInfo n) {
+        Rect r = new Rect();
+        n.getBoundsInScreen(r);
+        float d = c.getResources().getDisplayMetrics().density;
+        return new Rect(Math.round(r.left / d), Math.round(r.top / d), Math.round(r.right / d), Math.round(r.bottom / d));
+    }
+
+    /** Lugar do elemento na tela, falado ("em cima, à direita"). */
+    private static String where(Context c, Rect r) {
+        android.util.DisplayMetrics m = c.getResources().getDisplayMetrics();
+        float w = m.widthPixels / m.density;
+        float h = m.heightPixels / m.density;
+        String v = r.centerY() < h / 3 ? "em cima" : r.centerY() > h * 2 / 3 ? "embaixo" : "no meio da tela";
+        String s = r.centerX() < w / 3 ? "à esquerda" : r.centerX() > w * 2 / 3 ? "à direita" : "no centro";
+        return v + ", " + s + ", " + r.width() + " por " + r.height() + " dp";
+    }
+
+    private static boolean isRegularApp(Context c, String pkg) {
+        return !pkg.isEmpty() && !pkg.equals(c.getPackageName()) && !pkg.equals("com.android.systemui")
+                && !pkg.contains("launcher") && !pkg.contains("inputmethod") && !pkg.contains("keyboard")
+                && !pkg.contains("pixelboard");
     }
 
     private static boolean empty(CharSequence s) {

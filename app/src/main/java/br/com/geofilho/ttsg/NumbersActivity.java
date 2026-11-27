@@ -90,6 +90,34 @@ public class NumbersActivity extends Activity {
             }
         });
 
+        findViewById(R.id.btn_name_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new android.content.Intent(NumbersActivity.this, NameButtonActivity.class));
+            }
+        });
+        findViewById(R.id.btn_clear_names).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final int n = Unlabeled.namedCount(NumbersActivity.this);
+                if (n == 0) {
+                    Toggles.say(NumbersActivity.this, "Você ainda não deu nome a nenhum botão.");
+                    return;
+                }
+                new android.app.AlertDialog.Builder(NumbersActivity.this)
+                        .setMessage("Apagar os " + n + " nomes que você deu aos botões?")
+                        .setPositiveButton("Apagar", new android.content.DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(android.content.DialogInterface d, int w) {
+                                Unlabeled.clearNames(NumbersActivity.this);
+                                Toggles.say(NumbersActivity.this, "Nomes apagados.");
+                            }
+                        })
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show();
+            }
+        });
+
         final EditText editTest = findViewById(R.id.edit_test);
         String engine = Prefs.engine(prefs, Prefs.MAIN);
         if (engine.isEmpty()) {

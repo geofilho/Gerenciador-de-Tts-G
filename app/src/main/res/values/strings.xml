@@ -66,4 +66,12 @@ Se o seu aparelho tiver o tradutor do próprio Android, ele é usado primeiro, s
     <string name="gboard_restricted">Liberar configuração restrita, se o Android bloquear</string>
     <string name="gboard_done">Concluir</string>
     <string name="emoji_word_switch">Ignorar a palavra Emoji antes dos emojis (por exemplo, Emoji 😔 fala só o emoji)</string>
+    <string name="name_button_title">Dar nome ao botão</string>
+    <string name="name_button_hint">Nome do botão</string>
+    <string name="name_button_save">Guardar</string>
+    <string name="name_button_delete">Apagar nome</string>
+    <string name="name_button_none">Nenhum botão sem nome ainda. Num aplicativo, pare o leitor de tela no botão sem nome e abra esta janela pelas configurações rápidas, no botão Dar nome ao botão.</string>
+    <string name="name_button_off">Ligue antes a chave Falar o nome escondido dos botões sem etiqueta, em Leitura de números, pontuação e emojis.</string>
+    <string name="name_button_open">Dar nome ao último botão sem nome</string>
+    <string name="name_button_clear">Apagar todos os nomes que você deu aos botões</string>
 </resources>

@@ -136,4 +136,17 @@ public abstract class QuickTile extends TileService {
             return 13;
         }
     }
+
+    /** Configuração rápida "Dar nome ao botão": abre a janela para nomear o último botão sem nome. */
+    public static class NameButton extends QuickTile {
+        @Override
+        Class<?> target() {
+            return NameButtonActivity.class;
+        }
+
+        @Override
+        int requestCode() {
+            return 14;
+        }
+    }
 }

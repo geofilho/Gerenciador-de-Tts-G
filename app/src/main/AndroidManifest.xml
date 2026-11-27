@@ -96,6 +96,15 @@
             android:taskAffinity=""
             android:theme="@style/TranslucentTheme" />
 
+        <!-- Dar nome ao último botão sem nome (configurações rápidas, tela de leitura ou MacroDroid). -->
+        <activity
+            android:name=".NameButtonActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="@string/name_button_title"
+            android:taskAffinity=""
+            android:theme="@style/TranslucentTheme" />
+
         <!-- Widgets da tela inicial: Dicionário, Saída de áudio e Tradução. -->
         <receiver
             android:name=".QuickWidget$Dictionary"
@@ -225,6 +234,17 @@
             <meta-data
                 android:name="android.service.quicksettings.TOGGLEABLE_TILE"
                 android:value="true" />
+        </service>
+
+        <service
+            android:name=".QuickTile$NameButton"
+            android:exported="true"
+            android:icon="@drawable/tile_name"
+            android:label="@string/name_button_title"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
         </service>
 
         <!-- Responde à verificação de dados de voz que o sistema faz nos motores. -->
