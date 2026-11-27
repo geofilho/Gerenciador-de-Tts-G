@@ -78,28 +78,10 @@ public class NumbersActivity extends Activity {
             }
         });
 
-        android.widget.Switch swUnlabeled = findViewById(R.id.switch_unlabeled);
-        swUnlabeled.setChecked(Prefs.unlabeledOn(prefs));
-        swUnlabeled.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(android.widget.CompoundButton b, boolean checked) {
-                prefs.edit().putBoolean("unlabeled_on", checked).apply();
-                if (checked && !GboardSetupActivity.isEnabled(NumbersActivity.this)) {
-                    startActivity(new android.content.Intent(NumbersActivity.this, GboardSetupActivity.class));
-                }
-            }
-        });
-
-        findViewById(R.id.btn_name_button).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btn_unlabeled).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new android.content.Intent(NumbersActivity.this, NameButtonActivity.class));
-            }
-        });
-        findViewById(R.id.btn_named_list).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new android.content.Intent(NumbersActivity.this, NamedButtonsActivity.class));
+                startActivity(new android.content.Intent(NumbersActivity.this, UnlabeledActivity.class));
             }
         });
 
@@ -193,5 +175,13 @@ public class NumbersActivity extends Activity {
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Estado escrito no próprio botão (não depende de cor).
+        ((android.widget.Button) findViewById(R.id.btn_unlabeled)).setText(getString(R.string.unlabeled_page)
+                + ": " + Toggles.state(Prefs.unlabeledOn(Prefs.get(this))));
     }
 }

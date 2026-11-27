@@ -31,7 +31,15 @@ public class NamedButtonsActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_named_buttons);
         list = findViewById(R.id.named_list);
+        pkg = getIntent().getStringExtra(EXTRA_PKG);
+        if (pkg != null) {
+            setTitle(appLabel(pkg));
+        }
     }
+
+    static final String EXTRA_PKG = "aplicativo";
+    /** null: lista de aplicativos; com valor: botões desse aplicativo. */
+    private String pkg;
 
     @Override
     protected void onResume() {
@@ -42,43 +50,33 @@ public class NamedButtonsActivity extends Activity {
     private void fill() {
         list.removeAllViews();
         List<String[]> all = Unlabeled.listNames(this);
-        if (all.isEmpty()) {
-            TextView t = text(getString(R.string.named_empty), false);
-            list.addView(t);
+        if (pkg == null) {
+            fillApps(all);
             return;
         }
-        // Agrupa por aplicativo, em ordem alfabética do nome do aplicativo e depois do nome do botão.
-        final Map<String, String> labels = new LinkedHashMap<>();
+        List<String[]> mine = new java.util.ArrayList<>();
         for (String[] e : all) {
-            if (!labels.containsKey(e[1])) {
-                labels.put(e[1], appLabel(e[1]));
+            if (e[1].equals(pkg)) {
+                mine.add(e);
             }
         }
-        Collections.sort(all, new Comparator<String[]>() {
+        if (mine.isEmpty()) {
+            list.addView(text(getString(R.string.named_app_empty), false));
+            return;
+        }
+        Collections.sort(mine, new Comparator<String[]>() {
             @Override
             public int compare(String[] a, String[] b) {
-                int r = labels.get(a[1]).compareToIgnoreCase(labels.get(b[1]));
-                return r != 0 ? r : a[2].compareToIgnoreCase(b[2]);
+                return a[2].compareToIgnoreCase(b[2]);
             }
         });
-        String lastPkg = null;
-        for (final String[] e : all) {
-            if (!e[1].equals(lastPkg)) {
-                lastPkg = e[1];
-                int count = 0;
-                for (String[] x : all) {
-                    if (x[1].equals(lastPkg)) {
-                        count++;
-                    }
-                }
-                list.addView(text(labels.get(lastPkg) + ": " + count + (count == 1 ? " botão" : " botões"), true));
-            }
+        for (final String[] e : mine) {
             Button b = (Button) getLayoutInflater().inflate(R.layout.item_named_button, list, false);
             b.setText(e[2] + (e[3].isEmpty() ? "" : " (" + e[3] + ")"));
             b.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    choose(e, labels.get(e[1]));
+                    choose(e, appLabel(e[1]));
                 }
             });
             b.setAccessibilityDelegate(new View.AccessibilityDelegate() {
@@ -102,6 +100,43 @@ public class NamedButtonsActivity extends Activity {
                         return true;
                     }
                     return super.performAccessibilityAction(host, action, args);
+                }
+            });
+            list.addView(b);
+        }
+    }
+
+    /** Um botão por aplicativo, com quantos botões foram nomeados nele. */
+    private void fillApps(List<String[]> all) {
+        if (all.isEmpty()) {
+            list.addView(text(getString(R.string.named_empty), false));
+            return;
+        }
+        final Map<String, String> labels = new LinkedHashMap<>();
+        final Map<String, Integer> counts = new LinkedHashMap<>();
+        for (String[] e : all) {
+            if (!labels.containsKey(e[1])) {
+                labels.put(e[1], appLabel(e[1]));
+                counts.put(e[1], 0);
+            }
+            counts.put(e[1], counts.get(e[1]) + 1);
+        }
+        List<String> pkgs = new java.util.ArrayList<>(labels.keySet());
+        Collections.sort(pkgs, new Comparator<String>() {
+            @Override
+            public int compare(String a, String b) {
+                return labels.get(a).compareToIgnoreCase(labels.get(b));
+            }
+        });
+        for (final String p : pkgs) {
+            Button b = (Button) getLayoutInflater().inflate(R.layout.item_named_button, list, false);
+            int n = counts.get(p);
+            b.setText(labels.get(p) + ": " + n + (n == 1 ? " botão" : " botões"));
+            b.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startActivity(new android.content.Intent(NamedButtonsActivity.this, NamedButtonsActivity.class)
+                            .putExtra(EXTRA_PKG, p));
                 }
             });
             list.addView(b);

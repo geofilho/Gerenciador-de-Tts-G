@@ -111,6 +111,10 @@
             android:label="Dar nome ao botão"
             android:targetActivity=".NameButtonActivity" />
         <activity
+            android:name=".UnlabeledActivity"
+            android:exported="false"
+            android:label="@string/unlabeled_page" />
+        <activity
             android:name=".NamedButtonsActivity"
             android:exported="false"
             android:label="@string/name_button_list" />

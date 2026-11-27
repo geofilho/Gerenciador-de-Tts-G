@@ -150,7 +150,6 @@ final class Unlabeled {
         }
         if (!bare) {
             // O leitor de tela já falou algum conteúdo (por exemplo, os textos de dentro): não mexe.
-            remember(c, "fala depois do foco sem nome em " + app + ": \"" + text + "\", não trocado (já tem conteúdo)");
             return text;
         }
         if (found == null || found.isEmpty()) {
