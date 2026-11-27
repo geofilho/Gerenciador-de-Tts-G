@@ -18,7 +18,7 @@
         <Button
             android:id="@+id/btn_name_button"
             style="@style/Row"
-            android:text="@string/name_button_title" />
+            android:text="@string/name_button_how" />
 
         <Button
             android:id="@+id/btn_named_list"

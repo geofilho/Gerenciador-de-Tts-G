@@ -46,7 +46,7 @@ public class UnlabeledActivity extends Activity {
     /** Explica como dar nome; se já houver um botão sem nome guardado, oferece nomear agora. */
     private void explain() {
         AlertDialog.Builder b = new AlertDialog.Builder(this)
-                .setTitle(R.string.name_button_title)
+                .setTitle(R.string.name_button_how)
                 .setMessage(R.string.name_button_help)
                 .setPositiveButton(R.string.gboard_done, null);
         String[] t = Unlabeled.target();

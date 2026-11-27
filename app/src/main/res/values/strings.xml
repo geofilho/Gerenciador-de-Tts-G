@@ -73,6 +73,7 @@ Se o seu aparelho tiver o tradutor do próprio Android, ele é usado primeiro, s
     <string name="name_button_none">Nenhum botão sem nome ainda. Num aplicativo, pare o leitor de tela no botão sem nome e abra esta janela pelas configurações rápidas, no botão Dar nome ao botão.</string>
     <string name="name_button_off">Ligue antes a chave Falar o nome escondido dos botões sem etiqueta, em Leitura de números, pontuação e emojis, na página Botões sem etiqueta.</string>
     <string name="unlabeled_page">Botões sem etiqueta</string>
+    <string name="name_button_how">Como dar nome ao botão</string>
     <string name="name_button_last">Nomear o último botão sem nome</string>
     <string name="name_button_help">Quando o leitor de tela fala Sem marcador ou só Botão, e o Gerenciador não acha o nome sozinho, você mesmo pode dar o nome, uma vez só:\n\n1. No aplicativo, pare o leitor de tela no botão sem nome.\n\n2. Puxe as configurações rápidas e toque em Dar nome ao botão. Antes, adicione esse botão nas configurações rápidas. Ou crie no MacroDroid a ação Iniciar atividade de aplicativo, com o Gerenciador de TTS G e a entrada Dar_nome_ao_botao.\n\n3. Escreva o nome e toque em Guardar.\n\nDepois disso, sempre que o foco cair nesse botão, no mesmo lugar e do mesmo tamanho nesse aplicativo, o Gerenciador fala o nome que você deu. Funciona melhor em botões que ficam sempre no mesmo lugar. Os nomes ficam em Botões que você nomeou, separados por aplicativo.</string>
     <string name="name_button_list">Botões que você nomeou</string>
