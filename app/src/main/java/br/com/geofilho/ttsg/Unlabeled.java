@@ -484,8 +484,8 @@ final class Unlabeled {
             android.util.DisplayMetrics m = c.getResources().getDisplayMetrics();
             float sw = m.widthPixels / m.density;
             float sh = m.heightPixels / m.density;
-            if (p.width() >= sw * 0.9f && p.height() >= sh * 0.5f) {
-                return ""; // grupo do tamanho da tela: não é um cartão de lista
+            if (p.width() >= sw * 0.75f) {
+                return ""; // grupo da largura da tela (barra de cima, por exemplo): não é um cartão de lista
             }
             return "R=" + r.width() + "," + r.height() + "," + p.width() + "," + (r.left - p.left) + ","
                     + (p.right - r.right) + "," + (r.top - p.top) + "," + (p.bottom - r.bottom);
@@ -512,7 +512,7 @@ final class Unlabeled {
                 q[i] = Integer.parseInt(y[i]);
             }
             boolean size = Math.abs(p[0] - q[0]) <= 4 && Math.abs(p[1] - q[1]) <= 4 && Math.abs(p[2] - q[2]) <= 8;
-            boolean across = Math.abs(p[3] - q[3]) <= 6 || Math.abs(p[4] - q[4]) <= 6;
+            boolean across = Math.abs(p[3] - q[3]) <= 6 && Math.abs(p[4] - q[4]) <= 6;
             boolean down = Math.abs(p[5] - q[5]) <= 6 || Math.abs(p[6] - q[6]) <= 6;
             return size && across && down;
         } catch (NumberFormatException e) {
