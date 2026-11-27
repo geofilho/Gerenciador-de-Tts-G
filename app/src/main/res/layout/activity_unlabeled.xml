@@ -20,6 +20,10 @@
             style="@style/Row"
             android:text="@string/silence_thin_switch" />
 
+        <TextView
+            style="@style/Row"
+            android:text="@string/silence_thin_help" />
+
         <Button
             android:id="@+id/btn_name_button"
             style="@style/Row"

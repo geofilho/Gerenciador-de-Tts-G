@@ -72,7 +72,12 @@ Se o seu aparelho tiver o tradutor do próprio Android, ele é usado primeiro, s
     <string name="name_button_delete">Apagar nome</string>
     <string name="name_button_none">Nenhum botão sem nome ainda. Num aplicativo, pare o leitor de tela no botão sem nome e abra esta janela pelas configurações rápidas, no botão Dar nome ao botão.</string>
     <string name="name_button_off">Ligue antes a chave Falar o nome escondido dos botões sem etiqueta, em Personalização de leitura, na página Botões sem etiqueta.</string>
-    <string name="silence_thin_switch">Calar o Sem marcador das faixas vazias (linhas finas que só separam itens, como no widget da Agenda)</string>
+    <string name="silence_thin_switch">Calar o Sem marcador das faixas vazias</string>
+    <string name="silence_thin_help">O que esta chave faz: alguns aplicativos e widgets têm linhas finas, sem nada escrito, que só separam um item do outro, como a linha entre os compromissos no widget da Agenda. O leitor de tela para nelas e fala Sem marcador. Com a chave ligada, o Gerenciador cala essa fala.
+
+Como funciona: só fica calado o elemento que tem tudo isto ao mesmo tempo: menos de 10 dp de altura ou de largura (uma faixa bem fina), não pode ser tocado, não tem nada escrito dentro e não tem código interno. Botões, imagens e tudo que tem nome continuam sendo falados.
+
+Atenção: o leitor de tela continua parando na faixa; você só não ouve nada e desliza de novo para o próximo item. A chave vem desligada e precisa da chave Falar o nome escondido dos botões sem etiqueta ligada.</string>
     <string name="unlabeled_page">Botões sem etiqueta</string>
     <string name="name_button_how">Como dar nome ao botão</string>
     <string name="name_button_now">Dar nome ao botão sem nome do %1$s</string>
