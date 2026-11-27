@@ -138,6 +138,11 @@ final class Prefs {
         return p.getBoolean("unlabeled_on", false);
     }
 
+    /** Calar o "Sem marcador" de faixas vazias muito finas (desligado por padrão). */
+    static boolean silenceThin(SharedPreferences p) {
+        return p.getBoolean("silence_thin", false);
+    }
+
     static boolean translateOn(SharedPreferences p) {
         return p.getBoolean("translate_on", false);
     }

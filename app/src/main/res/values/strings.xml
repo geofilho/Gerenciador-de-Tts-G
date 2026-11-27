@@ -72,6 +72,7 @@ Se o seu aparelho tiver o tradutor do próprio Android, ele é usado primeiro, s
     <string name="name_button_delete">Apagar nome</string>
     <string name="name_button_none">Nenhum botão sem nome ainda. Num aplicativo, pare o leitor de tela no botão sem nome e abra esta janela pelas configurações rápidas, no botão Dar nome ao botão.</string>
     <string name="name_button_off">Ligue antes a chave Falar o nome escondido dos botões sem etiqueta, em Personalização de leitura, na página Botões sem etiqueta.</string>
+    <string name="silence_thin_switch">Calar o Sem marcador das faixas vazias (linhas finas que só separam itens, como no widget da Agenda)</string>
     <string name="unlabeled_page">Botões sem etiqueta</string>
     <string name="name_button_how">Como dar nome ao botão</string>
     <string name="name_button_now">Dar nome ao botão sem nome do %1$s</string>

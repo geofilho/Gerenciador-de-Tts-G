@@ -41,6 +41,9 @@ final class Unlabeled {
     private static String pkg = "";
     private static boolean unnamed;   // o elemento não tinha texto nem descrição
 
+    /** Marca de "faixa vazia": a fala fica calada. Comparada pela identidade. */
+    private static final String SILENT = new String("");
+
     /** Últimos achados, para o diagnóstico. */
     private static final ArrayDeque<String> FOUND = new ArrayDeque<>();
     private static final int MAX_FOUND = 25;
@@ -174,6 +177,10 @@ final class Unlabeled {
         if (!bare) {
             // O leitor de tela já falou algum conteúdo (por exemplo, os textos de dentro): não mexe.
             return text;
+        }
+        if (found == SILENT) {
+            remember(c, "fala em " + app + ": \"" + text + "\" calada (faixa vazia)");
+            return "";
         }
         if (found == null || found.isEmpty()) {
             remember(c, "fala depois do foco sem nome em " + app + ": \"" + text + "\", não trocado (nada encontrado)");
@@ -388,6 +395,13 @@ final class Unlabeled {
         String fromInner = fromCode(c, innerCode);
         if (fromInner != null) {
             found(c, fromInner, type, "veio do código de dentro " + innerCode, id, appName, cls, where);
+            return;
+        }
+        // Faixa vazia (linha que separa itens, por exemplo no widget da Agenda): fica calada, se a pessoa quiser.
+        if (Prefs.silenceThin(Prefs.get(c)) && (r.width() < 10 || r.height() < 10) && !n.isClickable()
+                && !n.isLongClickable() && id == null) {
+            focusDone(true, SILENT, type, "faixa vazia", id, appName);
+            remember(c, "foco sem nome em " + appName + ": faixa vazia, fica calada, classe " + cls + ", " + where);
             return;
         }
         focusDone(true, null, type, "", id, appName);

@@ -28,6 +28,14 @@ public class UnlabeledActivity extends Activity {
                 }
             }
         });
+        Switch thin = findViewById(R.id.switch_silence_thin);
+        thin.setChecked(Prefs.silenceThin(prefs));
+        thin.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton b, boolean checked) {
+                prefs.edit().putBoolean("silence_thin", checked).apply();
+            }
+        });
         findViewById(R.id.btn_name_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
