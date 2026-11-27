@@ -92,7 +92,19 @@ public class GboardService extends AccessibilityService {
         }
         notes = 0;
         rowNotes = 0;
+        prefsWatch = new android.content.SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(android.content.SharedPreferences sp, String key) {
+                if ("unlabeled_on".equals(key)) {
+                    followKeyboard();
+                }
+            }
+        };
+        Prefs.get(this).registerOnSharedPreferenceChangeListener(prefsWatch);
     }
+
+    /** Liga ou desliga a escuta de todos os aplicativos quando a chave dos botões sem etiqueta muda. */
+    private android.content.SharedPreferences.OnSharedPreferenceChangeListener prefsWatch;
 
     /** Teclado em uso (o Gboard ou outro). O serviço só recebe eventos dele. */
     private String keyboardPkg = GBOARD;
@@ -111,7 +123,8 @@ public class GboardService extends AccessibilityService {
         try {
             android.accessibilityservice.AccessibilityServiceInfo info = getServiceInfo();
             if (info != null) {
-                info.packageNames = new String[]{pkg};
+                // Com a função dos botões sem etiqueta ligada, recebe o foco de todos os aplicativos.
+                info.packageNames = Prefs.unlabeledOn(Prefs.get(this)) ? null : new String[]{pkg};
                 setServiceInfo(info);
             }
         } catch (Exception ignored) {
@@ -135,7 +148,31 @@ public class GboardService extends AccessibilityService {
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        if (event == null || !Prefs.gboardOn(Prefs.get(this))) {
+        if (event == null) {
+            return;
+        }
+        android.content.SharedPreferences prefs = Prefs.get(this);
+        if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED) {
+            if (Prefs.unlabeledOn(prefs)) {
+                CharSequence app = event.getPackageName();
+                if (app != null && app.toString().equals(keyboardPkg)) {
+                    return; // teclas do teclado: o leitor de tela já fala
+                }
+                Unlabeled.focusStarted();
+                AccessibilityNodeInfo n = null;
+                try {
+                    n = event.getSource();
+                } catch (Exception ignored) {
+                }
+                try {
+                    Unlabeled.inspect(this, n, app);
+                } catch (Exception e) {
+                    Unlabeled.focusDone(false, null, "", "", "", "");
+                }
+            }
+            return;
+        }
+        if (!Prefs.gboardOn(prefs)) {
             return;
         }
         CharSequence p = event.getPackageName();
@@ -543,6 +580,9 @@ public class GboardService extends AccessibilityService {
         handler.removeCallbacks(say);
         if (keyboardWatch != null) {
             getContentResolver().unregisterContentObserver(keyboardWatch);
+        }
+        if (prefsWatch != null) {
+            Prefs.get(this).unregisterOnSharedPreferenceChangeListener(prefsWatch);
         }
         if (tts != null) {
             tts.shutdown();

@@ -2,7 +2,7 @@
 <!-- Só o teclado Gboard: os outros aplicativos nem mandam eventos para este serviço.
      isAccessibilityTool: marca oficial de ferramenta de acessibilidade. -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accessibilityEventTypes="typeWindowContentChanged|typeWindowStateChanged|typeViewTextChanged|typeWindowsChanged"
+    android:accessibilityEventTypes="typeWindowContentChanged|typeWindowStateChanged|typeViewTextChanged|typeWindowsChanged|typeViewAccessibilityFocused"
     android:accessibilityFeedbackType="feedbackSpoken"
     android:accessibilityFlags="flagRetrieveInteractiveWindows|flagReportViewIds"
     android:canRetrieveWindowContent="true"

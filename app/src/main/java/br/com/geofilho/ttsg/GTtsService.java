@@ -269,6 +269,10 @@ public class GTtsService extends TextToSpeechService {
         float reqPitch = request.getPitch() / 100f;
 
         String original = text;
+        // Botão "sem etiqueta": troca pelo nome encontrado pelo serviço de acessibilidade.
+        if (Prefs.unlabeledOn(p)) {
+            text = Unlabeled.replace(this, text);
+        }
         // Tradução automática (se ligada): antes do dicionário, que está no idioma do usuário.
         text = Translator.maybeTranslate(this, text, stopFlag);
         if (stopped) {

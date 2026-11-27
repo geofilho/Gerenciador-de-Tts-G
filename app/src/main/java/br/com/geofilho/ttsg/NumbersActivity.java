@@ -78,6 +78,18 @@ public class NumbersActivity extends Activity {
             }
         });
 
+        android.widget.Switch swUnlabeled = findViewById(R.id.switch_unlabeled);
+        swUnlabeled.setChecked(Prefs.unlabeledOn(prefs));
+        swUnlabeled.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(android.widget.CompoundButton b, boolean checked) {
+                prefs.edit().putBoolean("unlabeled_on", checked).apply();
+                if (checked && !GboardSetupActivity.isEnabled(NumbersActivity.this)) {
+                    startActivity(new android.content.Intent(NumbersActivity.this, GboardSetupActivity.class));
+                }
+            }
+        });
+
         final EditText editTest = findViewById(R.id.edit_test);
         String engine = Prefs.engine(prefs, Prefs.MAIN);
         if (engine.isEmpty()) {

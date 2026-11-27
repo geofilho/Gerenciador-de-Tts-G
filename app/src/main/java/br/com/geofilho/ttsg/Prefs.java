@@ -133,6 +133,11 @@ final class Prefs {
         return p.getBoolean("gboard_on", false);
     }
 
+    /** Falar o nome escondido dos botões sem etiqueta (precisa do serviço de acessibilidade ligado). */
+    static boolean unlabeledOn(SharedPreferences p) {
+        return p.getBoolean("unlabeled_on", false);
+    }
+
     static boolean translateOn(SharedPreferences p) {
         return p.getBoolean("translate_on", false);
     }

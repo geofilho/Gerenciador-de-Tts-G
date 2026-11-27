@@ -36,6 +36,11 @@
             style="@style/Row"
             android:text="@string/gboard_switch" />
 
+        <Switch
+            android:id="@+id/switch_unlabeled"
+            style="@style/Row"
+            android:text="@string/unlabeled_switch" />
+
         <EditText
             android:id="@+id/edit_test"
             style="@style/Row"
