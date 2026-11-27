@@ -10,8 +10,8 @@ android {
         applicationId 'br.com.geofilho.ttsg'
         minSdk 21
         targetSdk 34
-        versionCode 103
-        versionName '2.02'
+        versionCode 104
+        versionName '2.03'
     }
 
     buildTypes {
