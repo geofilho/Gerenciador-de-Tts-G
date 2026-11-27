@@ -46,7 +46,7 @@ final class Unlabeled {
 
     /** "sem etiqueta" e variações que o leitor de tela fala. */
     private static final Pattern PHRASE = Pattern.compile(
-            "\\s*[,.]?\\s*\\b(sem etiqueta|sem r[óo]tulo|unlabell?ed)\\b\\s*[,.]?",
+            "\\s*[,.]?\\s*\\b(sem etiqueta|sem marcador|sem r[óo]tulo|unlabell?ed)\\b\\s*[,.]?",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 
     private static final Pattern ROLE = Pattern.compile(
@@ -93,6 +93,12 @@ final class Unlabeled {
     static String replace(Context c, String text) {
         if (text == null || text.trim().isEmpty() || text.length() > 200) {
             return text;
+        }
+        // Descrição que é código ("home_square_icon_live"): o leitor de tela fala o código; troca por nome legível.
+        String readable = readableCodes(c, text);
+        if (!readable.equals(text)) {
+            remember(c, "código falado: \"" + text + "\" trocado por \"" + readable + "\"");
+            text = readable;
         }
         Matcher m = PHRASE.matcher(text);
         boolean phrase = m.find();
@@ -178,6 +184,32 @@ final class Unlabeled {
         out = out.replaceAll(",\\s*,", ",").replaceAll(",\\s*\\.", ".").trim();
         remember(c, "fala em " + app + ": \"" + text + "\" trocada por \"" + out + "\" (" + from + ")");
         return out;
+    }
+
+    private static final Pattern SPOKEN_CODE = Pattern.compile("\\b[a-z][a-z0-9]*(_[a-z0-9]+)+\\b");
+
+    /** Troca cada código no texto ("dd_module_product_card_1") pelo nome legível ("produto"). */
+    static String readableCodes(Context c, String text) {
+        if (text.indexOf('_') < 0) {
+            return text;
+        }
+        Matcher m = SPOKEN_CODE.matcher(text);
+        StringBuffer sb = new StringBuffer();
+        boolean changed = false;
+        while (m.find()) {
+            String name = fromCode(c, m.group());
+            if (name == null) {
+                name = ""; // código só de estrutura (tangram_view_container): não fala nada
+            }
+            m.appendReplacement(sb, Matcher.quoteReplacement(name));
+            changed = true;
+        }
+        if (!changed) {
+            return text;
+        }
+        m.appendTail(sb);
+        String out = sb.toString().replaceAll("\\s*\\.\\s*\\.", ".").replaceAll("^\\s*[.,]\\s*", "").trim();
+        return out.isEmpty() ? text : out;
     }
 
     /** Palavras que o leitor de tela fala sozinhas num elemento sem nome. */
@@ -404,7 +436,7 @@ final class Unlabeled {
             "btn", "button", "bt", "ic", "icon", "iv", "img", "image", "imageview", "imgbtn", "ib", "tv", "txt",
             "text", "textview", "view", "layout", "container", "wrapper", "holder", "root", "content", "frame",
             "id", "tangram", "item", "cell", "cover", "bg", "background", "fl", "ll", "rl", "cl", "lay", "lyt",
-            "vg", "group", "hotspot", "skinny", "collection", "tangram", "widget", "action", "iconfont", "svg", "lottie", "anim", "the", "of", "to", "a", "an",
+            "vg", "group", "square", "module", "dd", "hotspot", "skinny", "collection", "tangram", "widget", "action", "iconfont", "svg", "lottie", "anim", "the", "of", "to", "a", "an",
             "and", "for", "on", "in", "my", "new", "main", "custom", "default", "common", "base", "rn", "android"));
 
     /** Palavras comuns em códigos de botões. */
@@ -464,7 +496,8 @@ final class Unlabeled {
                 "switch", "chave", "dismiss", "dispensar", "minimize", "minimizar", "maximize", "maximizar",
                 "service", "atendimento", "support", "suporte", "faq", "perguntas frequentes", "feedback", "opinião",
                 "new", "novo", "home", "início", "explore", "explorar", "discover", "descobrir", "mall", "shopping",
-                "me", "eu", "mine", "eu"
+                "me", "eu", "mine", "eu", "shopeevip", "Shopee VIP", "vip", "VIP", "shopee", "Shopee",
+                "pesquisa", "pesquisar", "recommend", "recomendados", "recommendation", "recomendados"
         };
         for (int i = 0; i + 1 < w.length; i += 2) {
             WORDS.put(w[i], w[i + 1]);
@@ -480,7 +513,7 @@ final class Unlabeled {
                 "clear search", "limpar pesquisa", "search clear", "limpar pesquisa", "voice search", "pesquisa por voz",
                 "show balance", "mostrar saldo", "hide balance", "ocultar saldo", "balance visibility", "mostrar ou ocultar saldo",
                 "eye balance", "mostrar ou ocultar saldo", "close dialog", "fechar", "dialog close", "fechar",
-                "play pause", "reproduzir ou pausar", "sign in", "entrar", "sign out", "sair", "log in", "entrar"
+                "play pause", "reproduzir ou pausar", "sign in", "entrar", "product card", "produto", "live card", "ao vivo", "sign out", "sair", "log in", "entrar"
         };
         for (int i = 0; i + 1 < p.length; i += 2) {
             PHRASES.put(p[i], p[i + 1]);
@@ -512,6 +545,9 @@ final class Unlabeled {
                 continue;
             }
             words.add(t);
+        }
+        if (words.size() > 1 && words.get(0).equals("home")) {
+            words.remove(0); // "home_..." na Shopee é só o nome da tela inicial
         }
         if (words.isEmpty()) {
             return null;
