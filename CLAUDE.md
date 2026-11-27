@@ -34,3 +34,20 @@ Todo aplicativo ou programa deve ser **100% acessível com leitor de tela** e
   ampliação configurados na acessibilidade do aparelho.
 - Sem textos todos em maiúsculas; espaço entre linhas confortável.
 - Não usar só a cor para transmitir informação.
+
+## Padrão de backup (para todos os aplicativos do autor)
+Quando um aplicativo tiver backup, fazer sempre neste formato (o do Gerenciador de TTS G, aprovado pelo autor):
+- No menu principal, um botão "Backup" (acima de "Sobre"), que abre por cima da tela principal a escolha
+  "Fazer backup" / "Restaurar backup". A tela principal fica aberta o tempo todo (nada de atividade
+  transparente separada: ao fechar, ela levava junto a permissão do arquivo e o compartilhamento falhava).
+- Fazer backup: no Android 10+, salvar direto na pasta Download pelo MediaStore, sem seletor de arquivos e
+  sem teclado, com data e hora no nome (ex.: `nome_do_app_backup_2026-11-27_15-14.json`), para um backup não
+  apagar o outro. No Android 9 ou mais antigo, seletor de arquivos (ACTION_CREATE_DOCUMENT) em Downloads.
+- Depois de salvar: janela "Backup salvo" dizendo o nome do arquivo e o que foi salvo, e perguntando
+  "Deseja compartilhar o arquivo de backup?". Sim abre o compartilhamento (ACTION_SEND com EXTRA_STREAM,
+  ClipData e FLAG_GRANT_READ_URI_PERMISSION, também no chooser).
+- Restaurar backup: seletor de arquivos (ACTION_OPEN_DOCUMENT) começando em Downloads, confirmação de que
+  tudo será substituído, e aviso falado do resultado. Tocar no arquivo no gerenciador de arquivos também
+  oferece restaurar.
+- Arquivo JSON com "app", "versao" e os dados; restaurar confere o "app" e não muda nada se não for dele.
+- Cada passo (salvo, não salvo e o motivo, compartilhamento aberto ou não) anotado no diagnóstico.
