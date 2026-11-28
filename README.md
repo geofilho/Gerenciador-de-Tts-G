@@ -12,7 +12,7 @@ Você pode usar o projeto como inspiração para criar o seu próprio, com códi
 
 Depois de instalado, as próximas versões chegam pelo botão "Verificar atualização" do próprio aplicativo.
 
-Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para uso com leitor de tela.
+Aplicativo Android leve (cerca de 200 KB, sem bibliotecas externas) e feito para uso com leitor de tela.
 
 ## Tela principal (ordem de varredura)
 1. Motor de TTS (lista os motores instalados)
@@ -29,16 +29,33 @@ Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para 
    dois; velocidade dos números; pontuação nenhuma, algumas ou todas; voz para
    emojis, com a opção de ignorar a palavra "Emoji" antes dos emojis; ler
    automaticamente as sugestões do teclado Gboard, testado no Gboard, no
-   Pixelboard e no Teclado Samsung, com tom diferente para as sugestões que
-   só entram tocando; caixa de texto e Ouvir a voz)
+   Pixelboard e no Teclado Samsung; Botões sem etiqueta; Tradução de voz TTS;
+   caixa de texto e Ouvir a voz)
+   - Botões sem etiqueta: falar o nome escondido dos botões (textos de dentro,
+     dicas escondidas e código interno, como btn_send = enviar), nome primeiro
+     e tipo depois ("Pesquisar, Botão"); códigos falados pelo leitor de tela
+     viram nomes legíveis; calar o "Sem marcador" das faixas vazias; dar nome
+     você mesmo ao botão sem identificação (por aplicativo, tela e lugar, e
+     também para o mesmo botão repetido nos cartões de uma lista), pelas
+     configurações rápidas, pelo atalho de acessibilidade, pelo MacroDroid ou
+     pela página; lista dos botões nomeados por aplicativo, com editar e apagar
+   - Tradução de voz TTS (tradução automática: chave, idioma de origem, idioma
+     de destino e teste)
 9. Usar como motor de TTS do sistema
 10. Saída de áudio do leitor de tela (manter a fala e, no Android 12+, os sons
     do leitor no telefone quando houver Bluetooth conectado)
-11. Tradução de voz TTS (tradução automática pela internet: chave, idioma de
-    origem, idioma de destino e teste)
-12. Verificar atualização (mostra as novidades e, com o OK, baixa e instala)
-13. Diagnóstico (ativar ou desativar o registro; ver, copiar, compartilhar e
-    limpar o relatório)
+11. Backup (fazer backup direto na pasta Download, sem teclado, com data e hora
+    no nome, e compartilhar; restaurar pelo arquivo ou tocando nele no Meus
+    Arquivos; leva as configurações, o dicionário e os botões nomeados)
+12. Sobre (Verificar atualização e Diagnóstico)
+
+## Vozes de todos os motores para outros aplicativos
+Aplicativos que deixam escolher a voz (por exemplo, o Ariadne GPS) veem, além
+da voz padrão do Gerenciador, as vozes de todos os outros motores instalados,
+com o nome do motor e da voz e o idioma. Escolhendo uma delas, a fala sai por
+aquele motor e aquela voz, com o dicionário, os números, a pontuação, os
+emojis, a tradução e a saída de áudio do Gerenciador. O leitor de tela continua
+com a voz padrão. A lista fica guardada e é refeita quando um motor muda.
 
 ## Acesso rápido
 - Atalhos ao manter o ícone pressionado (também nas rotinas da Samsung):
@@ -46,8 +63,8 @@ Aplicativo Android leve (cerca de 50 KB, sem bibliotecas externas) e feito para 
 - Widgets da tela inicial para as mesmas três funções. Os de Tradução e Saída
   de áudio são chaves: cada toque liga ou desliga e fala o novo estado. O do
   Dicionário abre o menu (ao sair, volta para a tela inicial).
-- Botões nas configurações rápidas do Android, também com Tradução e Saída de
-  áudio como chaves de liga e desliga.
+- Botões nas configurações rápidas do Android: Dicionário, Saída de áudio,
+  Tradução (estes dois como chaves de liga e desliga) e Dar nome ao botão.
 - MacroDroid: "Iniciar atividade de aplicativo" com as entradas Dicionario,
   Ligar_traducao, Desligar_traducao, Ligar_saida_de_audio,
   Desligar_saida_de_audio, Alternar_traducao, Alternar_saida_de_audio (liga
